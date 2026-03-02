@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  CUSTOMER
+  MANAGER
+}
+
+enum ScooterStatus {
+  AVAILABLE
+  UNAVAILABLE
+}
+
+enum BookingStatus {
+  PENDING_PAYMENT
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
+
+enum HireType {
+  HOUR_1
+  HOUR_4
+  DAY_1
+  WEEK_1
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(CUSTOMER)
+  bookings     Booking[]
+}
+
+model Scooter {
+  id       String        @id @default(uuid())
+  location String
+  status   ScooterStatus @default(AVAILABLE)
+  bookings Booking[]
+}
+
+model Booking {
+  id        String        @id @default(uuid())
+  user      User          @relation(fields: [userId], references: [id])
+  userId    String
+  scooter   Scooter       @relation(fields: [scooterId], references: [id])
+  scooterId String
+  hireType  HireType
+  startTime DateTime
+  endTime   DateTime
+  status    BookingStatus @default(PENDING_PAYMENT)
+  totalCost Float
+  payment   Payment?
+}
+
+model Payment {
+  id        String   @id @default(uuid())
+  booking   Booking  @relation(fields: [bookingId], references: [id])
+  bookingId String   @unique
+  amount    Float
+  status    String
+}
