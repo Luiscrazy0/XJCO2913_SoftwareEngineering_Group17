@@ -8,6 +8,7 @@ import { PrismaModule } from '../prisma/prisma.module'; // <- 相对路径必须
   imports: [PrismaModule],
   controllers: [UserController],
   providers: [UserService],
+  exports: [UserService], // 导出给其他模块使用
   
 })
 export class UserModule {}
