@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ScooterModule } from './modules/scooter/scooter.module';
 import { BookingModule } from './modules/booking/booking.module';
+import { PaymentModule } from './modules/payment/payment.module'; // <- PaymentModule registration
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { BookingModule } from './modules/booking/booking.module';
     AuthModule,
     ScooterModule,
     BookingModule,
+    PaymentModule, // <- PaymentModule registration
   ],
   controllers: [AppController],
   providers: [AppService],
