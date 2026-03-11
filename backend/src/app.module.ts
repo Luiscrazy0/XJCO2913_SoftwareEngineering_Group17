@@ -7,9 +7,17 @@ import { UserModule } from './modules/user/user.module'; // <- 相对路径必�
 import { AuthModule } from './modules/auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ScooterModule } from './modules/scooter/scooter.module';
+import { BookingModule } from './modules/booking/booking.module';
 
 @Module({
-  imports: [HealthModule, PrismaModule, UserModule, AuthModule,ScooterModule],
+  imports: [
+    HealthModule, 
+    PrismaModule, 
+    UserModule, 
+    AuthModule,
+    ScooterModule,
+    BookingModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
