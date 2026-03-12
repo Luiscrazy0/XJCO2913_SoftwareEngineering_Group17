@@ -1,25 +1,17 @@
-// backend/src/prisma/prisma.service.ts
-
-import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '@prisma/client';
+import 'dotenv/config'
+import { Injectable, OnModuleInit } from '@nestjs/common'
+import { PrismaClient } from '@prisma/client'
+import { PrismaPg } from '@prisma/adapter-pg'
 
 @Injectable()
-export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
+export class PrismaService extends PrismaClient implements OnModuleInit {
   constructor() {
-    super({
-      log: ['query', 'error', 'warn', 'info'], 
-      // 选择一个合适的 adapter
-      // adapter: { sqlite: { storage: 'file' } }
-      // 或者使用 accelerateUrl
-      // accelerateUrl: 'https://prisma-accelerate.example.com'
-    });
+    const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL })
+    super({ adapter })
   }
 
   async onModuleInit() {
-    await this.$connect();
+    await this.$connect()
   }
-
-  async onModuleDestroy() {
-    await this.$disconnect();
-  }
+  
 }
