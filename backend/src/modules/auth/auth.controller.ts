@@ -32,3 +32,8 @@ export class AuthController {
     return this.authService.login(body.email, body.password);
   }
 }
+
+export class RegisterDto {
+  email: string
+  password: string
+}
