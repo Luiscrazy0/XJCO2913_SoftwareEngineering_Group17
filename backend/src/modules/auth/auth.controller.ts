@@ -1,6 +1,7 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { AuthService } from './auth.service';
-
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
 /**
  * AuthController is the controller responsible for handling authentication-related requests.
  */
@@ -18,9 +19,9 @@ export class AuthController {
    * @returns The result of the user registration process.
    */
   @Post('register')
-  async register(@Body() body: { email: string; password: string }) {
-    return this.authService.register(body.email, body.password);
-  }
+  async register(@Body() body: RegisterDto) {
+  return this.authService.register(body.email, body.password);
+}
 
   /**
    * Endpoint for user login.
@@ -28,12 +29,7 @@ export class AuthController {
    * @returns The result of the user login process.
    */
   @Post('login')
-  async login(@Body() body: { email: string; password: string }) {
-    return this.authService.login(body.email, body.password);
+  async login(@Body() body: LoginDto) {
+  return this.authService.login(body.email, body.password);
   }
-}
-
-export class RegisterDto {
-  email: string
-  password: string
 }
