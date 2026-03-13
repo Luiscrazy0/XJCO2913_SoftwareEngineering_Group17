@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Param, Body } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { HireType } from '@prisma/client';
+import { CreateBookingDto } from './dto/create-booking.dto';
 
 @Controller('bookings')
 export class BookingController {
@@ -17,16 +18,9 @@ export class BookingController {
   }
 
   @Post()
-  create(
-    @Body()
-    body: {
-      userId: string;
-      scooterId: string;
-      hireType: HireType;
-      startTime: string;
-      endTime: string;
-    },
-  ) {
+  create(@Body()body: CreateBookingDto)
+  // Dto
+  {
     return this.bookingService.createBooking(
       body.userId,
       body.scooterId,

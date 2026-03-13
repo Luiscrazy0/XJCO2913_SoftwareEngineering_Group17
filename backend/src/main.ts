@@ -12,16 +12,20 @@ async function bootstrap() {
     .setVersion('1.0')
     .build();
 
+  // Swagger：启用
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
+  // 全局管道：启用
   await app.listen(process.env.PORT ?? 3000);
 
+  
   async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     app.useGlobalPipes(
       new ValidationPipe({
+        // 验证规则
         whitelist: true,              // 自动删除多余字段
         forbidNonWhitelisted: true,   // 多余字段直接报错
         transform: true               // 自动类型转换
