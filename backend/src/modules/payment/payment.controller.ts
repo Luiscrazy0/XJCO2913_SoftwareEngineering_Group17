@@ -1,10 +1,6 @@
-/*
-* @description: Payment controller for handling payment-related operations.
-*/
 import { Controller, Post, Get, Body, Param } from '@nestjs/common';
 import { PaymentService } from './payment.service';
-
-
+import { CreatePaymentDto } from './dto/create-payment.dto';
 /**
 * Payment controller class.
 */
@@ -12,21 +8,9 @@ import { PaymentService } from './payment.service';
 export class PaymentController {
   constructor(private readonly paymentService: PaymentService) {}
 
-
-  /**
-* Creates a new payment.
-*
-* @param body - Payment body with booking ID and amount.
-*
-* @returns The created payment.
-*/
   @Post()
-  create(
-    @Body()
-    body: {
-      bookingId: string;
-      amount: number;
-    },
+  create(@Body()
+    body: CreatePaymentDto
   ) {
     return this.paymentService.createPayment(body.bookingId, body.amount);
   }

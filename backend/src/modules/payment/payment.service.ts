@@ -10,13 +10,8 @@ export class PaymentService {
   
   constructor(private readonly prisma: PrismaService) {}
 
-  /**
-   * Creates a new payment for a booking.
-   * @param bookingId Unique ID of the booking.
-   * @param amount Amount to be paid for the booking.
-   * @returns The created payment.
-   */
   async createPayment(bookingId: string, amount: number) {
+    //第一步：检查 booking 是否存在。
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
     });
@@ -28,16 +23,12 @@ export class PaymentService {
       throw new BadRequestException('Booking not found');
     }
 
-    /**
-     * Throws a BadRequestException if the booking status is not PENDING_PAYMENT.
-     */
+    //第二步：检查 booking 是否允许支付。
     if (booking.status !== BookingStatus.PENDING_PAYMENT) {
       throw new BadRequestException('Booking cannot be paid');
     }
 
-    /**
-     * Creates a new payment with the given booking ID, amount, and status.
-     */
+    //第三步：创建 payment。
     const payment = await this.prisma.payment.create({
       data: {
         bookingId,
