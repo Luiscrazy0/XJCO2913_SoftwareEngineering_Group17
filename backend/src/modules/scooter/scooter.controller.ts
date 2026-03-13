@@ -1,6 +1,8 @@
 import { Controller, Get, Post, Patch, Param, Body } from '@nestjs/common';
 import { ScooterService } from './scooter.service';
 import { ScooterStatus } from '@prisma/client';
+import { CreateScooterDto } from './dto/create-scooter.dto';
+import { UpdateScooterStatusDto } from './dto/update-scooter-status.dto';
 
 @Controller('scooters')
 export class ScooterController {
@@ -17,15 +19,17 @@ export class ScooterController {
   }
 
   @Post()
-  create(@Body() body: { location: string }) {
+  create(@Body() body: CreateScooterDto) 
+  // Add dto validation for location
+  {
     return this.scooterService.createScooter(body.location);
   }
 
   @Patch(':id/status')
-  updateStatus(
-    @Param('id') id: string,
-    @Body() body: { status: ScooterStatus },
-  ) {
-    return this.scooterService.updateStatus(id, body.status);
-  }
+    updateStatus(
+      @Param('id') id: string,
+      @Body() body: UpdateScooterStatusDto,
+    ) {
+      return this.scooterService.updateStatus(id, body.status);
+    }
 }
