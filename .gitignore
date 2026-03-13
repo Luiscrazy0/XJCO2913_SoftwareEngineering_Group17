@@ -67,3 +67,4 @@ backend/coverage/
 backend/.nyc_output/
 backend/.idea/
 backend/.vscode/
+.vscode/settings.json
