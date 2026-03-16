@@ -68,3 +68,16 @@ backend/.nyc_output/
 backend/.idea/
 backend/.vscode/
 .vscode/settings.json
+
+frontend/node_modules
+node_modules
+dist
+
+.env
+.env.local
+.env.*
+
+.vscode
+.idea
+
+.DS_Store
