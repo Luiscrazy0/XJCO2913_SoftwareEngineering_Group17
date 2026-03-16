@@ -1,3 +1,0 @@
-import React from "react";
-
-export const AppRouter: React.FC = () => <div>AppRouter</div>;
