@@ -70,6 +70,7 @@ backend/.vscode/
 .vscode/settings.json
 
 frontend/node_modules
+scooter-frontend/node_modules
 node_modules
 dist
 
