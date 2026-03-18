@@ -1,36 +1,27 @@
 import axiosClient from '../utils/axiosClient'
-import { AuthResponse, LoginRequest, RegisterRequest, ApiResponse } from '../types'
+import { LoginRequest, RegisterRequest } from '../types'
 
 export const authApi = {
   // Login user
-  login: async (credentials: LoginRequest): Promise<AuthResponse> => {
-    const response = await axiosClient.post<ApiResponse<AuthResponse>>('/auth/login', credentials)
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Login failed')
-    }
-    return response.data.data!
+  login: async (credentials: LoginRequest): Promise<{ access_token: string }> => {
+    const response = await axiosClient.post('/auth/login', credentials)
+    return response.data // 直接返回后端数据，没有ApiResponse包装
   },
 
   // Register new user
-  register: async (userData: RegisterRequest): Promise<AuthResponse> => {
-    const response = await axiosClient.post<ApiResponse<AuthResponse>>('/auth/register', userData)
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Registration failed')
-    }
-    return response.data.data!
+  register: async (userData: RegisterRequest): Promise<{ id: string, email: string }> => {
+    const response = await axiosClient.post('/auth/register', userData)
+    return response.data // 直接返回后端数据，没有ApiResponse包装
   },
 
-  // Get current user profile
-  getProfile: async (): Promise<AuthResponse> => {
-    const response = await axiosClient.get<ApiResponse<AuthResponse>>('/auth/profile')
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to get profile')
-    }
-    return response.data.data!
-  },
+  // Get current user profile - 暂时注释掉，后端可能没有这个接口
+  // getProfile: async (): Promise<User> => {
+  //   const response = await axiosClient.get('/auth/profile')
+  //   return response.data
+  // },
 
-  // Logout user
-  logout: async (): Promise<void> => {
-    await axiosClient.post('/auth/logout')
-  },
+  // Logout user - 暂时注释掉，后端可能没有这个接口
+  // logout: async (): Promise<void> => {
+  //   await axiosClient.post('/auth/logout')
+  // },
 }
