@@ -5,10 +5,7 @@ import { User, Scooter, Booking, UserRole } from './types'
 const testUser: User = {
   id: '1',
   email: 'test@example.com',
-  name: 'Test User',
   role: 'CUSTOMER' as UserRole,
-  createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-01T00:00:00Z'
 }
 
 const testScooter: Scooter = {
@@ -59,7 +56,7 @@ import axiosClient from './utils/axiosClient'
 console.log('\nAxios client configured with baseURL:', axiosClient.defaults.baseURL)
 
 // Test query client
-import { queryClient } from './utils/queryClient'
-console.log('Query client configured with default options')
+// import { queryClient } from './utils/queryClient'
+// console.log('Query client configured with default options')
 
 console.log('\n✅ All infrastructure components are properly set up!')
