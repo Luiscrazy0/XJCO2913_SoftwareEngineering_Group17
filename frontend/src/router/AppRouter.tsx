@@ -5,17 +5,34 @@ import AuthPage from "../pages/AuthPage"
 import ScooterListPage from "../pages/ScooterListPage"
 import MyBookingsPage from "../pages/MyBookingsPage"
 import AdminFleetPage from "../pages/AdminFleetPage"
+import ProtectedRoute from "../components/ProtectedRoute"
 
 // Main App Router component
 export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Defining routes for different pages */}
+        {/* Public routes */}
         <Route path="/" element={<AuthPage />} />
-        <Route path="/scooters" element={<ScooterListPage />} />
-        <Route path="/my-bookings" element={<MyBookingsPage />} />
-        <Route path="/admin" element={<AdminFleetPage />} />
+        
+        {/* Protected routes */}
+        <Route path="/scooters" element={
+          <ProtectedRoute>
+            <ScooterListPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/my-bookings" element={
+          <ProtectedRoute>
+            <MyBookingsPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/admin" element={
+          <ProtectedRoute requiredRole="MANAGER">
+            <AdminFleetPage />
+          </ProtectedRoute>
+        } />
       </Routes>
     </BrowserRouter>
   )
