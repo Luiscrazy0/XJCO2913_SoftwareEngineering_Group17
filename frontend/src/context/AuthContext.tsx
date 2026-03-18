@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { User } from '../types'
+import { authApi } from '../api/auth'
 
 interface AuthContextType {
   user: User | null
   token: string | null
   isLoading: boolean
-  login: (token: string, user: User) => void
+  login: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string) => Promise<void>
   logout: () => void
   isAuthenticated: boolean
 }
@@ -49,11 +51,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setIsLoading(false)
   }, [])
 
-  const login = (newToken: string, newUser: User) => {
-    setToken(newToken)
-    setUser(newUser)
-    localStorage.setItem('auth_token', newToken)
-    localStorage.setItem('user', JSON.stringify(newUser))
+  const login = async (email: string, password: string) => {
+    try {
+      // 1. 调用登录API
+      const { access_token } = await authApi.login({ email, password })
+      
+      // 2. 解析JWT token获取用户信息
+      const payload = JSON.parse(atob(access_token.split('.')[1]))
+      const user: User = {
+        id: payload.sub,
+        email: email,
+        role: payload.role
+      }
+      
+      // 3. 保存状态
+      setToken(access_token)
+      setUser(user)
+      localStorage.setItem('auth_token', access_token)
+      localStorage.setItem('user', JSON.stringify(user))
+      
+      // 4. 路由跳转
+      if (user.role === 'MANAGER') {
+        window.location.href = '/admin'
+      } else {
+        window.location.href = '/scooters'
+      }
+    } catch (error) {
+      console.error('Login failed:', error)
+      throw error
+    }
+  }
+
+  const register = async (email: string, password: string) => {
+    try {
+      // 1. 调用注册API
+      await authApi.register({ email, password })
+      
+      // 2. 注册成功后自动登录
+      await login(email, password)
+    } catch (error) {
+      console.error('Registration failed:', error)
+      throw error
+    }
   }
 
   const logout = () => {
@@ -70,6 +109,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     token,
     isLoading,
     login,
+    register,
     logout,
     isAuthenticated: !!token && !!user,
   }

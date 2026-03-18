@@ -1,0 +1,23 @@
+开发顺序应该遵循一个基本原则：**先建立系统骨架，再接入认证，再实现核心业务流，最后补充管理功能**。这样可以尽早跑通一条完整路径，同时降低调试复杂度。下面给出一个适合你当前架构的 Sprint 1 前端实现顺序。
+
+第一阶段是项目基础结构。目标是让前端项目能够运行，并具备基本的路由和 API 通信能力。首先创建 React 项目（Vite），安装依赖：Tailwind、Shadcn UI（或 Ant Design）、TanStack Query、React Router。随后搭建项目目录结构，例如 `api / components / pages / context / router`。此阶段还需要实现基础的 API 请求工具，例如一个 `fetch` 或 `axios` 封装，并预留 token header 的位置。同时创建 `AppRouter` 并配置基础路由：`/login`、`/scooters`、`/my-bookings`、`/admin`。完成后系统应能正常启动并切换页面。
+
+第二阶段是认证系统（Auth）。这是整个系统的入口。首先实现 `AuthContext`，用于保存 `user` 和 `token`。然后实现 `AuthPage`，包含 Login 和 Register 的 Tab 表单。完成后接入 `/auth/login` 和 `/auth/register` API。登录成功后将 token 存入 `localStorage`，并更新 `AuthContext`。随后实现 `Auth Guard`，在访问 `/scooters`、`/my-bookings` 等页面时检查 token，没有则跳转 `/login`。这一阶段完成后应该能完成流程：注册 → 登录 → 跳转系统首页。
+
+第三阶段实现核心页面：Scooter List。这是用户最主要的操作界面。创建 `ScooterListPage` 和 `ScooterCard` 组件，并接入 `GET /scooters` API。使用 TanStack Query 获取数据并展示车辆列表。此时只需显示 `Scooter ID`、`Location`、`Status`。完成后用户登录后应能看到车辆列表。
+
+第四阶段实现预约流程（Booking）。首先创建 `BookingModal` 组件，在 `ScooterCard` 点击 Book 按钮时弹出。实现预约表单：`HireType` 和 `StartTime`。提交时调用 `POST /bookings`。成功后关闭 Modal 并跳转 `/my-bookings`。这一阶段完成后系统应该可以完成完整流程：登录 → 浏览车辆 → 创建预约。
+
+第五阶段实现 My Bookings 页面。创建 `MyBookingsPage`，接入 `GET /bookings` API。展示用户预约列表。可以使用简单的表格或卡片列表展示 booking 信息。到这里为止，**Customer 的完整业务闭环已经完成**。
+
+第六阶段实现 Logout 与 Token 生命周期管理。在 Navbar 中添加 Logout 按钮，点击时执行 `localStorage.removeItem("token")` 并清除 `AuthContext`。随后跳转 `/login`。同时确保 API 请求在 header 中自动附带 `Authorization: Bearer <token>`。
+
+第七阶段实现 Admin Fleet 页面。创建 `AdminFleetPage`，接入 `GET /scooters` 展示车辆列表。然后实现 Add Scooter 功能，表单提交 `POST /scooters`。管理员界面只需实现最基本的车辆新增即可，不需要复杂管理逻辑。
+
+如果按这个顺序推进，系统会逐步形成一个完整的功能链：
+
+项目初始化 → 登录系统 → 浏览车辆 → 创建预约 → 查看预约 → 退出登录 → 管理员添加车辆。
+
+这种顺序有两个好处。第一，任何阶段都能运行系统并测试已有功能，问题更容易定位。第二，核心业务（租车流程）会最早完成，不会因为后台或管理功能拖慢进度。
+
+在时间安排上，一个典型的 Sprint 1 可以这样分配：第一天完成项目初始化和 Auth，第二天完成 Scooter List 与 Booking，第三天完成 My Bookings 与 Admin Fleet，最后半天用于调试与演示准备。这样通常可以在三天内完成一个可演示的 MVP。

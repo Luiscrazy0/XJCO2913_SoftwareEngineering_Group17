@@ -83,11 +83,4 @@ dist
 .idea
 
 .DS_Store
-local docs
-Sprint1_Phase1_项目基础结构.md
-Sprint1_Phase2_认证系统实现.md
-Sprint1_Phase3_车辆发现页实现.md
-Sprint1_Phase4_预约流程实现.md
-Sprint1_Phase5_我的预约页面实现.md
-Sprint1_Phase6_登出与Token管理.md
-Sprint1_Phase7_管理后台实现.md
+
