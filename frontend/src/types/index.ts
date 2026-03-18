@@ -5,10 +5,9 @@ export type UserRole = 'CUSTOMER' | 'MANAGER'
 export interface User {
   id: string
   email: string
-  name: string
   role: UserRole
-  createdAt: string
-  updatedAt: string
+  // 后端User模型没有name字段，已移除
+  // 后端User模型没有createdAt/updatedAt字段，已移除
 }
 
 export interface Scooter {
@@ -52,7 +51,7 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string
   password: string
-  name: string
+  // 后端RegisterDto不需要name字段，已移除
 }
 
 // API Response wrappers

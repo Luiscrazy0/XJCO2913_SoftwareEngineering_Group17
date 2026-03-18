@@ -13,6 +13,32 @@
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
+  /* Auth System Color Tokens */
+  --auth-bg: #f8fafc;
+  --auth-card-bg: #FFFFFF;
+  --auth-text-main: #0F172A;
+  --auth-text-secondary: #64748B;
+  --auth-tab-active: #22C55E;
+  --auth-tab-inactive: #64748B;
+  --auth-tab-hover: #16A34A;
+  --auth-input-bg: #FFFFFF;
+  --auth-input-border: #E2E8F0;
+  --auth-input-text: #0F172A;
+  --auth-input-placeholder: #94A3B8;
+  --auth-input-focus: #22C55E;
+  --auth-input-error: #EF4444;
+  --auth-button-primary: #22C55E;
+  --auth-button-primary-hover: #16A34A;
+  --auth-button-primary-active: #15803D;
+  --auth-button-disabled: #86EFAC;
+  --auth-button-text: #FFFFFF;
+  --auth-link: #3B82F6;
+  --auth-link-hover: #2563EB;
+  --auth-error: #EF4444;
+  --auth-warning: #F59E0B;
+  --auth-success: #10B981;
+  --auth-info: #3B82F6;
+
   --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
   --mono: ui-monospace, Consolas, monospace;
@@ -45,6 +71,15 @@
     --social-bg: rgba(47, 48, 58, 0.5);
     --shadow:
       rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
+
+    /* Dark Mode Auth System Color Tokens */
+    --auth-bg: #0F172A;
+    --auth-card-bg: #1E293B;
+    --auth-text-main: #F1F5F9;
+    --auth-text-secondary: #CBD5F5;
+    --auth-input-bg: #1E293B;
+    --auth-input-border: #334155;
+    --auth-input-focus: #22C55E;
   }
 
   #social .button-icon {
