@@ -2,7 +2,7 @@ import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'ax
 
 // Base URL configuration
 // For now, use hardcoded URL. Will be replaced with environment variable in production
-const BASE_URL = 'http://localhost:3000/api'
+const BASE_URL = 'http://localhost:3000'
 
 // Create axios instance
 const axiosClient: AxiosInstance = axios.create({
