@@ -1,6 +1,7 @@
 ---
-description: 避免前端因CORS问题无法访问后端API
-alwaysApply: true
+globs: backend/src/main.ts
+description: 确保CORS配置能够灵活支持Vite开发服务器的不同端口，避免端口冲突导致的CORS错误
+alwaysApply: false
 ---
 
-所有后端API服务必须显式配置CORS，允许前端应用跨域访问。CORS配置应包括：允许的前端域名、支持的HTTP方法、允许的请求头、是否允许携带凭证。开发环境中应允许本地开发服务器（如localhost:5173）的跨域请求。
+后端CORS配置必须使用正则表达式匹配Vite开发服务器的任意51xx端口（如5173、5174、5175等）。正则表达式应为：/^https?:\/\/(localhost|127\.0\.0\.1):51[0-9]{2}$/。必须允许无origin的请求（如移动应用或curl）。需要在控制台记录被CORS阻止的请求以便调试。
