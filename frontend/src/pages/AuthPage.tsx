@@ -11,31 +11,76 @@ export default function AuthPage() {
   const [confirmPassword, setConfirmPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [focusedInput, setFocusedInput] = useState<string | null>(null)
+  const [formErrors, setFormErrors] = useState<{
+    email?: string
+    password?: string
+    confirmPassword?: string
+  }>({})
+
+  // 验证邮箱格式
+  const validateEmail = (email: string): string | null => {
+    if (!email) return '邮箱不能为空'
+    if (!email.includes('@') || !email.includes('.')) {
+      return '邮箱格式不正确'
+    }
+    return null
+  }
+
+  // 验证密码
+  const validatePassword = (password: string): string | null => {
+    if (!password) return '密码不能为空'
+    if (password.length < 6) return '密码长度至少6位'
+    return null
+  }
+
+  // 验证确认密码
+  const validateConfirmPassword = (password: string, confirmPassword: string): string | null => {
+    if (!confirmPassword) return '请确认密码'
+    if (password !== confirmPassword) return '两次输入的密码不一致'
+    return null
+  }
+
+  // 实时验证表单
+  const validateForm = () => {
+    const errors: typeof formErrors = {}
+    
+    const emailError = validateEmail(email)
+    if (emailError) errors.email = emailError
+    
+    const passwordError = validatePassword(password)
+    if (passwordError) errors.password = passwordError
+    
+    if (activeTab === 'register') {
+      const confirmError = validateConfirmPassword(password, confirmPassword)
+      if (confirmError) errors.confirmPassword = confirmError
+    }
+    
+    setFormErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+    
+    // 表单验证
+    if (!validateForm()) {
+      return
+    }
+    
     setIsLoading(true)
 
     try {
-      // 表单验证
-      if (!email || !password) {
-        throw new Error('邮箱和密码不能为空')
-      }
-
       if (activeTab === 'register') {
-        if (password !== confirmPassword) {
-          throw new Error('两次输入的密码不一致')
-        }
-        if (password.length < 6) {
-          throw new Error('密码长度至少6位')
-        }
         await register(email, password)
       } else {
         await login(email, password)
       }
     } catch (err: any) {
-      setError(err.message || '操作失败，请重试')
+      // 提取后端错误消息
+      const errorMessage = err.response?.data?.message || err.message || '操作失败，请重试'
+      setError(errorMessage)
     } finally {
       setIsLoading(false)
     }
@@ -44,8 +89,121 @@ export default function AuthPage() {
   const handleTabChange = (tab: AuthTab) => {
     setActiveTab(tab)
     setError(null)
+    setFormErrors({})
     setPassword('')
     setConfirmPassword('')
+  }
+
+  const handleInputChange = (field: string, value: string) => {
+    switch (field) {
+      case 'email':
+        setEmail(value)
+        if (formErrors.email) {
+          const error = validateEmail(value)
+          setFormErrors(prev => ({ ...prev, email: error || undefined }))
+        }
+        break
+      case 'password':
+        setPassword(value)
+        if (formErrors.password) {
+          const error = validatePassword(value)
+          setFormErrors(prev => ({ ...prev, password: error || undefined }))
+        }
+        if (activeTab === 'register' && formErrors.confirmPassword) {
+          const error = validateConfirmPassword(value, confirmPassword)
+          setFormErrors(prev => ({ ...prev, confirmPassword: error || undefined }))
+        }
+        break
+      case 'confirmPassword':
+        setConfirmPassword(value)
+        if (formErrors.confirmPassword) {
+          const error = validateConfirmPassword(password, value)
+          setFormErrors(prev => ({ ...prev, confirmPassword: error || undefined }))
+        }
+        break
+    }
+  }
+
+  const handleInputFocus = (field: string) => {
+    setFocusedInput(field)
+  }
+
+  const handleInputBlur = (field: string) => {
+    setFocusedInput(null)
+    // 失去焦点时验证
+    switch (field) {
+      case 'email':
+        const emailError = validateEmail(email)
+        setFormErrors(prev => ({ ...prev, email: emailError || undefined }))
+        break
+      case 'password':
+        const passwordError = validatePassword(password)
+        setFormErrors(prev => ({ ...prev, password: passwordError || undefined }))
+        break
+      case 'confirmPassword':
+        const confirmError = validateConfirmPassword(password, confirmPassword)
+        setFormErrors(prev => ({ ...prev, confirmPassword: confirmError || undefined }))
+        break
+    }
+  }
+
+  // 获取输入框样式
+  const getInputStyle = (field: string, hasError?: boolean) => {
+    const baseStyle = {
+      padding: '12px 16px',
+      border: '1px solid var(--auth-input-border, #E2E8F0)',
+      borderRadius: '8px',
+      fontSize: '16px',
+      color: 'var(--auth-input-text, #0F172A)',
+      backgroundColor: 'var(--auth-input-bg, #FFFFFF)',
+      transition: 'all 0.2s ease',
+      outline: 'none',
+    }
+
+    if (hasError) {
+      return {
+        ...baseStyle,
+        borderColor: 'var(--auth-input-error, #EF4444)',
+      }
+    }
+
+    if (focusedInput === field) {
+      return {
+        ...baseStyle,
+        borderColor: 'var(--auth-input-focus, #22C55E)',
+        boxShadow: '0 0 0 3px rgba(34, 197, 94, 0.1)',
+      }
+    }
+
+    return baseStyle
+  }
+
+
+
+  // 获取按钮样式
+  const getButtonStyle = () => {
+    const baseStyle = {
+      padding: '14px',
+      backgroundColor: 'var(--auth-button-primary, #22C55E)',
+      color: 'var(--auth-button-text, #FFFFFF)',
+      border: 'none',
+      borderRadius: '8px',
+      fontSize: '16px',
+      fontWeight: '600' as const,
+      cursor: 'pointer',
+      transition: 'all 0.2s ease',
+      width: '100%',
+    }
+
+    if (isLoading) {
+      return {
+        ...baseStyle,
+        backgroundColor: 'var(--auth-button-disabled, #86EFAC)',
+        cursor: 'not-allowed',
+      }
+    }
+
+    return baseStyle
   }
 
   return (
@@ -65,6 +223,7 @@ export default function AuthPage() {
               ...(activeTab === 'login' ? styles.tabActive : {}),
             }}
             onClick={() => handleTabChange('login')}
+            className={activeTab === 'login' ? 'active-tab' : 'inactive-tab'}
           >
             登录
           </button>
@@ -74,6 +233,7 @@ export default function AuthPage() {
               ...(activeTab === 'register' ? styles.tabActive : {}),
             }}
             onClick={() => handleTabChange('register')}
+            className={activeTab === 'register' ? 'active-tab' : 'inactive-tab'}
           >
             注册
           </button>
@@ -90,12 +250,17 @@ export default function AuthPage() {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => handleInputChange('email', e.target.value)}
+              onFocus={() => handleInputFocus('email')}
+              onBlur={() => handleInputBlur('email')}
               placeholder="请输入邮箱地址"
-              style={styles.input}
+              style={getInputStyle('email', !!formErrors.email)}
               disabled={isLoading}
               required
             />
+            {formErrors.email && (
+              <div style={styles.fieldError}>{formErrors.email}</div>
+            )}
           </div>
 
           {/* Password Input */}
@@ -107,12 +272,17 @@ export default function AuthPage() {
               id="password"
               type="password"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={(e) => handleInputChange('password', e.target.value)}
+              onFocus={() => handleInputFocus('password')}
+              onBlur={() => handleInputBlur('password')}
               placeholder="请输入密码"
-              style={styles.input}
+              style={getInputStyle('password', !!formErrors.password)}
               disabled={isLoading}
               required
             />
+            {formErrors.password && (
+              <div style={styles.fieldError}>{formErrors.password}</div>
+            )}
           </div>
 
           {/* Confirm Password Input (Register only) */}
@@ -125,12 +295,17 @@ export default function AuthPage() {
                 id="confirmPassword"
                 type="password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                onFocus={() => handleInputFocus('confirmPassword')}
+                onBlur={() => handleInputBlur('confirmPassword')}
                 placeholder="请再次输入密码"
-                style={styles.input}
+                style={getInputStyle('confirmPassword', !!formErrors.confirmPassword)}
                 disabled={isLoading}
                 required
               />
+              {formErrors.confirmPassword && (
+                <div style={styles.fieldError}>{formErrors.confirmPassword}</div>
+              )}
             </div>
           )}
 
@@ -144,10 +319,8 @@ export default function AuthPage() {
           {/* Submit Button */}
           <button
             type="submit"
-            style={{
-              ...styles.button,
-              ...(isLoading ? styles.buttonDisabled : {}),
-            }}
+            style={getButtonStyle()}
+            className="auth-button"
             disabled={isLoading}
           >
             {isLoading ? '处理中...' : activeTab === 'login' ? '登录' : '注册'}
@@ -161,6 +334,7 @@ export default function AuthPage() {
                 <button
                   type="button"
                   style={styles.link}
+                  className="auth-link"
                   onClick={() => handleTabChange('register')}
                 >
                   立即注册
@@ -172,6 +346,7 @@ export default function AuthPage() {
                 <button
                   type="button"
                   style={styles.link}
+                  className="auth-link"
                   onClick={() => handleTabChange('login')}
                 >
                   立即登录
@@ -234,10 +409,24 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 0.2s ease',
     position: 'relative' as const,
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      bottom: '-1px',
+      left: 0,
+      right: 0,
+      height: '2px',
+      backgroundColor: 'var(--auth-tab-active, #22C55E)',
+      transform: 'scaleX(0)',
+      transition: 'transform 0.2s ease',
+    },
   },
   tabActive: {
     color: 'var(--auth-tab-active, #22C55E)',
     fontWeight: '600' as const,
+    '&::after': {
+      transform: 'scaleX(1)',
+    },
   },
   form: {
     display: 'flex',
@@ -254,22 +443,10 @@ const styles = {
     fontWeight: '500' as const,
     color: 'var(--auth-text-main, #0F172A)',
   },
-  input: {
-    padding: '12px 16px',
-    border: '1px solid var(--auth-input-border, #E2E8F0)',
-    borderRadius: '8px',
-    fontSize: '16px',
-    color: 'var(--auth-input-text, #0F172A)',
-    backgroundColor: 'var(--auth-input-bg, #FFFFFF)',
-    transition: 'all 0.2s ease',
-    outline: 'none',
-  },
-  inputFocus: {
-    borderColor: 'var(--auth-input-focus, #22C55E)',
-    boxShadow: '0 0 0 3px rgba(34, 197, 94, 0.1)',
-  },
-  inputError: {
-    borderColor: 'var(--auth-input-error, #EF4444)',
+  fieldError: {
+    fontSize: '12px',
+    color: 'var(--auth-error, #EF4444)',
+    marginTop: '4px',
   },
   error: {
     padding: '12px',
@@ -279,27 +456,6 @@ const styles = {
     color: 'var(--auth-error, #EF4444)',
     fontSize: '14px',
     textAlign: 'center' as const,
-  },
-  button: {
-    padding: '14px',
-    backgroundColor: 'var(--auth-button-primary, #22C55E)',
-    color: 'var(--auth-button-text, #FFFFFF)',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: '600' as const,
-    cursor: 'pointer',
-    transition: 'all 0.2s ease',
-  },
-  buttonHover: {
-    backgroundColor: 'var(--auth-button-primary-hover, #16A34A)',
-  },
-  buttonActive: {
-    backgroundColor: 'var(--auth-button-primary-active, #15803D)',
-  },
-  buttonDisabled: {
-    backgroundColor: 'var(--auth-button-disabled, #86EFAC)',
-    cursor: 'not-allowed',
   },
   helpText: {
     textAlign: 'center' as const,
@@ -319,5 +475,6 @@ const styles = {
     cursor: 'pointer',
     padding: 0,
     textDecoration: 'underline',
+    transition: 'color 0.2s ease',
   },
 }

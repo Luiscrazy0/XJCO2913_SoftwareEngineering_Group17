@@ -146,3 +146,49 @@ code {
   padding: 4px 8px;
   background: var(--code-bg);
 }
+
+/* AuthPage specific styles */
+.inactive-tab:hover {
+  color: var(--auth-tab-hover, #16A34A) !important;
+}
+
+.active-tab {
+  color: var(--auth-tab-active, #22C55E) !important;
+  font-weight: 600 !important;
+}
+
+.active-tab::after {
+  content: "" !important;
+  position: absolute !important;
+  bottom: -1px !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 2px !important;
+  background-color: var(--auth-tab-active, #22C55E) !important;
+  transform: scaleX(1) !important;
+  transition: transform 0.2s ease !important;
+}
+
+/* Input placeholder styling */
+input::placeholder {
+  color: var(--auth-input-placeholder, #94A3B8) !important;
+}
+
+/* Button hover states */
+.auth-button:hover:not(:disabled) {
+  background-color: var(--auth-button-primary-hover, #16A34A) !important;
+}
+
+.auth-button:active:not(:disabled) {
+  background-color: var(--auth-button-primary-active, #15803D) !important;
+}
+
+.auth-button:disabled {
+  background-color: var(--auth-button-disabled, #86EFAC) !important;
+  cursor: not-allowed !important;
+}
+
+/* Link hover states */
+.auth-link:hover {
+  color: var(--auth-link-hover, #2563EB) !important;
+}

@@ -355,11 +355,9 @@ const login = async (email: string, password: string) => {
 * 登录/注册 API 适配后端 ✅
 * token存储 ✅
 * 类型定义与后端对齐 ✅
-
-### 待实现
-* 表单校验 + 错误提示
-* AuthPage UI实现
-* UI颜色体系完整保留
+* 表单校验 + 错误提示 ✅
+* AuthPage UI实现 ✅
+* UI颜色体系完整保留 ✅
 
 ### 待优化
 * toast 弹窗
@@ -396,7 +394,7 @@ const login = async (email: string, password: string) => {
 ---
 ## 十、实施优先级
 
-1. **高优先级**：实现AuthPage UI和表单验证
+1. **已完成**：实现AuthPage UI和表单验证 ✅
 2. **中优先级**：完善错误处理和JWT解析
 3. **低优先级**：UI优化和细节完善
 
