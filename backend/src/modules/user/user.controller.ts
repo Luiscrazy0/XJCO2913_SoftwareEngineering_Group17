@@ -12,12 +12,10 @@ export class UserController {
    */
   constructor(private readonly userService: UserService) {}
 
-  /**
-   * 获取所有用户的端点。
-   * @returns 用户列表。
-   */
   @Get()
   findAll() {
     return this.userService.findAll();
   }
+  
+  
 }
