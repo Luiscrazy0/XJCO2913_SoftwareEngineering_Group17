@@ -3,14 +3,14 @@ import { Scooter } from '../types'
 
 interface ScooterCardProps {
   scooter: Scooter
-  onBook?: (scooterId: string) => void
+  onBook?: (scooter: Scooter) => void
 }
 
 const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
   // 处理预约按钮点击
   const handleBookClick = () => {
     if (onBook) {
-      onBook(scooter.id)
+      onBook(scooter)
     } else {
       // 默认行为：显示提示信息
       alert(`预约车辆 ${scooter.id} - 预约功能将在下一阶段实现`)

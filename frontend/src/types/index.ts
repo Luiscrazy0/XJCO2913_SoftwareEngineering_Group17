@@ -2,6 +2,8 @@
 
 export type UserRole = 'CUSTOMER' | 'MANAGER'
 
+export type HireType = 'HOUR_1' | 'HOUR_4' | 'DAY_1' | 'WEEK_1'
+
 export interface User {
   id: string
   email: string

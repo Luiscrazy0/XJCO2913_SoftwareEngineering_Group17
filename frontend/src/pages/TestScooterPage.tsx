@@ -1,4 +1,3 @@
-import React from 'react'
 import ScooterCard from '../components/ScooterCard'
 import { Scooter } from '../types'
 
@@ -27,8 +26,8 @@ const testScooters: Scooter[] = [
 ]
 
 export default function TestScooterPage() {
-  const handleBookClick = (scooterId: string) => {
-    alert(`预约车辆 ${scooterId} - 预约功能将在下一阶段实现`)
+  const handleBookClick = (scooter: Scooter) => {
+    alert(`预约车辆 ${scooter.id} - 预约功能将在下一阶段实现`)
   }
 
   return (
