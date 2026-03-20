@@ -12,18 +12,16 @@ export interface User {
 
 export interface Scooter {
   id: string
-  name: string
-  model: string
-  batteryLevel: number
-  location: {
-    latitude: number
-    longitude: number
-    address: string
-  }
-  status: 'AVAILABLE' | 'IN_USE' | 'MAINTENANCE' | 'RESERVED'
-  pricePerMinute: number
-  createdAt: string
-  updatedAt: string
+  location: string  // 位置描述字符串，如"Main Street, Building 5"
+  status: 'AVAILABLE' | 'UNAVAILABLE'  // 与后端ScooterStatus枚举对齐
+  // 后端模型没有以下字段，已移除：
+  // name: string
+  // model: string
+  // batteryLevel: number
+  // location: { latitude: number; longitude: number; address: string }
+  // pricePerMinute: number
+  // createdAt: string
+  // updatedAt: string
 }
 
 export interface Booking {
