@@ -1,10 +1,14 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { scootersApi } from '../api/scooters'
 import ScooterCard from '../components/ScooterCard'
+import BookingModal from '../components/BookingModal'
 import { Scooter } from '../types'
 
 export default function ScooterListPage() {
+  const [selectedScooter, setSelectedScooter] = useState<Scooter | null>(null)
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
+
   // 使用TanStack Query获取车辆数据
   const {
     data: scooters = [],
@@ -27,6 +31,24 @@ export default function ScooterListPage() {
     retry: 1,
     refetchOnWindowFocus: false
   })
+
+  // 处理预约按钮点击
+  const handleBookClick = (scooter: Scooter) => {
+    setSelectedScooter(scooter)
+    setIsBookingModalOpen(true)
+  }
+
+  // 处理预约成功
+  const handleBookingSuccess = () => {
+    // 重新获取车辆数据
+    refetch()
+  }
+
+  // 处理关闭预约弹窗
+  const handleCloseBookingModal = () => {
+    setIsBookingModalOpen(false)
+    setSelectedScooter(null)
+  }
 
   // 过滤出可用的车辆
   const availableScooters = scooters.filter(scooter => scooter.status === 'AVAILABLE')
@@ -115,66 +137,82 @@ export default function ScooterListPage() {
 
   // 成功状态：显示车辆列表
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-7xl mx-auto">
-        {/* 页面标题和统计信息 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">发现车辆</h1>
-          <p className="mt-2 text-gray-600">
-            当前有 <span className="font-semibold text-blue-600">{availableScooters.length}</span> 辆可用车辆
-            {scooters.length > availableScooters.length && (
-              <span className="ml-2 text-gray-500">
-                (共 {scooters.length} 辆，{scooters.length - availableScooters.length} 辆不可用)
-              </span>
-            )}
-          </p>
-        </div>
+    <>
+      <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+        <div className="max-w-7xl mx-auto">
+          {/* 页面标题和统计信息 */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-bold text-gray-900">发现车辆</h1>
+            <p className="mt-2 text-gray-600">
+              当前有 <span className="font-semibold text-blue-600">{availableScooters.length}</span> 辆可用车辆
+              {scooters.length > availableScooters.length && (
+                <span className="ml-2 text-gray-500">
+                  (共 {scooters.length} 辆，{scooters.length - availableScooters.length} 辆不可用)
+                </span>
+              )}
+            </p>
+          </div>
 
-        {/* 车辆网格列表 */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {availableScooters.map((scooter: Scooter) => (
-            <ScooterCard key={scooter.id} scooter={scooter} />
-          ))}
-        </div>
+          {/* 车辆网格列表 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {availableScooters.map((scooter: Scooter) => (
+              <ScooterCard 
+                key={scooter.id} 
+                scooter={scooter}
+                onBook={handleBookClick}
+              />
+            ))}
+          </div>
 
-        {/* 调试信息（开发环境显示） */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-12 p-6 bg-gray-100 rounded-xl border border-gray-300">
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">调试信息</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">API响应数据</h3>
-                <div className="bg-white p-3 rounded border border-gray-200 overflow-auto">
-                  <pre className="text-xs">
-                    {JSON.stringify(scooters, null, 2)}
-                  </pre>
+          {/* 调试信息（开发环境显示） */}
+          {import.meta.env.DEV && (
+            <div className="mt-12 p-6 bg-gray-100 rounded-xl border border-gray-300">
+              <h2 className="text-lg font-semibold text-gray-800 mb-4">调试信息</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">API响应数据</h3>
+                  <div className="bg-white p-3 rounded border border-gray-200 overflow-auto">
+                    <pre className="text-xs">
+                      {JSON.stringify(scooters, null, 2)}
+                    </pre>
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-sm font-medium text-gray-700 mb-2">系统状态</h3>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex justify-between">
+                      <span className="text-gray-600">后端API:</span>
+                      <span className="font-medium text-green-600">正常</span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span className="text-gray-600">车辆总数:</span>
+                      <span className="font-medium">{scooters.length}</span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span className="text-gray-600">可用车辆:</span>
+                      <span className="font-medium text-green-600">{availableScooters.length}</span>
+                    </li>
+                    <li className="flex justify-between">
+                      <span className="text-gray-600">不可用车辆:</span>
+                      <span className="font-medium text-red-600">{scooters.length - availableScooters.length}</span>
+                    </li>
+                  </ul>
                 </div>
               </div>
-              <div>
-                <h3 className="text-sm font-medium text-gray-700 mb-2">系统状态</h3>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">后端API:</span>
-                    <span className="font-medium text-green-600">正常</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">车辆总数:</span>
-                    <span className="font-medium">{scooters.length}</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">可用车辆:</span>
-                    <span className="font-medium text-green-600">{availableScooters.length}</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-gray-600">不可用车辆:</span>
-                    <span className="font-medium text-red-600">{scooters.length - availableScooters.length}</span>
-                  </li>
-                </ul>
-              </div>
             </div>
-          </div>
         )}
+        </div>
       </div>
-    </div>
+
+      {/* 预约弹窗 */}
+      {selectedScooter && (
+        <BookingModal
+          scooter={selectedScooter}
+          isOpen={isBookingModalOpen}
+          onClose={handleCloseBookingModal}
+          onBookingSuccess={handleBookingSuccess}
+        />
+      )}
+    </>
   )
 }
