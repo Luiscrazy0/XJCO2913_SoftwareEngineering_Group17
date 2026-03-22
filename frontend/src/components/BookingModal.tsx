@@ -89,11 +89,23 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
   const friendlyErrorMessage = useMemo(() => {
     if (isError) {
       if (mutationError instanceof Error && mutationError.message) {
-        return mutationError.message
+        // 尝试解析API错误响应
+        try {
+          if ('response' in mutationError) {
+            const axiosError = mutationError as any;
+            const errorData = axiosError.response?.data;
+            if (errorData?.message) {
+              return `预约失败: ${errorData.message}`;
+            }
+          }
+        } catch (e) {
+          // 如果解析失败，使用原始错误消息
+        }
+        return mutationError.message;
       }
-      return '预约失败，请稍后重试'
+      return '预约失败，请稍后重试';
     }
-    return ''
+    return '';
   }, [isError, mutationError])
 
   const statusMessage = useMemo(() => {
