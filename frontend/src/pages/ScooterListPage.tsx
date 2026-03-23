@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { scootersApi } from '../api/scooters'
 import ScooterCard from '../components/ScooterCard'
 import BookingModal from '../components/BookingModal'
+import Navbar from '../components/Navbar'
 import { Scooter } from '../types'
 
 export default function ScooterListPage() {
@@ -138,6 +139,7 @@ export default function ScooterListPage() {
   // 成功状态：显示车辆列表
   return (
     <>
+      <Navbar />
       <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           {/* 页面标题和统计信息 */}
