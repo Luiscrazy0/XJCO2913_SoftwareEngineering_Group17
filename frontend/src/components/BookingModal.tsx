@@ -56,6 +56,7 @@ const getInitialStartTime = () => {
   return toDatetimeLocal(now)
 }
 
+
 export default function BookingModal({ isOpen, scooter, onClose, onBookingSuccess }: BookingModalProps) {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -75,7 +76,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
   const {
     mutate: createBooking,
     reset: resetBookingMutation,
-    isLoading,
+    isPending,
     isSuccess,
     isError,
     error: mutationError,
@@ -109,7 +110,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
   }, [isError, mutationError])
 
   const statusMessage = useMemo(() => {
-    if (isLoading) {
+    if (isPending) {
       return '正在创建预约...'
     }
     if (isSuccess) {
@@ -122,14 +123,14 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
       return friendlyErrorMessage
     }
     return ''
-  }, [isLoading, isSuccess, friendlyErrorMessage, formError])
+  }, [isPending, isSuccess, friendlyErrorMessage, formError])
 
   const statusState = useMemo(() => {
-    if (isLoading) return 'loading'
+    if (isPending) return 'loading'
     if (isSuccess) return 'success'
     if (friendlyErrorMessage || formError) return 'error'
     return 'idle'
-  }, [isLoading, isSuccess, friendlyErrorMessage, formError])
+  }, [isPending, isSuccess, friendlyErrorMessage, formError])
 
   const handleSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
@@ -154,17 +155,14 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
 
       setFormError('')
 
-      const endDate = new Date(parsedStart.getTime() + selectedDuration * 60 * 1000)
-
       createBooking({
         userId: user.id,
         scooterId: scooter.id,
         hireType: selectedHireType,
         startTime: parsedStart.toISOString(),
-        endTime: endDate.toISOString(),
       })
     },
-    [createBooking, selectedDuration, selectedHireType, scooter.id, startTime, user],
+    [createBooking, selectedHireType, scooter.id, startTime, user],
   )
 
   const handleHireTypeChange = (value: HireType) => {
@@ -314,14 +312,14 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
             </button>
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isPending}
               className={`rounded-2xl px-5 py-3 text-sm font-semibold text-white transition ${
-                isLoading
+                isPending
                   ? 'cursor-not-allowed bg-emerald-200'
                   : 'bg-emerald-500 hover:bg-emerald-600 focus:ring-2 focus:ring-emerald-300'
               }`}
             >
-              {isLoading ? '处理中...' : '确认预约'}
+              {isPending ? '处理中...' : '确认预约'}
             </button>
           </div>
         </form>
