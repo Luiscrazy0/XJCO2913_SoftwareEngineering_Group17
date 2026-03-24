@@ -58,7 +58,7 @@ export class BookingService {
     // Calculate total cost based on hire type
 
     return this.prisma.booking.create({
-        // Create booking in database
+        // Create booking in database and include related user and scooter details
       data: {
         userId,
         scooterId,
@@ -68,6 +68,10 @@ export class BookingService {
         totalCost,
         status: BookingStatus.PENDING_PAYMENT,
         // Set status to PENDING_PAYMENT
+      },
+      include: {
+        user: true,
+        scooter: true,
       },
     });
   }
