@@ -192,7 +192,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
       successTimer.current = window.setTimeout(() => {
         onBookingSuccess?.()
         onClose()
-        navigate('/my-bookings')
+        navigate('/bookings')
       }, 1400)
     }
 
