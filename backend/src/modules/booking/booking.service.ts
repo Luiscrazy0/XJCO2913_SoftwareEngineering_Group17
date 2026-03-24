@@ -82,6 +82,10 @@ export class BookingService {
         // Update booking status to CANCELLED
       where: { id },
       data: { status: BookingStatus.CANCELLED },
+      include: {
+        user: true,
+        scooter: true,
+      },
     });
   }
 
