@@ -73,7 +73,8 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay }) =
   }
 
   // 业务逻辑判断
-  const canCancel = booking.status === 'PENDING_PAYMENT'
+  // Allow cancel unless already completed or cancelled; payment still only when pending
+  const canCancel = booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED'
   const canPay = booking.status === 'PENDING_PAYMENT'
 
   const statusStyle = getStatusStyle(booking.status)
