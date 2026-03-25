@@ -1,1 +1,41 @@
+name: Backend CI Pipeline
 
+# 触发条件：当 dev 或 main 分支的 backend 目录发生变化时触发
+on:
+  push:
+    branches: [ "main", "dev" ]
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches: [ "main", "dev" ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    
+    # 【关键配置】告诉 CI 所有的 run 命令都在 backend 目录下执行
+    defaults:
+      run:
+        working-directory: ./backend 
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22' 
+        cache: 'npm'
+        cache-dependency-path: ./backend/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Generate Prisma Client
+      run: npx prisma generate
+
+    - name: Run Unit Tests
+      run: npm run test
