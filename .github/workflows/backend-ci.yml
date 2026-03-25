@@ -1,6 +1,6 @@
 name: Backend CI Pipeline
 
-# 触发条件：当 dev 或 main 分支的 backend 目录发生变化时触发
+# 修复了缩进问题，明确告诉系统什么时候触发
 on:
   push:
     branches: [ "main", "dev" ]
@@ -11,14 +11,17 @@ on:
     paths:
       - 'backend/**'
 
+# 加上这行环境变量，彻底消除 Node 20 的烦人警告
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   test-backend:
     runs-on: ubuntu-latest
     
-    # 【关键配置】告诉 CI 所有的 run 命令都在 backend 目录下执行
     defaults:
       run:
-        working-directory: ./backend 
+        working-directory: ./backend
 
     steps:
     - name: Checkout repository
@@ -27,7 +30,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '22' 
+        node-version: '22' # 保持与你们项目一致
         cache: 'npm'
         cache-dependency-path: ./backend/package-lock.json
 
