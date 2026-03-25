@@ -107,7 +107,6 @@ describe('BookingService', () => {
 
       const result = await bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime);
 
-      // 🌟 对齐队友的最新代码：加上 include
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith({
         data: {
           userId,
@@ -144,18 +143,19 @@ describe('BookingService', () => {
   });
 
   describe('cancelBooking', () => {
-    it('应该成功将预订状态更新为 CANCELLED', async () => {
+    it('应该成功将预订状态更新为 CANCELLED，并返回包含 user 和 scooter 的信息', async () => {
       const targetId = 'booking-123';
       
       const mockCancelledBooking = { 
         id: targetId, 
-        status: BookingStatus.CANCELLED 
+        status: BookingStatus.CANCELLED,
+        user: { id: 'user-1' },
+        scooter: { id: 'scooter-1' }
       };
       mockPrismaService.booking.update.mockResolvedValue(mockCancelledBooking);
 
       const result = await bookingService.cancelBooking(targetId);
 
-      // 🌟 对齐队友的最新代码：加上 include
       expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
         where: { id: targetId },
         data: { status: BookingStatus.CANCELLED },
