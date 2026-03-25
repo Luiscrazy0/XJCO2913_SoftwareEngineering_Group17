@@ -122,7 +122,7 @@ describe('BookingService', () => {
       // 2. 发起租车请求 (选择借 1 小时)
       const result = await bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime);
 
-      // 3. 验证是否以正确的参数写入数据库 (这里间接测试了私有的 calculateCost 方法)
+      // 3. 验证是否以正确的参数写入数据库
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith({
         data: {
           userId,
@@ -130,7 +130,7 @@ describe('BookingService', () => {
           hireType: HireType.HOUR_1,
           startTime,
           endTime,
-          totalCost: 5, // 验证费用是否正确计算为 5
+          totalCost: 5,
           status: BookingStatus.PENDING_PAYMENT,
         },
       });
@@ -160,17 +160,30 @@ describe('BookingService', () => {
   // 测试组 4: cancelBooking
   // ==========================================
   describe('cancelBooking', () => {
-    it('应该成功将预订状态更新为 CANCELLED', async () => {
+    it('应该成功将预订状态更新为 CANCELLED，并返回包含 user 和 scooter 的信息', async () => {
       const targetId = 'booking-123';
-      const mockCancelledBooking = { id: targetId, status: BookingStatus.CANCELLED };
+      
+      // 模拟返回的数据
+      const mockCancelledBooking = { 
+        id: targetId, 
+        status: BookingStatus.CANCELLED,
+        user: { id: 'user-1' },
+        scooter: { id: 'scooter-1' }
+      };
       mockPrismaService.booking.update.mockResolvedValue(mockCancelledBooking);
 
       const result = await bookingService.cancelBooking(targetId);
 
+      // 🌟 修复关键：补齐了 include 参数，让 Jest 严格对账通过
       expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
         where: { id: targetId },
         data: { status: BookingStatus.CANCELLED },
+        include: {
+          user: true,
+          scooter: true,
+        },
       });
+      
       expect(result).toEqual(mockCancelledBooking);
     });
   });
