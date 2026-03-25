@@ -10,6 +10,7 @@ on:
     branches: [ "main", "dev" ]
     paths:
       - 'backend/**'
+  workflow_dispatch:
 
 # 加上这行环境变量，彻底消除 Node 20 的烦人警告
 env:
