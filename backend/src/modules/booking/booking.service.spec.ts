@@ -1,177 +1,52 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { BookingService } from './booking.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
-import { BadRequestException } from '@nestjs/common';
+Run npm run test
 
-describe('BookingService', () => {
-  let bookingService: BookingService;
-  let prismaService: PrismaService;
+> backend@0.0.1 test
+> jest
 
-  // 1. 创建假的 PrismaService
-  // 注意：这里需要同时模拟 booking 和 scooter 两个表的操作
-  const mockPrismaService = {
-    booking: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-    },
-    scooter: {
-      findUnique: jest.fn(),
-    },
-  };
+PASS src/modules/payment/payment.service.spec.ts
+PASS src/modules/scooter/scooter.service.spec.ts
+FAIL src/modules/booking/booking.service.spec.ts
+  ● BookingService › cancelBooking › 应该成功将预订状态更新为 CANCELLED，并返回包含 user 和 scooter 的信息
 
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        BookingService,
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
+    expect(jest.fn()).toHaveBeenCalledWith(...expected)
+
+    - Expected
+    + Received
+
+      Object {
+        "data": Object {
+          "status": "CANCELLED",
         },
-      ],
-    }).compile();
-
-    bookingService = module.get<BookingService>(BookingService);
-    prismaService = module.get<PrismaService>(PrismaService);
-
-    jest.clearAllMocks();
-  });
-
-  it('模块应该被成功定义', () => {
-    expect(bookingService).toBeDefined();
-  });
-
-  // ==========================================
-  // 测试组 1: findAll
-  // ==========================================
-  describe('findAll', () => {
-    it('应该成功返回所有预订记录，并关联用户和滑板车信息', async () => {
-      const mockBookings = [{ id: 'booking-1', userId: 'user-1', scooterId: 'scooter-1' }];
-      mockPrismaService.booking.findMany.mockResolvedValue(mockBookings);
-
-      const result = await bookingService.findAll();
-
-      expect(mockPrismaService.booking.findMany).toHaveBeenCalledWith({
-        include: { user: true, scooter: true },
-      });
-      expect(result).toEqual(mockBookings);
-    });
-  });
-
-  // ==========================================
-  // 测试组 2: findById
-  // ==========================================
-  describe('findById', () => {
-    it('应该根据 ID 成功返回指定的预订记录', async () => {
-      const targetId = 'booking-123';
-      const mockBooking = { id: targetId, userId: 'user-1' };
-      mockPrismaService.booking.findUnique.mockResolvedValue(mockBooking);
-
-      const result = await bookingService.findById(targetId);
-
-      expect(mockPrismaService.booking.findUnique).toHaveBeenCalledWith({
-        where: { id: targetId },
-        include: { user: true, scooter: true, payment: true },
-      });
-      expect(result).toEqual(mockBooking);
-    });
-  });
-
-  // ==========================================
-  // 测试组 3: createBooking (核心业务逻辑)
-  // ==========================================
-  describe('createBooking', () => {
-    const userId = 'user-1';
-    const scooterId = 'scooter-1';
-    const startTime = new Date('2026-04-01T10:00:00Z');
-    const endTime = new Date('2026-04-01T11:00:00Z');
-
-    it('【异常路径】如果找不到指定的滑板车，应该抛出 Scooter not found 错误', async () => {
-      // 模拟数据库查不到这辆车
-      mockPrismaService.scooter.findUnique.mockResolvedValue(null);
-
-      await expect(
-        bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime)
-      ).rejects.toThrow(new BadRequestException('Scooter not found'));
-    });
-
-    it('【异常路径】如果滑板车状态不是 AVAILABLE，应该抛出 Scooter not available 错误', async () => {
-      // 模拟数据库里这辆车正在被使用 (IN_USE)
-      mockPrismaService.scooter.findUnique.mockResolvedValue({
-        id: scooterId,
-        status: ScooterStatus.IN_USE,
-      });
-
-      await expect(
-        bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime)
-      ).rejects.toThrow(new BadRequestException('Scooter not available'));
-    });
-
-    it('【正常路径】应该成功创建预订，并正确计算 1 小时的费用 (5)', async () => {
-      // 1. 模拟滑板车处于可用状态
-      mockPrismaService.scooter.findUnique.mockResolvedValue({
-        id: scooterId,
-        status: ScooterStatus.AVAILABLE,
-      });
-
-      const mockCreatedBooking = { id: 'new-booking', totalCost: 5 };
-      mockPrismaService.booking.create.mockResolvedValue(mockCreatedBooking);
-
-      // 2. 发起租车请求 (选择借 1 小时)
-      const result = await bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime);
-
-      // 3. 验证是否以正确的参数写入数据库 (这里间接测试了私有的 calculateCost 方法)
-      expect(mockPrismaService.booking.create).toHaveBeenCalledWith({
-        data: {
-          userId,
-          scooterId,
-          hireType: HireType.HOUR_1,
-          startTime,
-          endTime,
-          totalCost: 5, // 验证费用是否正确计算为 5
-          status: BookingStatus.PENDING_PAYMENT,
+    -   "include": Object {
+    -     "scooter": true,
+    -     "user": true,
+    -   },
+        "where": Object {
+          "id": "booking-123",
         },
-      });
-      expect(result).toEqual(mockCreatedBooking);
-    });
+      },
 
-    it('【正常路径】应该成功创建预订，并正确计算 1 天的费用 (40)', async () => {
-      // 这个测试专门用来验证其他计费逻辑是否正确
-      mockPrismaService.scooter.findUnique.mockResolvedValue({
-        id: scooterId,
-        status: ScooterStatus.AVAILABLE,
-      });
-      mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking', totalCost: 40 });
+    Number of calls: 1
 
-      await bookingService.createBooking(userId, scooterId, HireType.DAY_1, startTime, endTime);
+      176 |
+      177 |       // 🌟 修复关键：补齐了 include 参数，让 Jest 严格对账通过
+    > 178 |       expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
+          |                                                ^
+      179 |         where: { id: targetId },
+      180 |         data: { status: BookingStatus.CANCELLED },
+      181 |         include: {
 
-      // 验证费用是否正确计算为 40
-      expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ totalCost: 40 }),
-        })
-      );
-    });
-  });
+      at Object.<anonymous> (modules/booking/booking.service.spec.ts:178:48)
 
-  // ==========================================
-  // 测试组 4: cancelBooking
-  // ==========================================
-  describe('cancelBooking', () => {
-    it('应该成功将预订状态更新为 CANCELLED', async () => {
-      const targetId = 'booking-123';
-      const mockCancelledBooking = { id: targetId, status: BookingStatus.CANCELLED };
-      mockPrismaService.booking.update.mockResolvedValue(mockCancelledBooking);
+PASS src/modules/auth/auth.service.spec.ts
+PASS src/app.controller.spec.ts
+PASS src/modules/user/user.service.spec.ts
+PASS src/modules/health/health.controller.spec.ts
+PASS src/modules/health/health.service.spec.ts
 
-      const result = await bookingService.cancelBooking(targetId);
-
-      expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
-        where: { id: targetId },
-        data: { status: BookingStatus.CANCELLED },
-      });
-      expect(result).toEqual(mockCancelledBooking);
-    });
-  });
-});
+Test Suites: 1 failed, 7 passed, 8 total
+Tests:       1 failed, 32 passed, 33 total
+Snapshots:   0 total
+Time:        2.023 s
+Ran all test suites.
+Error: Process completed with exit code 1.
