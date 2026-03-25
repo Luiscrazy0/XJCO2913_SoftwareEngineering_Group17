@@ -8,34 +8,25 @@ export interface User {
   id: string
   email: string
   role: UserRole
-  // 后端User模型没有name字段，已移除
-  // 后端User模型没有createdAt/updatedAt字段，已移除
 }
 
 export interface Scooter {
   id: string
   location: string  // 位置描述字符串，如"Main Street, Building 5"
   status: 'AVAILABLE' | 'UNAVAILABLE'  // 与后端ScooterStatus枚举对齐
-  // 后端模型没有以下字段，已移除：
-  // name: string
-  // model: string
-  // batteryLevel: number
-  // location: { latitude: number; longitude: number; address: string }
-  // pricePerMinute: number
-  // createdAt: string
-  // updatedAt: string
 }
 
 export interface Booking {
   id: string
-  scooterId: string
   userId: string
-  startTime: string
-  endTime: string | null
-  totalCost: number | null
-  status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED'
-  createdAt: string
-  updatedAt: string
+  scooterId: string
+  hireType: HireType
+  startTime: string   // ISO日期字符串
+  endTime: string     // ISO日期字符串
+  status: 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED'
+  totalCost: number
+  scooter: Scooter    // 关联的电动车信息
+  user: User          // 关联的用户信息
 }
 
 export interface AuthResponse {
@@ -51,7 +42,6 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string
   password: string
-  // 后端RegisterDto不需要name字段，已移除
 }
 
 // API Response wrappers
