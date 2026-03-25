@@ -1,14 +1,10 @@
 import axiosClient from '../utils/axiosClient'
-import { Booking, ApiResponse, PaginatedResponse, HireType } from '../types'
+import { Booking, ApiResponse, HireType } from '../types'
 
 export const bookingsApi = {
-  // Get user's bookings
-  getMyBookings: async (params?: {
-    page?: number
-    limit?: number
-    status?: string
-  }): Promise<PaginatedResponse<Booking>> => {
-    const response = await axiosClient.get<ApiResponse<PaginatedResponse<Booking>>>('/bookings/my', { params })
+  // Get user's bookings - 使用正确的端点 GET /bookings
+  getMyBookings: async (): Promise<Booking[]> => {
+    const response = await axiosClient.get<ApiResponse<Booking[]>>('/bookings')
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to fetch bookings')
     }
@@ -55,20 +51,12 @@ export const bookingsApi = {
     return response.data.data!
   },
 
-  // Update booking (end booking)
-  update: async (id: string): Promise<Booking> => {
-    const response = await axiosClient.put<ApiResponse<Booking>>(`/bookings/${id}/end`)
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to update booking')
-    }
-    return response.data.data!
-  },
-
   // Cancel booking
-  cancel: async (id: string): Promise<void> => {
-    const response = await axiosClient.delete<ApiResponse<void>>(`/bookings/${id}`)
+  cancel: async (id: string): Promise<Booking> => {
+    const response = await axiosClient.patch<ApiResponse<Booking>>(`/bookings/${id}/cancel`)
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to cancel booking')
     }
+    return response.data.data!
   },
 }
