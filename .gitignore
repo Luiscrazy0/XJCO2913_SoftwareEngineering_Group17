@@ -1,7 +1,6 @@
 # compiled output
-/dist
-/node_modules
-/build
+dist/
+build/
 
 # Logs
 logs
@@ -11,26 +10,43 @@ pnpm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
-.continue/agents
+
+# Dependencies
+node_modules/
 
 # OS
 .DS_Store
+Thumbs.db
+
+# Windows
+Thumbs.db
+ehthumbs.db
+ehthumbs_vista.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
 
 # Tests
-/coverage
-/.nyc_output
+coverage/
+.nyc_output/
 
 # IDEs and editors
-/.idea
+.idea/
 .project
 .classpath
 .c9/
 *.launch
 .settings/
 *.sublime-workspace
-
-# IDE - VSCode
-.vscode/*
+.vscode/
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
@@ -42,10 +58,11 @@ lerna-debug.log*
 .env.test.local
 .env.production.local
 .env.local
+.env.*
 
 # temp directory
-.temp
-.tmp
+.temp/
+.tmp/
 
 # Runtime data
 pids
@@ -56,31 +73,9 @@ pids
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
-backend/dist/
-backend/node_modules/
-backend/build/
-backend/logs/
-backend/.env*
-backend/.temp/
-backend/.tmp/
-backend/.DS_Store
-backend/coverage/
-backend/.nyc_output/
-backend/.idea/
-backend/.vscode/
-.vscode/settings.json
+# Local development
+.continue/agents
+.continue/rules/arch-linux-path-safety.md
 
-frontend/node_modules
-scooter-frontend/node_modules
-node_modules
-dist
-
-.env
-.env.local
-.env.*
-
-.vscode
-.idea
-
-.DS_Store
-
+# Project specific
+/home/kk/Scooter-project/XJCO2913_SoftwareEngineering_Group17/home

@@ -1,53 +1,33 @@
 import axiosClient from '../utils/axiosClient'
-import { Scooter, ApiResponse, PaginatedResponse } from '../types'
+import { Scooter } from '../types'
 
 export const scootersApi = {
-  // Get all scooters with optional filters
-  getAll: async (params?: {
-    page?: number
-    limit?: number
-    status?: string
-    minBattery?: number
-  }): Promise<PaginatedResponse<Scooter>> => {
-    const response = await axiosClient.get<ApiResponse<PaginatedResponse<Scooter>>>('/scooters', { params })
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to fetch scooters')
-    }
-    return response.data.data!
+  // Get all scooters
+  getAll: async (): Promise<Scooter[]> => {
+    const response = await axiosClient.get<Scooter[]>('/scooters')
+    return response.data
   },
 
   // Get scooter by ID
   getById: async (id: string): Promise<Scooter> => {
-    const response = await axiosClient.get<ApiResponse<Scooter>>(`/scooters/${id}`)
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to fetch scooter')
-    }
-    return response.data.data!
+    const response = await axiosClient.get<Scooter>(`/scooters/${id}`)
+    return response.data
   },
 
-  // Create new scooter (admin only)
-  create: async (scooterData: Omit<Scooter, 'id' | 'createdAt' | 'updatedAt'>): Promise<Scooter> => {
-    const response = await axiosClient.post<ApiResponse<Scooter>>('/scooters', scooterData)
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to create scooter')
-    }
-    return response.data.data!
+  // Create new scooter (admin only) - 只需要location字段
+  create: async (location: string): Promise<Scooter> => {
+    const response = await axiosClient.post<Scooter>('/scooters', { location })
+    return response.data
   },
 
-  // Update scooter (admin only)
-  update: async (id: string, scooterData: Partial<Scooter>): Promise<Scooter> => {
-    const response = await axiosClient.put<ApiResponse<Scooter>>(`/scooters/${id}`, scooterData)
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to update scooter')
-    }
-    return response.data.data!
+  // Update scooter status (admin only)
+  updateStatus: async (id: string, status: 'AVAILABLE' | 'UNAVAILABLE'): Promise<Scooter> => {
+    const response = await axiosClient.patch<Scooter>(`/scooters/${id}/status`, { status })
+    return response.data
   },
 
   // Delete scooter (admin only)
   delete: async (id: string): Promise<void> => {
-    const response = await axiosClient.delete<ApiResponse<void>>(`/scooters/${id}`)
-    if (!response.data.success) {
-      throw new Error(response.data.message || 'Failed to delete scooter')
-    }
+    await axiosClient.delete(`/scooters/${id}`)
   },
 }

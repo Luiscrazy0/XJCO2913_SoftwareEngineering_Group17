@@ -8,8 +8,6 @@ describe('BookingService', () => {
   let bookingService: BookingService;
   let prismaService: PrismaService;
 
-  // 1. 创建假的 PrismaService
-  // 注意：这里需要同时模拟 booking 和 scooter 两个表的操作
   const mockPrismaService = {
     booking: {
       findMany: jest.fn(),
@@ -43,9 +41,6 @@ describe('BookingService', () => {
     expect(bookingService).toBeDefined();
   });
 
-  // ==========================================
-  // 测试组 1: findAll
-  // ==========================================
   describe('findAll', () => {
     it('应该成功返回所有预订记录，并关联用户和滑板车信息', async () => {
       const mockBookings = [{ id: 'booking-1', userId: 'user-1', scooterId: 'scooter-1' }];
@@ -60,9 +55,6 @@ describe('BookingService', () => {
     });
   });
 
-  // ==========================================
-  // 测试组 2: findById
-  // ==========================================
   describe('findById', () => {
     it('应该根据 ID 成功返回指定的预订记录', async () => {
       const targetId = 'booking-123';
@@ -79,9 +71,6 @@ describe('BookingService', () => {
     });
   });
 
-  // ==========================================
-  // 测试组 3: createBooking (核心业务逻辑)
-  // ==========================================
   describe('createBooking', () => {
     const userId = 'user-1';
     const scooterId = 'scooter-1';
@@ -89,7 +78,6 @@ describe('BookingService', () => {
     const endTime = new Date('2026-04-01T11:00:00Z');
 
     it('【异常路径】如果找不到指定的滑板车，应该抛出 Scooter not found 错误', async () => {
-      // 模拟数据库查不到这辆车
       mockPrismaService.scooter.findUnique.mockResolvedValue(null);
 
       await expect(
@@ -98,7 +86,6 @@ describe('BookingService', () => {
     });
 
     it('【异常路径】如果滑板车状态不是 AVAILABLE，应该抛出 Scooter not available 错误', async () => {
-      // 模拟数据库里这辆车正在被使用 (IN_USE)
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
         status: ScooterStatus.IN_USE,
@@ -110,7 +97,6 @@ describe('BookingService', () => {
     });
 
     it('【正常路径】应该成功创建预订，并正确计算 1 小时的费用 (5)', async () => {
-      // 1. 模拟滑板车处于可用状态
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
         status: ScooterStatus.AVAILABLE,
@@ -119,7 +105,6 @@ describe('BookingService', () => {
       const mockCreatedBooking = { id: 'new-booking', totalCost: 5 };
       mockPrismaService.booking.create.mockResolvedValue(mockCreatedBooking);
 
-      // 2. 发起租车请求 (选择借 1 小时)
       const result = await bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime);
 
       // 3. 验证是否以正确的参数写入数据库
@@ -133,12 +118,15 @@ describe('BookingService', () => {
           totalCost: 5,
           status: BookingStatus.PENDING_PAYMENT,
         },
+        include: {
+          scooter: true,
+          user: true,
+        },
       });
       expect(result).toEqual(mockCreatedBooking);
     });
 
     it('【正常路径】应该成功创建预订，并正确计算 1 天的费用 (40)', async () => {
-      // 这个测试专门用来验证其他计费逻辑是否正确
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
         status: ScooterStatus.AVAILABLE,
@@ -147,7 +135,6 @@ describe('BookingService', () => {
 
       await bookingService.createBooking(userId, scooterId, HireType.DAY_1, startTime, endTime);
 
-      // 验证费用是否正确计算为 40
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ totalCost: 40 }),
@@ -156,9 +143,6 @@ describe('BookingService', () => {
     });
   });
 
-  // ==========================================
-  // 测试组 4: cancelBooking
-  // ==========================================
   describe('cancelBooking', () => {
     it('应该成功将预订状态更新为 CANCELLED，并返回包含 user 和 scooter 的信息', async () => {
       const targetId = 'booking-123';
@@ -179,8 +163,8 @@ describe('BookingService', () => {
         where: { id: targetId },
         data: { status: BookingStatus.CANCELLED },
         include: {
-          user: true,
           scooter: true,
+          user: true,
         },
       });
       
