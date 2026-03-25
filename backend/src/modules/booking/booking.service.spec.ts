@@ -107,6 +107,7 @@ describe('BookingService', () => {
 
       const result = await bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime);
 
+      // 🌟 对齐队友的最新代码：加上 include
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith({
         data: {
           userId,
@@ -116,6 +117,10 @@ describe('BookingService', () => {
           endTime,
           totalCost: 5,
           status: BookingStatus.PENDING_PAYMENT,
+        },
+        include: {
+          scooter: true,
+          user: true,
         },
       });
       expect(result).toEqual(mockCreatedBooking);
@@ -150,10 +155,14 @@ describe('BookingService', () => {
 
       const result = await bookingService.cancelBooking(targetId);
 
-      // 🌟 事实证明：实际代码长啥样，这里就得写啥样，已经删掉 include！
+      // 🌟 对齐队友的最新代码：加上 include
       expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
         where: { id: targetId },
         data: { status: BookingStatus.CANCELLED },
+        include: {
+          scooter: true,
+          user: true,
+        },
       });
       
       expect(result).toEqual(mockCancelledBooking);
