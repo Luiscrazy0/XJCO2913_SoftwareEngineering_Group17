@@ -26,6 +26,27 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
+// Helper function to decode JWT token
+const decodeJWT = (token: string): any => {
+  try {
+    // JWT uses Base64Url encoding, not standard Base64
+    const base64Url = token.split('.')[1]
+    // Replace Base64Url characters
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
+    // Decode
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    )
+    return JSON.parse(jsonPayload)
+  } catch (error) {
+    console.error('Failed to decode JWT token:', error)
+    return null
+  }
+}
+
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
@@ -57,7 +78,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const { access_token } = await authApi.login({ email, password })
       
       // 2. 解析JWT token获取用户信息
-      const payload = JSON.parse(atob(access_token.split('.')[1]))
+      const payload = decodeJWT(access_token)
+      if (!payload) {
+        throw new Error('Failed to decode JWT token')
+      }
+      
       const user: User = {
         id: payload.sub,
         email: email,

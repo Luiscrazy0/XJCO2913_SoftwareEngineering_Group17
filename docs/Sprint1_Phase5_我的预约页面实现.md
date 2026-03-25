@@ -1,213 +1,208 @@
-下面是阶段5“我的预约页面”整理后的颜色与状态体系总结版，保持你之前的设计逻辑，同时把重点放在数据密集型 UI 上，便于直接开发和文档使用：
+Sprint 1 - 阶段5：我的预约页面（MyBookingsPage）开发文档（API对齐版）
+一、阶段目标（工程化定义）
 
----
+实现一个认证用户专属的预约列表页：
 
-# Sprint 1 - 阶段5：我的预约页面（MyBookingsPage）概览
+拉取 GET /bookings
+渲染用户自己的 Booking（后端已按用户过滤 or 前端过滤 userId）
+显示完整业务信息（时间 / 车辆 / 状态 / 金额）
+支持 4 种核心 UI 状态：
+Loading
+Success
+Empty
+Error
+二、API 对接规范
+1️⃣ 获取预约列表
 
-## 一、阶段目标
+Endpoint
 
-实现用户侧预约记录查看：
+GET /bookings
+Authorization: Bearer <token>
+2️⃣ 返回数据结构（关键字段）
+type Booking = {
+  id: string;
+  userId: string;
+  scooterId: string;
 
-* 显示所有预约订单
-* 区分不同预约状态
-* 提供加载、空、错误状态反馈
-* 保持信息密集但可读
+  hireType: 'HOUR_1' | 'HOUR_4' | 'DAY_1' | 'WEEK_1';
 
----
+  startTime: string;   // ISO
+  endTime: string;
 
-## 二、数据流与状态
+  status: 
+    | 'PENDING_PAYMENT'
+    | 'CONFIRMED'
+    | 'CANCELLED'
+    | 'COMPLETED';
 
-```text
-页面加载 → useQuery(GET /bookings)
+  totalCost: number;
+
+  scooter: {
+    id: string;
+    location: string;
+    status: 'AVAILABLE' | 'UNAVAILABLE';
+  };
+
+  user: {
+    id: string;
+    email: string;
+  };
+};
+三、状态流（与 React Query 对齐）
+MyBookingsPage mounted
   ↓
-isLoading → Skeleton / Spinner
-isSuccess → 渲染 BookingCard 列表
+useQuery(['bookings'], fetchBookings)
+
   ↓
-状态标签：PENDING / CONFIRMED / CANCELLED / COMPLETED
-isError → 显示错误提示 + 重试按钮
-```
+isLoading → Skeleton UI
+isError   → Error UI（Retry）
+isSuccess →
+    bookings.length === 0 → Empty UI
+    bookings.length > 0 → BookingList
+四、状态映射（核心：API → UI）
 
----
+这是本阶段最关键的改动点👇
 
-## 三、组件结构建议（React）
-
-```tsx
+后端状态 → UI标签
+API状态	UI显示	说明
+PENDING_PAYMENT	PENDING	等待支付
+CONFIRMED	CONFIRMED	已确认
+CANCELLED	CANCELLED	已取消
+COMPLETED	COMPLETED	已完成
+映射函数（必须实现）
+function mapBookingStatus(status: Booking['status']) {
+  switch (status) {
+    case 'PENDING_PAYMENT':
+      return 'PENDING';
+    case 'CONFIRMED':
+      return 'CONFIRMED';
+    case 'CANCELLED':
+      return 'CANCELLED';
+    case 'COMPLETED':
+      return 'COMPLETED';
+  }
+}
+五、组件结构（最终实现形态）
 <MyBookingsPage>
   <Navbar />
 
-  <Header />         // 页面标题 + 描述
-  <Stats />          // 总预约数 + 状态统计
+  <Header />
+  <Stats bookings={data} />
 
   <BookingList>
-    <BookingCard />  // 单条预约展示
+    {bookings.map(b => (
+      <BookingCard key={b.id} booking={b} />
+    ))}
   </BookingList>
 </MyBookingsPage>
-```
+六、BookingCard 数据绑定（严格字段定义）
+必须展示字段（按优先级）
+1️⃣ 状态标签（status）
+2️⃣ Booking ID（id）
+3️⃣ 时间（startTime - endTime）
+4️⃣ Total Cost（totalCost）
+5️⃣ Scooter 信息（location / id）
+示例 UI 数据结构
+type BookingCardProps = {
+  booking: Booking;
+};
+时间处理（必须格式化）
+import dayjs from 'dayjs';
 
----
+const start = dayjs(booking.startTime).format('MMM D, HH:mm');
+const end = dayjs(booking.endTime).format('MMM D, HH:mm');
+七、UI颜色系统（保持你原设计）
 
-## 四、UI颜色设计（保留配色体系）
+这里只保留开发关键 Token
 
-### 1️⃣ 页面背景与层级
-
-| 区域   | HEX     |
-| ---- | ------- |
-| 页面背景 | #F8FAFC |
-| 内容区块 | #F1F5F9 |
-| 卡片背景 | #FFFFFF |
-
----
-
-### 2️⃣ 页面标题与说明
-
-| 元素   | HEX     |
-| ---- | ------- |
-| 标题   | #0F172A |
-| 描述文本 | #64748B |
-
----
-
-### 3️⃣ 统计信息区（Dashboard风格）
-
-| 状态        | 背景/颜色   |
-| --------- | ------- |
-| 总预约数      | #0F172A |
-| CONFIRMED | #22C55E |
-| PENDING   | #F59E0B |
-| COMPLETED | #64748B |
-
----
-
-### 4️⃣ BookingCard 核心样式
-
-| 属性         | HEX / 描述         |
-| ---------- | ---------------- |
-| 背景         | #FFFFFF          |
-| 边框         | #E2E8F0          |
-| Hover边框    | #CBD5F1          |
-| 阴影         | rgba(0,0,0,0.06) |
-| Booking ID | #0F172A          |
-| Scooter ID | #334155          |
-| 时间信息       | #334155          |
-| 辅助说明       | #64748B          |
-| Total Cost | #2563EB          |
-
----
-
-### 5️⃣ 预约状态标签
-
-| 状态        | 背景      | 文字      |
-| --------- | ------- | ------- |
-| PENDING   | #FEF3C7 | #92400E |
-| CONFIRMED | #DCFCE7 | #166534 |
-| CANCELLED | #FEE2E2 | #7F1D1D |
-| COMPLETED | #E2E8F0 | #334155 |
-
-> 原则：浅背景 + 深文字，状态仅用于标签，不扩散到卡片
-
----
-
-### 6️⃣ 列表布局与交互
-
-| 属性      | 值                 |
-| ------- | ----------------- |
-| 卡片间距    | 16px              |
-| 卡片内边距   | 16–20px           |
-| Hover效果 | 阴影增强 + 边框 #CBD5F1 |
-
----
-
-### 7️⃣ 时间信息显示
-
-| 类型               | 颜色      |
-| ---------------- | ------- |
-| Start / End Time | #334155 |
-| 相对时间             | #64748B |
-
----
-
-### 8️⃣ 页面状态（加载 / 空 / 错误）
-
-| 状态      | 元素       | 颜色      |
-| ------- | -------- | ------- |
-| Loading | Skeleton | #E2E8F0 |
-| Loading | Spinner  | #3B82F6 |
-| Empty   | 图标       | #94A3B8 |
-| Empty   | 文本       | #64748B |
-| Error   | 图标       | #EF4444 |
-| Error   | 文本       | #334155 |
-| Error   | 按钮       | #3B82F6 |
-
----
-
-### 9️⃣ 可选功能区（筛选 / 排序）
-
-| 元素   | 背景 / 文本                              |
-| ---- | ------------------------------------ |
-| 筛选按钮 | 默认 #F1F5F9 / 选中 #DCFCE7 / 文字 #334155 |
-| 排序按钮 | 默认 #E2E8F0 / Hover #CBD5F1           |
-
----
-
-### 🔟 Dark Mode
-
-| 元素   | HEX                   |
-| ---- | --------------------- |
-| 页面背景 | #0F172A               |
-| 卡片背景 | #1E293B               |
-| 主文字  | #F1F5F9               |
-| 次文字  | #CBD5F5               |
-| 状态标签 | 保持语义绿色/黄色/红色/灰色，降低透明度 |
-
----
-
-## 十一、前端实现建议
-
-### CSS Token
-
-```css
+状态标签
 --booking-pending-bg: #FEF3C7;
+--booking-pending-text: #92400E;
+
 --booking-confirmed-bg: #DCFCE7;
+--booking-confirmed-text: #166534;
+
 --booking-cancelled-bg: #FEE2E2;
+--booking-cancelled-text: #7F1D1D;
+
 --booking-completed-bg: #E2E8F0;
-
+--booking-completed-text: #334155;
+价格强调
 --booking-price: #2563EB;
-```
-
-### 状态样式控制示例
-
-```tsx
-switch (booking.status) {
-  case 'CONFIRMED': return greenStyle;
-  case 'PENDING': return yellowStyle;
-  case 'CANCELLED': return redStyle;
-  case 'COMPLETED': return grayStyle;
+八、状态样式控制（推荐实现）
+function getStatusStyle(status: Booking['status']) {
+  switch (status) {
+    case 'PENDING_PAYMENT':
+      return pendingStyle;
+    case 'CONFIRMED':
+      return confirmedStyle;
+    case 'CANCELLED':
+      return cancelledStyle;
+    case 'COMPLETED':
+      return completedStyle;
+  }
 }
-```
+九、业务逻辑增强（建议实现）
+1️⃣ 是否可取消（前端控制）
+const canCancel = booking.status === 'PENDING_PAYMENT';
 
----
+👉 对应 API：
 
-## 十二、页面视觉优先级
+PATCH /bookings/:id/cancel
+2️⃣ 是否可支付（关键）
+const canPay = booking.status === 'PENDING_PAYMENT';
 
-```
-1️⃣ 状态标签（核心）
-2️⃣ Booking ID
-3️⃣ 时间信息
-4️⃣ Total Cost
-```
+👉 对应 API：
 
-用户行为路径：**扫状态 → 看时间 → 判断订单**
+POST /payments
+十、页面状态实现（必须完成）
+Loading
+{isLoading && <SkeletonList />}
+Empty
+{isSuccess && bookings.length === 0 && (
+  <EmptyState text="No bookings yet" />
+)}
+Error
+{isError && (
+  <ErrorState onRetry={refetch} />
+)}
+十一、Stats 统计模块（基于真实数据）
+const stats = {
+  total: bookings.length,
+  confirmed: bookings.filter(b => b.status === 'CONFIRMED').length,
+  pending: bookings.filter(b => b.status === 'PENDING_PAYMENT').length,
+  completed: bookings.filter(b => b.status === 'COMPLETED').length,
+};
+十二、前端数据层建议（React Query）
+const fetchBookings = async (): Promise<Booking[]> => {
+  const res = await axios.get('/bookings', {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  return res.data;
+};
+十三、关键工程注意点（很重要）
+1️⃣ 不要信任 UI 状态名
 
----
+必须始终使用：
 
-## 总结
+booking.status === 'PENDING_PAYMENT'
 
-我的预约页面颜色设计原则：
+而不是：
 
-* 多状态标签系统为核心
-* 浅背景 + 高语义标签
-* 信息优先于操作
+'PENDING' // ❌ 错误（只是UI层）
+2️⃣ 时间一定是 ISO 字符串
 
-构建高信息密度、易理解、可扩展的数据页面。
+必须格式化，否则 UI 会很乱。
 
-下一步 → 阶段6：登出与 Token 管理。
+3️⃣ totalCost 是 number
+£{booking.totalCost}
+4️⃣ scooter 信息已经 join 好
+
+不要再请求：
+
+booking.scooter.location // ✅ 直接用
+十四、页面优先级（交互视角）
+
+用户扫描路径：
+
+状态 → 时间 → 是否已完成 → 价格
