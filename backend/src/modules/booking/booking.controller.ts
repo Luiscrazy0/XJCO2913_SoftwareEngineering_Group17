@@ -9,12 +9,18 @@ export class BookingController {
 
   @Get()
   findAll() {
-    return this.bookingService.findAll();
+    return this.bookingService.findAll().then((data) => ({
+      success: true,
+      data,
+    }));
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.bookingService.findById(id);
+    return this.bookingService.findById(id).then((data) => ({
+      success: true,
+      data,
+    }));
   }
 
   @Post()
@@ -27,11 +33,17 @@ export class BookingController {
       body.hireType,
       new Date(body.startTime),
       new Date(body.endTime),
-    );
+    ).then((data) => ({
+      success: true,
+      data,
+    }));
   }
 
   @Patch(':id/cancel')
   cancel(@Param('id') id: string) {
-    return this.bookingService.cancelBooking(id);
+    return this.bookingService.cancelBooking(id).then((data) => ({
+      success: true,
+      data,
+    }));
   }
 }

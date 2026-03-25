@@ -15,6 +15,7 @@ export default function AppRouter() {
       <Routes>
         {/* Public routes */}
         <Route path="/" element={<AuthPage />} />
+        <Route path="/auth" element={<AuthPage />} />
         <Route path="/test-scooters" element={<TestScooterPage />} />
         
         {/* Protected routes */}
@@ -24,7 +25,7 @@ export default function AppRouter() {
           </ProtectedRoute>
         } />
         
-        <Route path="/my-bookings" element={
+        <Route path="/bookings" element={
           <ProtectedRoute>
             <MyBookingsPage />
           </ProtectedRoute>
