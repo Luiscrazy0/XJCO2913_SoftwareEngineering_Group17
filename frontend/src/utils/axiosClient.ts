@@ -41,11 +41,9 @@ axiosClient.interceptors.response.use(
       // Clear auth data
       localStorage.removeItem('auth_token')
       localStorage.removeItem('user')
-      
-      // Redirect to login page if not already there
-      if (window.location.pathname !== '/') {
-        window.location.href = '/'
-      }
+
+      // 通知应用层做统一处理（Toast + 重定向）
+      window.dispatchEvent(new CustomEvent('auth:session-expired'))
     }
     
     // You can add more error handling here (e.g., 403, 500, etc.)
