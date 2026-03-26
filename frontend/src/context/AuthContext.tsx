@@ -1,6 +1,7 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
 import { User } from '../types'
 import { authApi } from '../api/auth'
+import { useToast } from '../components/ToastProvider'
 
 interface AuthContextType {
   user: User | null
@@ -8,8 +9,13 @@ interface AuthContextType {
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
   register: (email: string, password: string) => Promise<void>
-  logout: () => void
+  logout: (options?: LogoutOptions) => void
   isAuthenticated: boolean
+}
+
+interface LogoutOptions {
+  redirect?: boolean
+  reason?: 'manual' | 'expired' | 'external'
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -51,6 +57,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const { showToast } = useToast()
 
   // Initialize auth state from localStorage
   useEffect(() => {
@@ -94,8 +101,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setUser(user)
       localStorage.setItem('auth_token', access_token)
       localStorage.setItem('user', JSON.stringify(user))
-      
+
       // 4. 路由跳转
+      const redirectPath = localStorage.getItem('redirect_path')
+      localStorage.removeItem('redirect_path')
+
+      if (redirectPath) {
+        window.location.href = redirectPath
+        return
+      }
+
       if (user.role === 'MANAGER') {
         window.location.href = '/admin'
       } else {
@@ -120,14 +135,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
-  const logout = () => {
+  const logout = useCallback((options?: LogoutOptions) => {
+    const redirect = options?.redirect !== false
+
     setToken(null)
     setUser(null)
     localStorage.removeItem('auth_token')
     localStorage.removeItem('user')
-    // Redirect to login page
-    window.location.href = '/'
-  }
+
+    if (options?.reason === 'expired') {
+      showToast('会话已过期，请重新登录。', 'error')
+    } else if (options?.reason === 'external') {
+      showToast('已在其他标签页登出，请重新登录。', 'info')
+    } else {
+      showToast('已成功登出', 'success')
+    }
+
+    if (redirect) {
+      window.location.href = '/'
+    }
+  }, [showToast])
+
+  // 监听跨标签页登出 & session 过期事件
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === 'auth_token' && event.newValue === null) {
+        logout({ reason: 'external' })
+      }
+    }
+
+    const handleSessionExpired = () => {
+      logout({ reason: 'expired' })
+    }
+
+    window.addEventListener('storage', handleStorage)
+    window.addEventListener('auth:session-expired', handleSessionExpired as EventListener)
+
+    return () => {
+      window.removeEventListener('storage', handleStorage)
+      window.removeEventListener('auth:session-expired', handleSessionExpired as EventListener)
+    }
+  }, [logout])
 
   const value: AuthContextType = {
     user,
