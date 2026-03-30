@@ -5,6 +5,7 @@ import Navbar from '../components/Navbar'
 import { FleetTable } from '../components/admin/FleetTable'
 import { AddScooterModal } from '../components/admin/AddScooterModal'
 import { FleetStats } from '../components/admin/FleetStats'
+import { DeleteConfirmationModal } from '../components/admin/DeleteConfirmationModal'
 import { useToast } from '../components/ToastProvider'
 import { Scooter } from '../types'
 
@@ -12,7 +13,10 @@ export default function AdminFleetPage() {
   const queryClient = useQueryClient()
   const { showToast } = useToast()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [selectedScooter, setSelectedScooter] = useState<Scooter | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const {
     data: scooters = [],
@@ -47,9 +51,38 @@ export default function AdminFleetPage() {
     onSettled: () => setUpdatingId(null),
   })
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => scootersApi.delete(id),
+    onMutate: (id) => setDeletingId(id),
+    onSuccess: () => {
+      showToast('车辆已删除。', 'success')
+      queryClient.invalidateQueries({ queryKey: ['scooters'] })
+      setIsDeleteModalOpen(false)
+      setSelectedScooter(null)
+    },
+    onError: () => showToast('删除失败，请稍后再试。', 'error'),
+    onSettled: () => setDeletingId(null),
+  })
+
   const handleToggleStatus = (scooter: Scooter) => {
     const nextStatus = scooter.status === 'AVAILABLE' ? 'UNAVAILABLE' : 'AVAILABLE'
     updateMutation.mutate({ id: scooter.id, status: nextStatus })
+  }
+
+  const handleDeleteClick = (scooter: Scooter) => {
+    setSelectedScooter(scooter)
+    setIsDeleteModalOpen(true)
+  }
+
+  const handleConfirmDelete = () => {
+    if (selectedScooter) {
+      deleteMutation.mutate(selectedScooter.id)
+    }
+  }
+
+  const handleCancelDelete = () => {
+    setIsDeleteModalOpen(false)
+    setSelectedScooter(null)
   }
 
   // Loading
@@ -139,7 +172,13 @@ export default function AdminFleetPage() {
                   当前共 <span className="font-semibold text-slate-800">{scooters.length}</span> 辆
                 </div>
               </div>
-              <FleetTable scooters={scooters} onToggleStatus={handleToggleStatus} updatingId={updatingId} />
+              <FleetTable 
+                scooters={scooters} 
+                onToggleStatus={handleToggleStatus} 
+                onDelete={handleDeleteClick}
+                updatingId={updatingId}
+                deletingId={deletingId}
+              />
             </div>
           </>
         ) : (
@@ -168,6 +207,14 @@ export default function AdminFleetPage() {
         onClose={() => setIsModalOpen(false)}
         onSubmit={(location) => createMutation.mutateAsync(location)}
         isSubmitting={createMutation.isPending}
+      />
+
+      <DeleteConfirmationModal
+        isOpen={isDeleteModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        scooter={selectedScooter}
+        isDeleting={deleteMutation.isPending}
       />
     </div>
   )

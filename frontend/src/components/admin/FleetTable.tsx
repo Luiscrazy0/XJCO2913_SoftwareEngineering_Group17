@@ -1,13 +1,16 @@
+
 import { Scooter } from '../../types'
 import { StatusBadge } from './StatusBadge'
 
 interface FleetTableProps {
   scooters: Scooter[]
   onToggleStatus: (scooter: Scooter) => void
+  onDelete: (scooter: Scooter) => void
   updatingId?: string | null
+  deletingId?: string | null
 }
 
-export function FleetTable({ scooters, onToggleStatus, updatingId }: FleetTableProps) {
+export function FleetTable({ scooters, onToggleStatus, onDelete, updatingId, deletingId }: FleetTableProps) {
   return (
     <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
       <table className="min-w-full divide-y divide-slate-200">
@@ -29,13 +32,22 @@ export function FleetTable({ scooters, onToggleStatus, updatingId }: FleetTableP
                 <StatusBadge status={scooter.status} />
               </td>
               <td className="px-6 py-4 text-right">
-                <button
-                  onClick={() => onToggleStatus(scooter)}
-                  disabled={updatingId === scooter.id}
-                  className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {updatingId === scooter.id ? '更新中…' : scooter.status === 'AVAILABLE' ? '标记不可用' : '恢复可用'}
-                </button>
+                <div className="flex justify-end gap-2">
+                  <button
+                    onClick={() => onToggleStatus(scooter)}
+                    disabled={updatingId === scooter.id || deletingId === scooter.id}
+                    className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {updatingId === scooter.id ? '更新中…' : scooter.status === 'AVAILABLE' ? '标记不可用' : '恢复可用'}
+                  </button>
+                  <button
+                    onClick={() => onDelete(scooter)}
+                    disabled={deletingId === scooter.id || updatingId === scooter.id}
+                    className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-semibold text-red-700 hover:border-red-300 hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {deletingId === scooter.id ? '删除中…' : '删除'}
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
