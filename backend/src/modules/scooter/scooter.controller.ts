@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { ScooterService } from './scooter.service';
 import { Role } from '@prisma/client';
 import { CreateScooterDto } from './dto/create-scooter.dto';
@@ -39,4 +39,11 @@ export class ScooterController {
     ) {
       return this.scooterService.updateStatus(id, body.status);
     }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MANAGER)
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.scooterService.deleteScooter(id);
+  }
 }
