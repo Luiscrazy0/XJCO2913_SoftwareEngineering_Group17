@@ -1,0 +1,519 @@
+明白了！基于你的实际情况，我推荐**"轻量混合方案"**——对T420友好，且完美解决种子数据问题。
+
+## 🎯 推荐方案：数据库Docker化 + 代码本地运行
+
+### 为什么这样设计？
+
+| 你的情况 | 解决方案 |
+|---------|---------|
+| **没用过Docker** | 只需要懂`docker-compose up`，其他不变 |
+| **T420老硬件** | 只跑PostgreSQL一个容器，内存占用<500MB |
+| **缺统一种子数据** | 一键脚本自动填充测试数据 |
+| **3人分工不同** | 全栈/测试/经理都能用同一套数据 |
+
+---
+
+## 📁 文件结构（放到项目根目录）
+
+```
+XJCO2913_SoftwareEngineering_Group17/
+├── backend/
+│   ├── ...原有代码
+│   └── prisma/
+│       └── seed.ts          # ⭐ 种子数据脚本（新建）
+├── docker-compose.yml        # ⭐ 数据库容器配置（新建）
+├── .env.example              # ⭐ 环境变量模板（新建）
+└── scripts/
+    └── setup.sh              # ⭐ 一键启动脚本（新建）
+```
+
+---
+
+## 🔧 具体实现
+
+### 1. `docker-compose.yml`（仅数据库）
+
+```yaml
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: scooter-db
+    environment:
+      POSTGRES_USER: scooter
+      POSTGRES_PASSWORD: scooter123
+      POSTGRES_DB: scooter_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"  # 用5433避免和本地PostgreSQL冲突
+    # 健康检查，确保数据库就绪
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U scooter"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+```
+
+**为什么这么简单？** 因为只跑数据库，前后端代码在本地用`npm run dev`跑。
+
+---
+
+### 2. `backend/prisma/seed.ts`（统一种子数据）
+
+这是你最缺的——统一的数据生成：
+
+```typescript
+import { PrismaClient, Role, ScooterStatus, HireType } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  console.log('🌱 开始填充种子数据...');
+
+  // ===== 1. 创建固定测试账号 =====
+  const adminPassword = await bcrypt.hash('admin123', 10);
+  const admin = await prisma.user.upsert({
+    where: { email: 'admin@scooter.com' },
+    update: {},
+    create: {
+      email: 'admin@scooter.com',
+      passwordHash: adminPassword,
+      role: Role.MANAGER,
+      createdAt: new Date('2024-01-01'),
+    },
+  });
+  console.log('✅ 管理员账号:', admin.email, '/ admin123');
+
+  const userPassword = await bcrypt.hash('user123', 10);
+  const user1 = await prisma.user.upsert({
+    where: { email: 'test1@example.com' },
+    update: {},
+    create: {
+      email: 'test1@example.com',
+      passwordHash: userPassword,
+      role: Role.CUSTOMER,
+    },
+  });
+  console.log('✅ 测试用户1:', user1.email, '/ user123');
+
+  const user2 = await prisma.user.upsert({
+    where: { email: 'test2@example.com' },
+    update: {},
+    create: {
+      email: 'test2@example.com',
+      passwordHash: userPassword,
+      role: Role.CUSTOMER,
+    },
+  });
+  console.log('✅ 测试用户2:', user2.email, '/ user123');
+
+  // ===== 2. 创建固定电动车数据 =====
+  const scooterLocations = [
+    { id: 'SC001', location: '市中心广场 - A区', battery: 85 },
+    { id: 'SC002', location: '火车站 - 东出口', battery: 72 },
+    { id: 'SC003', location: '购物中心 - 北门', battery: 90 },
+    { id: 'SC004', location: '大学城 - 图书馆', battery: 45 },
+    { id: 'SC005', location: '科技园 - 1号楼', battery: 60 },
+    { id: 'SC006', location: '公园南门 - 停车场', battery: 95 },
+  ];
+
+  for (const s of scooterLocations) {
+    await prisma.scooter.upsert({
+      where: { id: s.id },
+      update: {},
+      create: {
+        id: s.id,
+        location: s.location,
+        batteryLevel: s.battery,
+        status: ScooterStatus.AVAILABLE,
+      },
+    });
+    console.log(`✅ 电动车: ${s.id} - ${s.location}`);
+  }
+
+  // ===== 3. 创建一些测试预约（可选）=====
+  // 这是测试人员最需要的——有现成的数据可以测试各种状态
+  const scooter = await prisma.scooter.findFirst({ where: { id: 'SC001' } });
+  if (scooter) {
+    await prisma.hire.upsert({
+      where: { id: 'HIRE001' },
+      update: {},
+      create: {
+        id: 'HIRE001',
+        userId: user1.id,
+        scooterId: scooter.id,
+        type: HireType.ONE_TIME,
+        status: 'ACTIVE',
+        startTime: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2小时前开始
+        createdAt: new Date('2024-01-15'),
+      },
+    });
+    console.log('✅ 测试预约: HIRE001 (ACTIVE状态)');
+
+    // 更新电动车状态为IN_USE
+    await prisma.scooter.update({
+      where: { id: scooter.id },
+      data: { status: ScooterStatus.IN_USE },
+    });
+  }
+
+  console.log('\n🎉 种子数据填充完成！');
+  console.log('\n📋 可用测试账号:');
+  console.log('   管理员: admin@scooter.com / admin123');
+  console.log('   用户1:  test1@example.com / user123');
+  console.log('   用户2:  test2@example.com / user123');
+  console.log('\n📋 测试场景:');
+  console.log('   - SC001: 被user1预约中 (IN_USE)');
+  console.log('   - SC002~SC006: 可用 (AVAILABLE)');
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ 种子数据失败:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+```
+
+---
+
+### 3. `package.json` 添加seed命令
+
+在`backend/package.json`的`scripts`里加一行：
+
+```json
+{
+  "scripts": {
+    "build": "nest build",
+    "start:dev": "nest start --watch",
+    "seed": "ts-node prisma/seed.ts",  // ⭐ 添加这行
+    "db:reset": "prisma migrate reset --force && npm run seed" // ⭐ 一键重置+种子
+  }
+}
+```
+
+---
+
+### 4. `.env.example`（环境变量模板）
+
+```bash
+# 数据库（用5433避免和本地PostgreSQL冲突）
+DATABASE_URL="postgresql://scooter:scooter123@localhost:5433/scooter_db"
+
+# JWT（随便填，本地开发用）
+JWT_SECRET="your-secret-key-here"
+
+# 后端端口
+PORT=3000
+```
+
+---
+
+### 5. `scripts/setup.sh`（一键启动脚本）
+
+```bash
+#!/bin/bash
+set -e
+
+echo "🚀 Scooter项目环境初始化..."
+
+# 检查Docker
+if ! command -v docker &> /dev/null; then
+    echo "❌ 请先安装Docker: https://docs.docker.com/get-docker/"
+    exit 1
+fi
+
+# 检查docker-compose
+if ! command -v docker-compose &> /dev/null; then
+    echo "❌ 请先安装docker-compose"
+    exit 1
+fi
+
+# 1. 创建.env文件（如果不存在）
+if [ ! -f "backend/.env" ]; then
+    echo "📝 创建 backend/.env..."
+    cp .env.example backend/.env
+    echo "✅ 已创建 backend/.env"
+fi
+
+# 2. 启动数据库
+echo "🐳 启动PostgreSQL容器..."
+docker-compose up -d
+
+# 3. 等待数据库就绪
+echo "⏳ 等待数据库就绪..."
+sleep 5
+
+# 4. 进入backend目录执行迁移和种子
+cd backend
+
+echo "📊 执行数据库迁移..."
+npx prisma migrate deploy
+
+echo "🌱 填充种子数据..."
+npm run seed
+
+echo ""
+echo "✅ 环境初始化完成！"
+echo ""
+echo "📋 下一步："
+echo "   1. cd backend && npm run start:dev    # 启动后端"
+echo "   2. cd frontend && npm run dev         # 启动前端（新终端）"
+echo "   3. 访问 http://localhost:5173"
+echo ""
+echo "🔑 测试账号:"
+echo "   管理员: admin@scooter.com / admin123"
+echo "   用户1:  test1@example.com / user123"
+echo ""
+echo "💡 常用命令:"
+echo "   npm run seed      # 重新填充种子数据"
+echo "   npm run db:reset  # 清空数据库并重新种子"
+echo "   docker-compose down  # 停止数据库"
+```
+
+**给Windows用户的版本** (`scripts/setup.bat`)：
+
+```batch
+@echo off
+echo 启动Scooter项目环境...
+
+echo 启动PostgreSQL...
+docker-compose up -d
+
+echo 等待数据库就绪...
+timeout /t 5 /nobreak > nul
+
+cd backend
+
+echo 执行迁移...
+call npx prisma migrate deploy
+
+echo 填充种子数据...
+call npm run seed
+
+echo 完成！运行 npm run start:dev 启动后端
+pause
+```
+
+---
+
+## 🚀 使用流程（3个人都一样）
+
+### 第一次（每人只需做一次）：
+
+```bash
+# 1. 确保Docker Desktop已安装并启动
+
+# 2. 在项目根目录执行
+bash scripts/setup.sh    # Linux/Mac
+# 或双击 scripts/setup.bat  # Windows
+
+# 3. 启动后端
+cd backend
+npm install
+npm run start:dev
+
+# 4. 启动前端（新终端）
+cd frontend
+npm install
+npm run dev
+```
+
+### 之后每天开发：
+
+```bash
+# 1. 启动数据库（如果关了）
+docker-compose up -d
+
+# 2. 启动后端
+cd backend && npm run start:dev
+
+# 3. 启动前端（新终端）
+cd frontend && npm run dev
+```
+
+### 需要重置数据（比如搞乱了）：
+
+```bash
+cd backend
+npm run db:reset    # 一键清空+重新种子
+```
+
+---
+
+## 📊 对T420的特别优化
+
+T420（i5-2520M + 8GB）能跑这个方案吗？
+
+| 组件 | 内存占用 | T420能跑？ |
+|------|---------|-----------|
+| PostgreSQL容器 | ~300MB | ✅ 轻松 |
+| 后端(Node.js) | ~200MB | ✅ 可以 |
+| 前端(Vite) | ~150MB | ✅ 可以 |
+| **总计** | **~650MB** | **✅ 完全OK** |
+
+如果T420还是觉得卡，可以：
+- 只跑后端+数据库，前端用别人的电脑看
+- 或者关闭前端HMR（修改`vite.config.ts`）
+
+---
+
+## 🎁 这个方案给每个人的价值
+
+| 角色 | 获得的好处 |
+|------|-----------|
+| **全栈** | 标准化的数据，迁移/种子一键完成 |
+| **测试** | 固定测试账号+现成预约数据，测试各种状态（ACTIVE/COMPLETED等） |
+| **经理** | 演示时`npm run db:reset`一键重置，永远有干净数据 |
+
+---
+
+三、需要优化的关键点（不多，但重要）
+❗问题1：setup.sh 里的 DB 等待不可靠
+
+你现在：
+
+sleep 5
+
+问题：
+
+有时 5 秒不够（尤其老机器）
+有时浪费时间
+✅ 建议（更稳）
+
+改成：
+
+echo "⏳ 等待数据库就绪..."
+until docker exec scooter-db pg_isready -U scooter > /dev/null 2>&1; do
+  sleep 1
+done
+
+👉 这是“不会翻车”的写法
+
+❗问题2：seed 依赖 ts-node（隐性坑）
+
+你现在：
+
+"seed": "ts-node prisma/seed.ts"
+
+问题：
+
+有人没装 ts-node
+或 devDependencies 没装
+✅ 更稳方案（推荐）
+
+改成：
+
+"seed": "node dist/prisma/seed.js"
+
+配套：
+
+npm run build
+
+或者简单一点（作业优先）：
+
+👉 在 README 明确：
+
+cd backend
+npm install
+
+（确保 ts-node 在本地存在）
+
+❗问题3：Windows 用户路径/脚本差异
+
+你虽然写了 .bat，但有一个潜在问题：
+
+cp .env.example backend/.env
+
+在 Windows 下：
+
+cp 不存在（除非 Git Bash）
+✅ 建议
+
+在 README 明确：
+
+Windows用户请使用 Git Bash 或 WSL 运行 setup.sh
+
+或者：
+
+👉 主推 .bat，弱化 .sh
+
+❗问题4：数据库容器名称写死
+
+你用了：
+
+container_name: scooter-db
+
+问题：
+
+如果有人已经有同名 container → 启动失败
+✅ 建议（更安全）
+
+直接删掉：
+
+# container_name: scooter-db
+
+然后脚本改成：
+
+docker-compose exec postgres pg_isready -U scooter
+
+👉 用 service 名，不用 container 名
+
+四、一个可以加的小优化（加分项）
+👉 加一个“只重置数据”的快捷命令
+
+你已经有：
+
+npm run db:reset
+
+可以再补一个：
+
+npm run seed
+
+这样测试同学可以：
+
+不清空数据
+只补充缺失数据
+
+深度优化建议（让方案更稳）
+
+为了确保这套方案在所有人的电脑上都能“秒开”，建议在实施时微调以下几点：
+1. 完善 Docker Compose 的重启策略
+
+在 docker-compose.yml 中，建议为数据库添加 restart: always。
+YAML
+
+services:
+  postgres:
+    # ... 其他配置
+    restart: always  # 即使电脑重启或 Docker 守护进程重启，数据库也会自动拉起
+
+2. 增强 .env 的安全性与灵活性
+
+在 scripts/setup.sh 中创建 .env 时，可以自动生成一个随机的 JWT_SECRET，这样比硬编码更专业。
+Bash
+
+# 在 setup.sh 中
+if [ ! -f "backend/.env" ]; then
+    RANDOM_SECRET=$(openssl rand -base64 32 2>/dev/null || echo "default_secret_123")
+    sed "s/your-secret-key-here/$RANDOM_SECRET/" .env.example > backend/.env
+fi
+
+3. 混合环境下的连接架构图
+
+为了让组员一眼看清流量是怎么走的，可以向他们展示这个逻辑结构：
+🛠️ 常见问题预判（演示防翻车指南）
+
+    端口占用：虽然你改成了 5433，但仍需提醒组员，如果他们之前在 T420 上原生安装过 PostgreSQL 且占用了该端口，Docker 会启动失败。
+
+    Prisma 引擎同步：提醒组员，每次修改 .prisma 文件后，必须执行 npx prisma generate。由于是在本地跑代码，他们需要确保本地的 Node 版本和项目的 engines 匹配（建议在 package.json 中声明 "engines": { "node": ">=20" }）。
+
+    Windows 的权限问题：Windows 用户运行 .bat 脚本时，有时会因为执行策略限制无法运行 npx 命令。建议提醒他们使用 PowerShell (管理员) 或 Git Bash。
