@@ -1,3 +1,5 @@
+//鉴权门禁组件，确保只有经过身份验证的用户才能访问特定页面，
+//并根据用户角色进行访问控制
 import { Navigate, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'

@@ -1,3 +1,8 @@
+
+//API 模块
+// 封装了与后端滑板车相关的 API 调用，
+// 提供获取滑板车列表、创建滑板车、更新滑板车状态和删除滑板车等功能的接口
+
 import axiosClient from '../utils/axiosClient'
 import { Scooter } from '../types'
 

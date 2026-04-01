@@ -1,3 +1,5 @@
+//Axios 实例封装，提供统一的 API 请求接口，
+// 包含基础 URL 配置、请求拦截器（注入 token）和响应拦截器（统一错误处理）
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 
 // Base URL configuration
