@@ -1,3 +1,5 @@
+//API 模块 
+// 封装了与后端认证相关的 API 调用，提供登录、注册等功能的接口，
 import axiosClient from '../utils/axiosClient'
 import { LoginRequest, RegisterRequest } from '../types'
 

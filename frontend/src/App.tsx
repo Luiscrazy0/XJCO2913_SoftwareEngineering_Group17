@@ -1,3 +1,4 @@
+//Provider 链接，提供全局状态管理和功能支持
 import { QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './context/AuthContext'
 import { queryClient } from './utils/queryClient'
