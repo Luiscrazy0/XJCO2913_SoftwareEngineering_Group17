@@ -2,9 +2,8 @@
 // 包含基础 URL 配置、请求拦截器（注入 token）和响应拦截器（统一错误处理）
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 
-// Base URL configuration
-// For now, use hardcoded URL. Will be replaced with environment variable in production
-const BASE_URL = 'http://localhost:3000'
+// Base URL configuration (prefer env, fallback to localhost for stability)
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
 
 // Create axios instance
 const axiosClient: AxiosInstance = axios.create({

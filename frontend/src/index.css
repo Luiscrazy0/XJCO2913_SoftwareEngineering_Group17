@@ -21,6 +21,24 @@
   --shadow-3d: 0 6px 0 var(--mclaren-orange-depth), 0 12px 20px rgba(0,0,0,0.5);
   --shadow-card: 0 8px 24px rgba(0,0,0,0.35);
 
+  /* Auth 页面变量（与现有 inline style 对齐） */
+  --auth-bg: var(--bg-main);
+  --auth-card-bg: var(--bg-card);
+  --auth-text-main: var(--text-main);
+  --auth-text-secondary: var(--text-secondary);
+  --auth-input-bg: var(--bg-input);
+  --auth-input-border: var(--border-line);
+  --auth-input-text: var(--text-main);
+  --auth-input-focus: var(--mclaren-orange);
+  --auth-input-error: #ef4444;
+  --auth-button-primary: var(--mclaren-orange);
+  --auth-button-disabled: #4b5563;
+  --auth-button-text: #ffffff;
+  --auth-tab-active: var(--mclaren-orange);
+  --auth-tab-inactive: var(--text-secondary);
+  --auth-link: var(--mclaren-orange);
+  --auth-error: #ef4444;
+
   /* 字体配置 */
   --sans: "Inter", system-ui, -apple-system, sans-serif;
   --mono: "Maple Mono NF CN", "JetBrains Mono", ui-monospace, monospace;
