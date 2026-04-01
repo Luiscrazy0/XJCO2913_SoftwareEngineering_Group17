@@ -1,8 +1,11 @@
-import { Controller, Get, Post, Patch, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, UseGuards } from '@nestjs/common';
 import { ScooterService } from './scooter.service';
-import { ScooterStatus } from '@prisma/client';
+import { Role } from '@prisma/client';
 import { CreateScooterDto } from './dto/create-scooter.dto';
 import { UpdateScooterStatusDto } from './dto/update-scooter-status.dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('scooters')
 export class ScooterController {
@@ -18,6 +21,8 @@ export class ScooterController {
     return this.scooterService.findById(id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MANAGER)
   @Post()
   create(@Body() body: CreateScooterDto) 
   // Add dto validation for location
@@ -25,6 +30,8 @@ export class ScooterController {
     return this.scooterService.createScooter(body.location);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MANAGER)
   @Patch(':id/status')
     updateStatus(
       @Param('id') id: string,
@@ -32,4 +39,11 @@ export class ScooterController {
     ) {
       return this.scooterService.updateStatus(id, body.status);
     }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MANAGER)
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.scooterService.deleteScooter(id);
+  }
 }

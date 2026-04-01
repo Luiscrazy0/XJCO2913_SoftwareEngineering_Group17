@@ -59,6 +59,7 @@ coverage/
 .env.production.local
 .env.local
 .env.*
+!.env.example
 
 # temp directory
 .temp/
@@ -79,3 +80,4 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 
 # Project specific
 /home/kk/Scooter-project/XJCO2913_SoftwareEngineering_Group17/home
+/tmp

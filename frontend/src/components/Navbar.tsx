@@ -1,10 +1,11 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const Navbar: React.FC = () => {
   const { user, logout } = useAuth()
   const location = useLocation()
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const navigation = [
     { name: '发现车辆', href: '/scooters' },
@@ -26,7 +27,7 @@ const Navbar: React.FC = () => {
   return (
     <nav className="bg-white shadow-sm border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
+        <div className="flex justify-between h-16 items-center">
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
@@ -37,16 +38,34 @@ const Navbar: React.FC = () => {
             </Link>
           </div>
 
-          {/* 导航链接 */}
-          <div className="flex items-center space-x-8">
+          {/* Mobile toggle */}
+          <div className="flex lg:hidden">
+            <button
+              type="button"
+              className="inline-flex items-center justify-center p-2 rounded-md text-slate-700 hover:bg-slate-100"
+              onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Toggle navigation"
+            >
+              <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                {mobileOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
+          </div>
+
+          {/* 导航链接 - Desktop */}
+          <div className="hidden lg:flex items-center space-x-8">
             {filteredNavigation.map((item) => (
               <Link
                 key={item.name}
                 to={item.href}
                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
                   isActive(item.href)
-                    ? 'text-blue-600 bg-blue-50'
-                    : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
+                    ? 'text-green-600 bg-green-50'
+                    : 'text-slate-700 hover:text-green-600 hover:bg-slate-50'
                 }`}
               >
                 {item.name}
@@ -55,7 +74,7 @@ const Navbar: React.FC = () => {
           </div>
 
           {/* 用户信息 */}
-          <div className="flex items-center space-x-4">
+          <div className="hidden lg:flex items-center space-x-4">
             {user ? (
               <>
                 <div className="flex items-center">
@@ -65,8 +84,11 @@ const Navbar: React.FC = () => {
                     </span>
                   </div>
                   <div className="ml-3">
-                    <div className="text-sm font-medium text-gray-900">
+                    <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
                       {user.email}
+                      {user.role === 'MANAGER' && (
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">ADMIN</span>
+                      )}
                     </div>
                     <div className="text-xs text-gray-500">
                       {user.role === 'MANAGER' ? '管理员' : '用户'}
@@ -74,8 +96,8 @@ const Navbar: React.FC = () => {
                   </div>
                 </div>
                 <button
-                  onClick={logout}
-                  className="ml-4 px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors duration-200"
+                  onClick={() => logout()}
+                  className="ml-4 px-4 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md transition-colors duration-200"
                 >
                   退出
                 </button>
@@ -91,6 +113,68 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile drawer */}
+      {mobileOpen && (
+        <div className="lg:hidden border-t border-slate-200 bg-white px-4 pb-4 space-y-4">
+          <div className="flex flex-col space-y-2 pt-3">
+            {filteredNavigation.map((item) => (
+              <Link
+                key={item.name}
+                to={item.href}
+                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                  isActive(item.href)
+                    ? 'text-green-600 bg-green-50'
+                    : 'text-slate-700 hover:text-green-600 hover:bg-slate-50'
+                }`}
+                onClick={() => setMobileOpen(false)}
+              >
+                {item.name}
+              </Link>
+            ))}
+          </div>
+
+          <div className="pt-2 border-t border-slate-100">
+            {user ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center">
+                    <span className="text-blue-600 font-medium text-sm">
+                      {user.email.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div className="ml-3">
+                    <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                      {user.email}
+                      {user.role === 'MANAGER' && (
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">ADMIN</span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-500">{user.role === 'MANAGER' ? '管理员' : '用户'}</div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setMobileOpen(false)
+                    logout()
+                  }}
+                  className="ml-4 px-3 py-2 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-md transition-colors duration-200"
+                >
+                  退出
+                </button>
+              </div>
+            ) : (
+              <Link
+                to="/auth"
+                className="block w-full text-center px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                onClick={() => setMobileOpen(false)}
+              >
+                登录/注册
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
     </nav>
   )
 }

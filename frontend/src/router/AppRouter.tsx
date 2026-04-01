@@ -7,6 +7,7 @@ import MyBookingsPage from "../pages/MyBookingsPage"
 import AdminFleetPage from "../pages/AdminFleetPage"
 import TestScooterPage from "../pages/TestScooterPage"
 import ProtectedRoute from "../components/ProtectedRoute"
+import ForbiddenPage from "../pages/ForbiddenPage"
 
 // Main App Router component
 export default function AppRouter() {
@@ -17,6 +18,7 @@ export default function AppRouter() {
         <Route path="/" element={<AuthPage />} />
         <Route path="/auth" element={<AuthPage />} />
         <Route path="/test-scooters" element={<TestScooterPage />} />
+        <Route path="/403" element={<ForbiddenPage />} />
         
         {/* Protected routes */}
         <Route path="/scooters" element={

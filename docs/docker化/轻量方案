@@ -1,0 +1,76 @@
+# ✅ 轻量混合方案（仅 Docker PostgreSQL + 本地跑前后端）
+
+适用场景：组员硬件差异大、想统一数据库环境/数据、但不想把前后端也容器化。
+
+---
+
+## 为什么推荐这个方案？
+
+- 只跑一个 PostgreSQL 容器：占用低、启动快
+- 前后端继续本地 `npm run start:dev` / `npm run dev`：开发体验不变
+- 通过 seed 统一测试账号与示例数据：演示/测试不翻车
+
+---
+
+## 已落地的文件
+
+```
+XJCO2913_SoftwareEngineering_Group17/
+├── docker-compose.yml        # 仅 PostgreSQL（宿主机端口 5433）
+├── .env.example              # 可提交模板（生成 backend/.env）
+├── scripts/
+│   ├── setup.sh              # 一键初始化（Linux/macOS/WSL）
+│   └── setup.bat             # 一键初始化（Windows）
+└── backend/
+    ├── prisma/
+    │   ├── schema.prisma
+    │   └── seed.ts           # 种子数据（与当前 schema 匹配）
+    └── .env                  # 本地私有（脚本生成，不提交）
+```
+
+---
+
+## 核心约定（请不要随意改）
+
+- PostgreSQL 对宿主机映射端口：`5433`（避免与本机 `5432` 冲突）
+- `.env.example` 可以提交；真实的 `.env` 不提交
+- seed 数据必须与当前 Prisma schema 的枚举/模型一致：
+  - `ScooterStatus`: `AVAILABLE` / `UNAVAILABLE`
+  - `BookingStatus`: `PENDING_PAYMENT` / `CONFIRMED` / `CANCELLED` / `COMPLETED`
+  - `HireType`: `HOUR_1` / `HOUR_4` / `DAY_1` / `WEEK_1`
+
+---
+
+## 一键启动（推荐）
+
+```bash
+bash scripts/setup.sh
+```
+
+Windows：
+```bat
+scripts\setup.bat
+```
+
+然后本地启动：
+```bash
+cd backend && npm run start:dev
+cd frontend && npm run dev
+```
+
+---
+
+## 数据重置（演示/测试常用）
+
+```bash
+cd backend
+npm run db:reset
+```
+
+---
+
+## 常见坑（避免翻车）
+
+- **端口冲突**：如果 `5433` 也被占用，改 `docker-compose.yml` 与 `.env.example`（端口必须同步）
+- **backend/.env 已存在**：脚本不会覆盖；如仍指向旧数据库，请手动改为 `.env.example` 的 `DATABASE_URL`
+
