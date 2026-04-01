@@ -1,7 +1,9 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { bookingsApi } from '../api/bookings'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../components/ToastProvider'
 import BookingCard from '../components/BookingCard'
 import BookingStats from '../components/BookingStats'
 import BookingSkeleton from '../components/BookingSkeleton'
@@ -12,10 +14,8 @@ import Navbar from '../components/Navbar'
 const MyBookingsPage: React.FC = () => {
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error'
-    message: string
-  } | null>(null)
+  const { showToast } = useToast()
+  const navigate = useNavigate()
 
   // 获取预约列表
   const {
@@ -43,22 +43,10 @@ const MyBookingsPage: React.FC = () => {
         )
       })
       
-      setNotification({
-        type: 'success',
-        message: '预约已成功取消'
-      })
-      
-      // 3秒后清除通知
-      setTimeout(() => setNotification(null), 3000)
+      showToast('预约已成功取消', 'success')
     },
     onError: (error: any) => {
-      setNotification({
-        type: 'error',
-        message: error.message || '取消预约失败'
-      })
-      
-      // 3秒后清除通知
-      setTimeout(() => setNotification(null), 3000)
+      showToast(error.message || '取消预约失败', 'error')
     }
   })
 
@@ -76,34 +64,7 @@ const MyBookingsPage: React.FC = () => {
 
   // 处理浏览车辆
   const handleBrowseScooters = () => {
-    // 这里可以导航到车辆发现页面
-    window.location.href = '/scooters'
-  }
-
-  // 显示通知
-  const renderNotification = () => {
-    if (!notification) return null
-
-    const bgColor = notification.type === 'success' ? 'bg-emerald-500/15 border-emerald-400/30' : 'bg-rose-500/15 border-rose-400/30'
-    const textColor = notification.type === 'success' ? 'text-emerald-200' : 'text-rose-200'
-    const iconColor = notification.type === 'success' ? 'text-emerald-200' : 'text-rose-200'
-
-    return (
-      <div className={`fixed top-4 right-4 z-50 border rounded-lg p-4 shadow-lg ${bgColor} ${textColor} max-w-md`}>
-        <div className="flex items-center">
-          {notification.type === 'success' ? (
-            <svg className={`w-5 h-5 mr-2 ${iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          ) : (
-            <svg className={`w-5 h-5 mr-2 ${iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          )}
-          <span>{notification.message}</span>
-        </div>
-      </div>
-    )
+    navigate('/scooters')
   }
 
   // 渲染页面内容
@@ -150,9 +111,6 @@ const MyBookingsPage: React.FC = () => {
     <div className="min-h-screen bg-[var(--bg-main)]">
       <Navbar />
       
-      {/* 通知 */}
-      {renderNotification()}
-
       {/* 主内容 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 页面标题 */}
