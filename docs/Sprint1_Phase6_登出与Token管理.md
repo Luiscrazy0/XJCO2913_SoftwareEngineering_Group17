@@ -1,45 +1,45 @@
 # Sprint 1 - 阶段6：登出与Token管理
 
 ## 目标
-实现完整的Token生命周期管理，包括登出功能、API请求自动携带Token、Token过期处理和认证守卫完善。
+实现完整的Token生命周期管理，包括登出功能、API请求自动携带Token、Token过期处理和认证守卫完善。本文已对齐当前代码（2026-03-26）现状，未实现的部分用「TODO」标记。
 
 ## 完成标准
-1. 导航栏添加登出功能
-2. 实现完整的登出流程
-3. API请求自动携带Authorization头
-4. Token过期或无效时自动处理
-5. 完善ProtectedRoute认证守卫
-6. 实现角色权限检查
+1. 导航栏添加登出功能（已实现）
+2. 实现登出流程（已实现，前端本地清理）
+3. API请求自动携带Authorization头（已实现）
+4. Token过期或无效时自动处理（已实现，重定向到登录页）
+5. 完善ProtectedRoute认证守卫（已实现基础版）
+6. 实现角色权限检查（已实现基础版，403 页面与提示 TODO）
 
 ## 核心任务
 
 ### 1. 实现登出功能
-- 在导航栏添加登出按钮
-- 实现登出逻辑：清除localStorage中的token和用户信息
-- 更新AuthContext状态
-- 登出后跳转到登录页面
-- 显示登出成功提示
+- 在导航栏添加登出按钮（`Navbar`）
+- 实现登出逻辑：清除 localStorage 中的 `auth_token` 和 `user`
+- 更新 AuthContext 状态
+- 登出后跳转到登录页面（当前跳转 `/`，与登录页路由一致）
+- 显示登出成功提示（TODO：尚未落地 Toast）
 
 ### 2. 完善Token生命周期管理
-- 确保所有API请求自动携带Authorization头
-- 实现请求拦截器添加token
-- 实现响应拦截器处理401错误
-- Token过期时自动跳转到登录页
-- 清除过期的本地存储数据
+- 确保所有API请求自动携带Authorization头（axios 拦截器已实现）
+- 实现请求拦截器添加 token（读取 `auth_token`）
+- 实现响应拦截器处理 401 错误（清理存储并重定向 `/`）
+- Token 过期时自动跳转到登录页（已实现）
+- 清除过期的本地存储数据（已实现）
 
 ### 3. 完善认证守卫（ProtectedRoute）
-- 检查用户是否已认证（token是否存在）
+- 检查用户是否已认证（`isAuthenticated`）
 - 检查用户角色权限（如需特定角色）
-- 未认证用户重定向到登录页
-- 角色不符用户显示无权限提示
-- 保存原始访问路径，登录后重定向
+- 未认证用户重定向到登录页 `/`
+- 角色不符用户当前重定向到 `/scooters`（TODO：替换为 403 页面 + Toast）
+- 保存原始访问路径（TODO：未实现）
 
 ### 4. 更新导航栏组件
 - 根据认证状态显示不同内容
 - 已登录用户显示用户邮箱和登出按钮
-- 未登录用户显示登录/注册链接
-- 根据用户角色显示不同的导航菜单
-- 添加响应式导航菜单
+- 未登录用户显示登录/注册链接（跳转 `/auth`）
+- 根据用户角色显示不同的导航菜单（`/admin` 仅 MANAGER）
+- 添加响应式导航菜单（TODO：当前仅桌面布局）
 
 ### 5. 实现Token安全处理
 - Token存储安全考虑
@@ -50,67 +50,68 @@
 ## 功能实现细节
 
 ### 登出流程
-1. 用户点击登出按钮
-2. 调用authApi.logout()方法
-3. 清除localStorage中的token和user数据
-4. 更新AuthContext状态为未认证
-5. 跳转到登录页面
-6. 显示"已成功登出"提示信息
+1. 用户点击导航栏登出按钮
+2. 调用 `AuthContext.logout()`（本地清理，暂未调用后端接口；如需服务器失效，请在 `authApi.logout` 开启后补充）
+3. 清除 localStorage 中的 `auth_token` 和 `user`
+4. 更新 AuthContext 状态为未认证
+5. 跳转到登录页面 `/`（等价登录页）
+6. 显示"已成功登出"提示信息（TODO：Toast 未实现）
 
-### API请求拦截器
+### API请求拦截器（与 `frontend/src/utils/axiosClient.ts` 一致）
 ```typescript
-// 请求拦截器 - 添加token
-apiClient.interceptors.request.use(config => {
-  const token = localStorage.getItem('token');
+// 请求拦截器 - 添加 token
+axiosClient.interceptors.request.use(config => {
+  const token = localStorage.getItem('auth_token')
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = `Bearer ${token}`
   }
-  return config;
-});
+  return config
+})
 
-// 响应拦截器 - 处理401错误
-apiClient.interceptors.response.use(
+// 响应拦截器 - 处理 401 错误
+axiosClient.interceptors.response.use(
   response => response,
   error => {
     if (error.response?.status === 401) {
-      // Token过期或无效
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      window.location.href = '/login';
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('user')
+      if (window.location.pathname !== '/') {
+        window.location.href = '/'
+      }
     }
-    return Promise.reject(error);
+    return Promise.reject(error)
   }
-);
+)
 ```
 
 ### ProtectedRoute逻辑
-1. 检查localStorage中是否有token
-2. 检查AuthContext中的用户状态
-3. 如果requiredRole参数存在，检查用户角色
-4. 未认证用户：重定向到/login，保存原始路径
-5. 角色不符用户：显示无权限页面
-6. 认证通过用户：渲染子组件
+1. 检查 `isLoading`，加载态显示全屏 Loading
+2. 检查 `isAuthenticated`（由 `auth_token` + `user` 计算）
+3. 未认证用户：重定向到 `/`
+4. requiredRole 存在且不匹配：当前重定向到 `/scooters`（TODO：无权限页面 + 提示）
+5. 认证通过用户：渲染子组件
 
 ### 导航栏状态管理
 - **未登录状态**：
-  - 显示：系统Logo
-  - 显示：登录/注册链接
-- **CUSTOMER登录状态**：
-  - 显示：用户邮箱
+  - 显示：系统 Logo
+  - 显示：登录/注册链接（跳转 `/auth`）
+- **CUSTOMER 登录状态**：
+  - 显示：用户邮箱与首字母头像
   - 显示：车辆列表链接
   - 显示：我的预约链接
   - 显示：登出按钮
-- **MANAGER登录状态**：
+- **MANAGER 登录状态**：
   - 显示：用户邮箱（管理员标识）
   - 显示：管理后台链接
   - 显示：登出按钮
+  - TODO：角色标签颜色按下方设计规范落地
 
 ## 安全考虑
 
 ### Token存储安全
-- 使用localStorage存储token（简单实现）
-- 考虑未来使用httpOnly cookies增强安全
-- 避免在代码中硬编码token处理逻辑
+- 使用 localStorage 存储 `auth_token`（当前简单实现）
+- 考虑未来使用 httpOnly cookies 增强安全（TODO）
+- 避免在代码中硬编码 token 处理逻辑
 
 ### XSS防护
 - 对用户输入进行适当转义
@@ -118,20 +119,20 @@ apiClient.interceptors.response.use(
 - 使用React的自动转义特性
 
 ### 会话管理
-- 页面刷新时从localStorage恢复会话
-- 提供"记住我"功能选项（增强功能）
-- 实现会话超时自动登出（增强功能）
+- 页面刷新时从 localStorage 恢复会话（已实现）
+- 提供"记住我"功能选项（增强）
+- 实现会话超时自动登出（增强）
 
 ## 验证测试
 1. 登录后导航栏显示用户信息和登出按钮
-2. 点击登出按钮，验证成功登出并跳转
-3. 测试API请求是否自动携带token
-4. 模拟token过期，验证自动跳转到登录页
-5. 未登录用户访问受保护页面被重定向
-6. CUSTOMER用户尝试访问/admin页面被阻止
-7. MANAGER用户可以正常访问/admin页面
+2. 点击登出按钮，验证成功登出并跳转 `/`
+3. 测试 API 请求是否自动携带 `Authorization: Bearer <auth_token>`
+4. 模拟 token 过期，验证自动清理并重定向 `/`
+5. 未登录用户访问受保护页面被重定向 `/`
+6. CUSTOMER 用户尝试访问 `/admin` 被重定向到 `/scooters`（当前行为）
+7. MANAGER 用户可以正常访问 `/admin`
 8. 页面刷新后认证状态保持
-9. 多标签页会话同步测试
+9. 多标签页会话同步测试（TODO：尚未实现 cross-tab 通知）
 
 ## 用户体验优化
 - 登出前的确认对话框（防止误操作）
@@ -141,7 +142,7 @@ apiClient.interceptors.response.use(
 - 加载状态的视觉反馈
 
 
-下面是将你的配色系统**落到“Token管理 + 登出 + 权限控制相关UI（Navbar / Toast / 错误页）”的页面级设计规范**。这一阶段不再是单一页面，而是**跨页面的全局交互层设计**，重点是：
+下面是将你的配色系统**落到“Token管理 + 登出 + 权限控制相关UI（Navbar / Toast / 错误页）”的页面级设计规范**。当前代码尚未落地 Toast、403 页和角色徽标，需按此规范补全（TODO）。这一阶段不再是单一页面，而是**跨页面的全局交互层设计**，重点是：
 
 * 状态反馈（成功 / 过期 / 无权限）
 * 全局一致性（所有页面共享）

@@ -30,4 +30,10 @@ export class ScooterService {
       data: { status },
     });
   }
+
+  async deleteScooter(id: string) {
+    return this.prisma.scooter.delete({
+      where: { id },
+    });
+  }
 }

@@ -1,113 +1,70 @@
-整理完 Sprint 1 阶段7内容后，可以得到一个完整的管理后台实现文档和落地方案。核心可以总结如下：
+整理完 Sprint 1 阶段7 内容后，先对当前代码进行验证并据实修正方案。以下为校验版文档（截至 2026-03-28）。
 
 ---
 
-# Sprint 1 - 阶段7：管理后台实现总结
+# Sprint 1 - 阶段7：管理后台实现（校验与修订）
 
 ## 目标
+为管理员提供车辆管理能力：查看列表、添加车辆、变更状态，并确保前后端权限一致、交互可用。
 
-为管理员提供完整车辆管理能力，包括查看车辆列表、添加车辆，并保证权限控制和系统安全。
+## 当前代码实况（2026-03-28）
 
-## 完成标准
+### 前端
+- 路由：`/admin` 通过 `ProtectedRoute requiredRole="MANAGER"` 保护，未登录重定向 `/`，角色不符跳转 `/403` 并弹 Toast（`src/router/AppRouter.tsx`, `src/components/ProtectedRoute.tsx`）。
+- 页面：`AdminFleetPage` 仍是占位视图，未实现列表/表单/统计（`src/pages/AdminFleetPage.tsx`）。
+- 组件：不存在 `components/admin/*`，文档中提到的表格、弹窗、状态徽章、统计组件均未落地。
+- 数据层：`scootersApi` 已提供 `getAll/create/updateStatus/delete`，状态类型为 `'AVAILABLE' | 'UNAVAILABLE'`，创建接口仅需 `location`（`src/api/scooters.ts`, `src/types/index.ts`）。
+- UI 辅助：403 页已存在；Toast Provider 已实现，可用于操作反馈。
 
-* AdminFleetPage 页面完成
-* 车辆管理表格实现
-* 添加车辆表单与弹窗功能
-* 集成 GET /scooters 与 POST /scooters
-* 管理员权限验证完整
+### 后端
+- 数据模型：`prisma/schema.prisma` 中 `ScooterStatus` 仅有 `AVAILABLE`, `UNAVAILABLE`。
+- 路由：`/scooters` 的 GET/POST/PATCH 可用，但**未加任何认证或角色守卫**（`src/modules/scooter/scooter.controller.ts`）。
+- DTO：`CreateScooterDto` 校验 `location` 必填；`UpdateScooterStatusDto` 限定状态枚举。
+- Service：支持 `findAll/findById/create/updateStatus`，有 `delete` 方法但未在 controller 暴露。
 
-## 页面架构
+## 与原方案的差异
+- 状态集合：原文写 `AVAILABLE/BOOKED/MAINTENANCE`，实际为 `AVAILABLE/UNAVAILABLE`，且前后端一致使用该二值。
+- 功能完成度：原文称 AdminFleetPage、表格、添加弹窗、统计均完成；实际未实现。
+- 权限：原文称管理员权限验证完整；实际后端无 Guard，前端仅路由保护。
+- 数据刷新：文档描述 TanStack Query 缓存与刷新；实际 Admin 页未接入 Query。
 
-```
-/pages/admin/AdminFleetPage.tsx
-/layouts/AdminLayout.tsx
-/components/admin/
-  ├── FleetTable.tsx
-  ├── AddScooterModal.tsx
-  ├── FleetStats.tsx
-  └── StatusBadge.tsx
-```
+## 修正后的落地方案
 
-* **AdminLayout**: 侧边栏导航 + Topbar + 内容区
-* **FleetTable**: 显示车辆列表，支持状态标签
-* **StatusBadge**: 统一管理状态显示颜色
-* **FleetStats**: 统计车辆数量与状态分布
-* **AddScooterModal**: 表单弹窗添加新车辆
+### API 与权限
+1) 给 `scooter.controller.ts` 的 POST/PATCH（以及后续 DELETE）添加 `@UseGuards(JwtAuthGuard, RolesGuard)` 并标注 `@Roles(Role.MANAGER)`；GET 可视需求决定是否需要登录/角色。
+2) 若项目尚未提供 RolesGuard，需在 Auth 模块增加角色守卫并在 `app.module.ts` 注册。
+3) 视业务决定是否保留二值状态；如需 MAINTENANCE/BOOKED，先扩展 Prisma 枚举并同步前端 `types` 与 API。
 
-## 数据层
+### 前端页面与组件
+1) 重写 `src/pages/AdminFleetPage.tsx`：
+   - 使用 `useQuery` 调用 `scootersApi.getAll`，`queryKey` 建议 `['scooters']`（与用户端复用）。
+   - 使用 `useMutation` 处理创建/状态更新，成功后 `invalidateQueries(['scooters'])`。
+   - 提供加载、错误、空态处理（可内置，不必依赖现有列表页组件）。
+2) 新增 `src/components/admin/`：
+   - `FleetTable.tsx`：表格列（位置、状态、操作），操作至少预留“标记不可用/可用”。
+   - `StatusBadge.tsx`：对 `AVAILABLE/UNAVAILABLE` 渲染绿色/灰色徽章。
+   - `AddScooterModal.tsx`：表单仅包含 `location`，提交后关闭并刷新。
+   - `FleetStats.tsx`：汇总可用/不可用数量。
+3) 交互反馈：所有创建/更新失败与成功使用 `useToast`；无权限交互保持现有 403 + Toast。
 
-* **TanStack Query** 用于缓存和刷新车辆数据
-* **QueryKey** 统一管理
+### 数据与状态一致性
+- 统一状态类型：前后端均使用 `'AVAILABLE' | 'UNAVAILABLE'`；若扩展枚举，需同步 `prisma/schema.prisma`、`frontend/src/types/index.ts`、`scootersApi`、后端 DTO。
+- 接口路径保持：`POST /scooters`、`PATCH /scooters/:id/status`；DELETE 如需暴露，与 service 对齐。
 
-  ```ts
-  scooters: ['scooters']
-  ```
-* **API 层**
+### 验收标准（更新）
+- MANAGER 访问 `/admin`：可看到车辆表格与“添加车辆”入口；添加成功后表格刷新，默认状态 AVAILABLE。
+- 状态列使用徽章标识，可用/不可用颜色清晰。
+- CUSTOMER 访问 `/admin`：前端跳转 403；后端（加 Guard 后）返回 403。
+- API 401/403 时前端 Toast 提示并保持在登录或 403 页。
+- 若引入 DELETE：删除后列表刷新，给出二次确认。
 
-  ```ts
-  getScooters() → GET /scooters
-  createScooter(data) → POST /scooters
-  ```
-* **Mutation**
+## 待办清单
+- [ ] 后端：为 scooter POST/PATCH（及未来 DELETE）添加 JwtAuthGuard + RolesGuard；评估 GET 是否需要认证。
+- [ ] 后端：可选暴露 DELETE 路由，补充 e2e/单元测试。
+- [ ] 前端：重写 AdminFleetPage，引入 Query/MUTATION 与 admin 组件。
+- [ ] 前后端：状态枚举一致性检查（保持 AVAILABLE/UNAVAILABLE 或共同扩展）。
+- [ ] 测试：管理员场景的集成/e2e 覆盖（访问、添加、状态变更、权限）。
 
-  * 成功后自动刷新车辆列表
-  * 显示 Toast 提示
-
-## 核心功能
-
-* 车辆状态显示：
-
-  * AVAILABLE → 绿色
-  * BOOKED → 黄色
-  * MAINTENANCE → 红色
-* 添加车辆表单：
-
-  * location 必填
-  * status 默认 AVAILABLE
-* 数据管理：
-
-  * 页面加载时获取所有车辆
-  * 添加成功后刷新列表
-  * 错误提示与重试机制
-* 权限控制：
-
-  * ProtectedRoute 校验 MANAGER
-  * 非管理员显示 403 页面
-  * 前端按钮/操作根据角色显示
-
-## 页面状态处理
-
-* Loading → Spinner
-* Error → ErrorState
-* Empty → EmptyState 提示
-
-## 安全与用户体验
-
-* 后端严格验证 role
-* 前端守卫避免未授权访问
-* 操作反馈（Toast）与确认弹窗
-* 键盘操作和表单验证增强体验
-
-## 验证测试
-
-* MANAGER 能访问 /admin，CUSTOMER 无法访问
-* 表格数据完整显示
-* 添加车辆功能正常
-* 状态样式正确
-* API 错误处理、响应式布局测试
-* 统计信息准确
-
-## MVP 判定
-
-* 能查看所有车辆
-* 能添加车辆并刷新表格
-* 非管理员无法访问
-* Token 认证正常工作
-
-## 下一步建议
-
-1. **Edit Scooter Status（PATCH /scooters/:id/status）**
-
-   * 完整管理闭环
-2. 表格增强（排序、搜索）
-3. 管理员视角的 Booking 管理
+## 备注
+- 现有预订流程依赖车辆状态为 `AVAILABLE`（见 booking service），请确保状态切换不会破坏此约束。
+- 文档保持与当前代码同步，如后续扩展枚举或新增操作，请在本页更新。

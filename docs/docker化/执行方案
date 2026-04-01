@@ -1,0 +1,97 @@
+# 🐳 Scooter 项目 Docker 化执行方案（轻量：仅 PostgreSQL）
+
+本方案只把 **PostgreSQL** 放进 Docker（宿主机端口 `5433`），前端/后端仍在本地运行（热更新体验不变）。
+
+---
+
+## 0. 前置条件
+
+- 已安装并能运行 Docker
+- 本机 Node.js v20 + npm
+
+---
+
+## 1. 一键初始化（推荐）
+
+在项目根目录执行：
+
+### Linux / macOS / WSL
+```bash
+bash scripts/setup.sh
+```
+
+### Windows（原生）
+```bat
+scripts\setup.bat
+```
+
+脚本会自动完成：
+1. 启动 PostgreSQL（`docker compose up -d`）
+2. 等待数据库就绪（`pg_isready`）
+3. 生成 `backend/.env`（若不存在则从根目录 `.env.example` 复制）
+4. `backend/` 下执行：
+   - `npx prisma generate`
+   - `npx prisma migrate deploy`
+   - `npm run seed`
+
+---
+
+## 2. 启动后端（本地）
+
+```bash
+cd backend
+npm run start:dev
+```
+
+---
+
+## 3. 启动前端（本地，另开终端）
+
+```bash
+cd frontend
+npm run dev
+```
+
+---
+
+## 4. 验证清单
+
+- 前端页面：`http://localhost:5173`
+- 后端 Swagger：`http://localhost:3000/api`
+- 后端健康检查（示例）：`curl http://localhost:3000/health`
+- 数据库端口：`localhost:5433`
+
+种子数据账号（由 `backend/prisma/seed.ts` 创建/upsert）：
+- `admin@scooter.com / admin123`（MANAGER）
+- `test1@example.com / user123`（CUSTOMER）
+- `test2@example.com / user123`（CUSTOMER）
+
+---
+
+## 5. 常用命令
+
+```bash
+# 只启动/停止数据库
+docker compose up -d
+docker compose down
+
+# 清空并重置数据库（本地开发用）
+cd backend
+npm run db:reset
+```
+
+---
+
+## 6. 常见问题
+
+### Q1: `5433` 端口被占用
+- 修改根目录 `docker-compose.yml` 的端口映射为其它端口（例如 `5434:5432`）
+- 同步修改 `.env.example` 的 `DATABASE_URL` 端口，并重新生成 `backend/.env`
+
+### Q2: `docker compose` 不可用
+- 脚本会自动 fallback 到 `docker-compose`（如果安装了）
+
+### Q3: Prisma 连接失败（ECONNREFUSED / P1001）
+- 先确认数据库容器正常：`docker compose ps`
+- 再确认 `backend/.env` 的 `DATABASE_URL` 指向 `localhost:5433`
+
