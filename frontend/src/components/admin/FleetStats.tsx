@@ -54,7 +54,7 @@ export function FleetStats({ scooters }: FleetStatsProps) {
       {cards.map((card) => (
         <div
           key={card.title}
-          className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+          className="relative overflow-hidden rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] shadow-[var(--shadow-card)]"
         >
           <div className={`absolute inset-0 opacity-80 bg-gradient-to-br ${card.accent}`} />
           <div className="relative flex items-center justify-between px-5 py-4">

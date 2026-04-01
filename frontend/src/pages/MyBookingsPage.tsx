@@ -84,9 +84,9 @@ const MyBookingsPage: React.FC = () => {
   const renderNotification = () => {
     if (!notification) return null
 
-    const bgColor = notification.type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-    const textColor = notification.type === 'success' ? 'text-green-800' : 'text-red-800'
-    const iconColor = notification.type === 'success' ? 'text-green-400' : 'text-red-400'
+    const bgColor = notification.type === 'success' ? 'bg-emerald-500/15 border-emerald-400/30' : 'bg-rose-500/15 border-rose-400/30'
+    const textColor = notification.type === 'success' ? 'text-emerald-200' : 'text-rose-200'
+    const iconColor = notification.type === 'success' ? 'text-emerald-200' : 'text-rose-200'
 
     return (
       <div className={`fixed top-4 right-4 z-50 border rounded-lg p-4 shadow-lg ${bgColor} ${textColor} max-w-md`}>
@@ -147,7 +147,7 @@ const MyBookingsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-main)]">
       <Navbar />
       
       {/* 通知 */}
@@ -157,8 +157,8 @@ const MyBookingsPage: React.FC = () => {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 页面标题 */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">我的预约</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-[var(--text-main)]">我的预约</h1>
+          <p className="text-[var(--text-secondary)] mt-2">
             查看和管理您的所有电动车租赁预约
           </p>
         </div>
@@ -169,10 +169,10 @@ const MyBookingsPage: React.FC = () => {
         {/* 加载状态指示器 */}
         {cancelMutation.isPending && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 shadow-xl">
+            <div className="bg-[var(--bg-card)] rounded-lg p-6 shadow-xl border border-[var(--border-line)]">
               <div className="flex items-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
-                <span className="text-gray-700">正在处理...</span>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--mclaren-orange)] mr-3"></div>
+                <span className="text-[var(--text-secondary)]">正在处理...</span>
               </div>
             </div>
           </div>

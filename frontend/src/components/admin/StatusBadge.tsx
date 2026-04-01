@@ -3,8 +3,8 @@ import { Scooter } from '../../types'
 type Status = Scooter['status']
 
 const styles: Record<Status, string> = {
-  AVAILABLE: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-  UNAVAILABLE: 'bg-slate-100 text-slate-700 border-slate-200',
+  AVAILABLE: 'bg-emerald-500/15 text-emerald-200 border-emerald-400/30',
+  UNAVAILABLE: 'bg-slate-500/15 text-slate-200 border-slate-400/30',
 }
 
 const labels: Record<Status, string> = {

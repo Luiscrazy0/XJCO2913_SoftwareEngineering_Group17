@@ -31,14 +31,14 @@ export default function TestScooterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+    <div className="min-h-screen bg-[var(--bg-main)] p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">车辆发现页 - 组件测试</h1>
-        <p className="text-gray-600 mb-8">此页面用于测试ScooterCard组件和布局</p>
+        <h1 className="text-3xl font-bold text-[var(--text-main)] mb-2">车辆发现页 - 组件测试</h1>
+        <p className="text-[var(--text-secondary)] mb-8">此页面用于测试ScooterCard组件和布局</p>
         
-        <div className="mb-8 p-4 bg-blue-50 rounded-lg">
-          <h2 className="text-lg font-semibold text-blue-800 mb-2">测试说明</h2>
-          <ul className="list-disc pl-5 text-blue-700">
+        <div className="mb-8 p-4 bg-[var(--bg-input)] rounded-lg border border-[var(--border-line)]">
+          <h2 className="text-lg font-semibold text-[var(--text-main)] mb-2">测试说明</h2>
+          <ul className="list-disc pl-5 text-[var(--text-secondary)]">
             <li>共 {testScooters.length} 辆测试车辆</li>
             <li>可用车辆: {testScooters.filter(s => s.status === 'AVAILABLE').length} 辆</li>
             <li>不可用车辆: {testScooters.filter(s => s.status === 'UNAVAILABLE').length} 辆</li>
@@ -58,20 +58,20 @@ export default function TestScooterPage() {
         </div>
 
         {/* 状态说明 */}
-        <div className="mt-12 p-6 bg-white rounded-xl shadow-sm border border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">状态说明</h2>
+        <div className="mt-12 p-6 bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-card)] border border-[var(--border-line)]">
+          <h2 className="text-xl font-bold text-[var(--text-main)] mb-4">状态说明</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-center">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 mr-3">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/15 text-emerald-200 mr-3 border border-emerald-400/30">
                 可用
               </span>
-              <span className="text-gray-700">车辆处于可用状态，可以预约</span>
+              <span className="text-[var(--text-secondary)]">车辆处于可用状态，可以预约</span>
             </div>
             <div className="flex items-center">
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 mr-3">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-rose-500/15 text-rose-200 mr-3 border border-rose-400/30">
                 不可用
               </span>
-              <span className="text-gray-700">车辆处于不可用状态，无法预约</span>
+              <span className="text-[var(--text-secondary)]">车辆处于不可用状态，无法预约</span>
             </div>
           </div>
         </div>
