@@ -215,37 +215,37 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
       aria-modal="true"
       onClick={handleOverlayClick}
     >
-      <div className="relative w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl ring-1 ring-slate-200">
+      <div className="relative w-full max-w-2xl rounded-3xl bg-[var(--bg-card)] p-6 shadow-2xl ring-1 ring-[var(--border-line)]">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-full bg-slate-100 p-2 text-slate-500 transition hover:bg-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-400"
+          className="absolute right-4 top-4 rounded-full bg-[var(--bg-input)] p-2 text-[var(--text-secondary)] transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/40"
         >
           <span className="sr-only">关闭弹窗</span>
           ×
         </button>
 
-        <h2 className="text-2xl font-bold text-slate-900">预约滑板车</h2>
-        <p className="mt-1 text-sm text-slate-500">确认信息后提交预约请求</p>
+        <h2 className="text-2xl font-bold text-[var(--text-main)]">预约滑板车</h2>
+        <p className="mt-1 text-sm text-[var(--text-secondary)]">确认信息后提交预约请求</p>
 
-        <section className="mt-6 rounded-2xl border border-slate-100 bg-slate-50 p-4">
-          <p className="text-xs uppercase tracking-wide text-slate-500">车辆信息</p>
+        <section className="mt-6 rounded-2xl border border-[var(--border-line)] bg-[var(--bg-input)] p-4">
+          <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)]">车辆信息</p>
           <div className="mt-2 flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-slate-800">ID</p>
-              <p className="text-xs text-slate-500">{scooter.id}</p>
+              <p className="text-sm font-medium text-[var(--text-main)]">ID</p>
+              <p className="text-xs text-[var(--text-secondary)]">{scooter.id}</p>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-800">位置</p>
-              <p className="text-xs text-slate-500">{scooter.location}</p>
+              <p className="text-sm font-medium text-[var(--text-main)]">位置</p>
+              <p className="text-xs text-[var(--text-secondary)]">{scooter.location}</p>
             </div>
           </div>
         </section>
 
         <section className="mt-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold text-slate-700">租赁类型</h3>
-            <span className="text-xs text-slate-500">总共 {selectedDuration / 60} 小时</span>
+            <h3 className="text-sm font-semibold text-[var(--text-main)]">租赁类型</h3>
+            <span className="text-xs text-[var(--text-secondary)]">总共 {selectedDuration / 60} 小时</span>
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             {hireTypeOptions.map((option) => {
@@ -258,12 +258,12 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
                   onClick={() => handleHireTypeChange(option.value)}
                   className={`flex flex-col rounded-2xl border px-4 py-3 text-left transition ${
                     isSelected
-                      ? 'border-emerald-300 bg-emerald-50 text-emerald-900 shadow-sm'
-                      : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
+                      ? 'border-[var(--mclaren-orange)] bg-[rgba(255,106,0,0.12)] text-[var(--text-main)] shadow-sm'
+                      : 'border-[var(--border-line)] bg-[var(--bg-card)] text-[var(--text-secondary)] hover:border-[var(--mclaren-orange)]'
                   }`}
                 >
                   <span className="text-base font-semibold">{option.label}</span>
-                  <span className="text-xs text-slate-500">{option.description}</span>
+                  <span className="text-xs text-[var(--text-secondary)]">{option.description}</span>
                 </button>
               )
             })}
@@ -272,7 +272,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
 
         <form onSubmit={handleSubmit}>
           <section className="mt-6">
-            <label htmlFor="startTime" className="text-sm font-semibold text-slate-700">
+            <label htmlFor="startTime" className="text-sm font-semibold text-[var(--text-main)]">
               开始时间
             </label>
             <input
@@ -282,9 +282,9 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
               value={startTime}
               min={minStartTime}
               onChange={(event) => setStartTime(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+              className="mt-2 w-full rounded-2xl border border-[var(--border-line)] bg-[var(--bg-input)] px-4 py-3 text-sm text-[var(--text-main)] transition focus:border-[var(--mclaren-orange)] focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/20"
             />
-            <p className="mt-1 text-xs text-slate-500">支持未来 2 周内的开始时间</p>
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">支持未来 2 周内的开始时间</p>
           </section>
 
           {statusMessage && (
@@ -292,10 +292,10 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
               aria-live="polite"
               className={`mt-6 rounded-2xl px-4 py-3 text-sm ${
                 statusState === 'loading'
-                  ? 'bg-slate-100 text-slate-700'
+                  ? 'bg-[var(--bg-input)] text-[var(--text-secondary)]'
                   : statusState === 'success'
-                  ? 'bg-emerald-50 text-emerald-700'
-                  : 'bg-rose-50 text-rose-700'
+                  ? 'bg-emerald-500/15 text-emerald-200'
+                  : 'bg-rose-500/15 text-rose-200'
               }`}
             >
               {statusMessage}
@@ -306,7 +306,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
             <button
               type="button"
               onClick={onClose}
-              className="rounded-2xl border border-slate-200 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300"
+              className="rounded-2xl border border-[var(--border-line)] px-5 py-3 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--mclaren-orange)]"
             >
               取消
             </button>
@@ -315,8 +315,8 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
               disabled={isPending}
               className={`rounded-2xl px-5 py-3 text-sm font-semibold text-white transition ${
                 isPending
-                  ? 'cursor-not-allowed bg-emerald-200'
-                  : 'bg-emerald-500 hover:bg-emerald-600 focus:ring-2 focus:ring-emerald-300'
+                  ? 'cursor-not-allowed bg-[var(--bg-input)] text-[var(--text-secondary)]'
+                  : 'bg-[var(--mclaren-orange)] hover:brightness-110 focus:ring-2 focus:ring-[var(--mclaren-orange)]/30'
               }`}
             >
               {isPending ? '处理中...' : '确认预约'}

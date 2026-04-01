@@ -25,8 +25,8 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   // Show loading state while checking auth
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
-        <div className="w-10 h-10 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" aria-label="loading" />
+      <div className="flex items-center justify-center h-screen bg-[var(--bg-main)]">
+        <div className="w-10 h-10 rounded-full border-4 border-[var(--mclaren-orange)] border-t-transparent animate-spin" aria-label="loading" />
       </div>
     )
   }

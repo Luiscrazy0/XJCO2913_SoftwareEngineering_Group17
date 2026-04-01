@@ -60,20 +60,20 @@ const BookingStats: React.FC<BookingStatsProps> = ({ bookings }) => {
 
   return (
     <div className="mb-8">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">预约统计</h2>
+      <h2 className="text-2xl font-bold text-[var(--text-main)] mb-6">预约统计</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
-          <div key={index} className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+          <div key={index} className="bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-card)] border border-[var(--border-line)] p-6">
             <div className="flex items-center justify-between mb-4">
               <div className={`p-3 rounded-lg ${stat.color}`}>
                 {stat.icon}
               </div>
               <div className="text-right">
-                <div className="text-3xl font-bold text-gray-900">{stat.value}</div>
-                <div className="text-sm text-gray-600">{stat.title}</div>
+                <div className="text-3xl font-bold text-[var(--text-main)]">{stat.value}</div>
+                <div className="text-sm text-[var(--text-secondary)]">{stat.title}</div>
               </div>
             </div>
-            <div className="text-xs text-gray-500">
+            <div className="text-xs text-[var(--text-secondary)]">
               {stat.title === '总预约数' && '所有预约的总数'}
               {stat.title === '待支付' && '等待支付的预约'}
               {stat.title === '已确认' && '已确认的预约'}
