@@ -59,6 +59,7 @@ coverage/
 .env.production.local
 .env.local
 .env.*
+!.env.example
 
 # temp directory
 .temp/

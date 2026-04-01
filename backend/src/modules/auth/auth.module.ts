@@ -10,7 +10,7 @@ import { RolesGuard } from './guards/roles.guard';
   imports: [
     UserModule,
     JwtModule.register({
-      secret: 'secretKey', // 后续用 env 文件
+      secret: process.env.JWT_SECRET ?? 'secretKey',
       signOptions: { expiresIn: '1h' },
     }),
   ],
