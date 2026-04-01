@@ -9,7 +9,7 @@
     "build": "nest build",
     "seed": "ts-node prisma/seed.ts",
     "db:migrate": "prisma migrate deploy",
-    "db:reset": "prisma migrate reset --force --skip-seed && npm run seed",
+    "db:reset": "prisma migrate reset --force  && npm run seed",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",

@@ -3,6 +3,7 @@ import * as bcrypt from 'bcrypt';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, BookingStatus, HireType, Role, ScooterStatus } from '@prisma/client';
 
+
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
