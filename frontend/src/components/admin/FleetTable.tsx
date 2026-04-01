@@ -12,7 +12,7 @@ interface FleetTableProps {
 
 export function FleetTable({ scooters, onToggleStatus, onDelete, updatingId, deletingId }: FleetTableProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-[var(--border-line)] bg-[var(--bg-card)] shadow-[var(--shadow-card)]">
+    <div className="surface-card overflow-hidden">
       <table className="min-w-full divide-y divide-[var(--border-line)]">
         <thead className="bg-[var(--bg-input)]">
           <tr className="text-left text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">

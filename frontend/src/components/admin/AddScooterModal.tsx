@@ -31,7 +31,7 @@ export function AddScooterModal({ isOpen, onClose, onSubmit, isSubmitting }: Add
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
-      <div className="w-full max-w-lg rounded-2xl bg-[var(--bg-card)] shadow-xl border border-[var(--border-line)]">
+      <div className="w-full max-w-lg rounded-2xl surface-card">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-line)]">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-secondary)]">新增车辆</p>
@@ -50,7 +50,7 @@ export function AddScooterModal({ isOpen, onClose, onSubmit, isSubmitting }: Add
           <label className="block text-sm font-medium text-[var(--text-main)]">
             车辆位置
             <input
-              className="mt-2 w-full rounded-lg border border-[var(--border-line)] bg-[var(--bg-input)] px-3 py-2 text-sm text-[var(--text-main)] focus:border-[var(--mclaren-orange)] focus:ring-2 focus:ring-[var(--mclaren-orange)]/20 outline-none"
+              className="mt-2 w-full surface-inset px-3 py-2 text-sm text-[var(--text-main)] focus:border-[var(--mclaren-orange)] focus:ring-2 focus:ring-[var(--mclaren-orange)]/20 outline-none"
               placeholder="例：Liverpool Lime Street - Gate B"
               value={location}
               onChange={(e) => setLocation(e.target.value)}

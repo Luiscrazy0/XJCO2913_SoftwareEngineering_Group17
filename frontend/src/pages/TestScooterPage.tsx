@@ -58,7 +58,7 @@ export default function TestScooterPage() {
         </div>
 
         {/* 状态说明 */}
-        <div className="mt-12 p-6 bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-card)] border border-[var(--border-line)]">
+        <div className="mt-12 p-6 surface-card surface-lift rounded-xl">
           <h2 className="text-xl font-bold text-[var(--text-main)] mb-4">状态说明</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex items-center">

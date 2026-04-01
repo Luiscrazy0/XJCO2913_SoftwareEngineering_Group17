@@ -10,17 +10,17 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const baseClasses =
-  'inline-flex items-center justify-center font-semibold rounded-xl transition disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mclaren-orange)]/40'
+  'relative inline-flex items-center justify-center font-semibold rounded-xl transition-transform duration-150 ease-out disabled:opacity-60 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--mclaren-orange)]/40 motion-reduce:transform-none'
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    'bg-[var(--mclaren-orange)] text-white border border-[#FFAC60] shadow-[var(--shadow-3d)] hover:brightness-110 active:translate-y-[2px]',
+    'bg-[linear-gradient(180deg,var(--mclaren-orange-hover),var(--mclaren-orange))] text-white border border-[#FFAC60] shadow-[var(--shadow-3d)] hover:brightness-110 hover:-translate-y-0.5 hover:shadow-[var(--shadow-3d-hover)] active:translate-y-[1px]',
   secondary:
-    'bg-transparent text-[var(--text-main)] border border-[var(--border-line)] hover:border-[var(--mclaren-orange)] hover:text-white',
+    'bg-[var(--bg-card)] text-[var(--text-main)] border border-[var(--border-line)] hover:border-[var(--mclaren-orange)] hover:-translate-y-0.5 hover:shadow-[var(--shadow-card)]',
   danger:
-    'bg-rose-600 text-white border border-rose-500 hover:bg-rose-500',
+    'bg-rose-600 text-white border border-rose-500 hover:bg-rose-500 hover:-translate-y-0.5',
   ghost:
-    'bg-transparent text-[var(--text-main)] hover:bg-white/5',
+    'bg-transparent text-[var(--text-main)] hover:bg-white/5 hover:-translate-y-0.5',
 }
 
 const sizeClasses: Record<ButtonSize, string> = {

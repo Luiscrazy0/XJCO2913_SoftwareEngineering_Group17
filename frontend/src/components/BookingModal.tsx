@@ -215,7 +215,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
       aria-modal="true"
       onClick={handleOverlayClick}
     >
-      <div className="relative w-full max-w-2xl rounded-3xl bg-[var(--bg-card)] p-6 shadow-2xl ring-1 ring-[var(--border-line)]">
+      <div className="relative w-full max-w-2xl rounded-3xl surface-card p-6 ring-1 ring-[var(--border-line)]">
         <button
           type="button"
           onClick={onClose}

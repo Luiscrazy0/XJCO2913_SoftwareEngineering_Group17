@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 export default function ForbiddenPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-[var(--bg-main)] px-6">
-      <div className="bg-[var(--bg-card)] shadow-[var(--shadow-card)] rounded-lg p-10 max-w-lg text-center border border-[var(--border-line)]">
+      <div className="surface-card surface-lift rounded-lg p-10 max-w-lg text-center">
         <div className="text-5xl mb-4" aria-hidden>
           🔒
         </div>
