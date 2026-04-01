@@ -1,6 +1,7 @@
 import React from 'react'
 import { Booking } from '../types'
 import dayjs from 'dayjs'
+import Badge from './ui/Badge'
 
 interface BookingCardProps {
   booking: Booking
@@ -10,45 +11,28 @@ interface BookingCardProps {
 
 const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay }) => {
   // 状态映射函数
-  const mapBookingStatus = (status: Booking['status']) => {
-    switch (status) {
-      case 'PENDING_PAYMENT':
-        return 'PENDING'
-      case 'CONFIRMED':
-        return 'CONFIRMED'
-      case 'CANCELLED':
-        return 'CANCELLED'
-      case 'COMPLETED':
-        return 'COMPLETED'
-    }
-  }
-
-  // 获取状态样式
-  const getStatusStyle = (status: Booking['status']) => {
+  // 获取状态信息
+  const getStatusMeta = (status: Booking['status']) => {
     switch (status) {
       case 'PENDING_PAYMENT':
         return {
-          bg: 'bg-amber-500/15',
-          text: 'text-amber-200',
-          border: 'border-amber-400/30'
+          label: 'PENDING',
+          variant: 'warning' as const,
         }
       case 'CONFIRMED':
         return {
-          bg: 'bg-emerald-500/15',
-          text: 'text-emerald-200',
-          border: 'border-emerald-400/30'
+          label: 'CONFIRMED',
+          variant: 'success' as const,
         }
       case 'CANCELLED':
         return {
-          bg: 'bg-rose-500/15',
-          text: 'text-rose-200',
-          border: 'border-rose-400/30'
+          label: 'CANCELLED',
+          variant: 'danger' as const,
         }
       case 'COMPLETED':
         return {
-          bg: 'bg-slate-500/15',
-          text: 'text-slate-200',
-          border: 'border-slate-400/30'
+          label: 'COMPLETED',
+          variant: 'neutral' as const,
         }
     }
   }
@@ -77,18 +61,15 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay }) =
   const canCancel = booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED'
   const canPay = booking.status === 'PENDING_PAYMENT'
 
-  const statusStyle = getStatusStyle(booking.status)
-  const uiStatus = mapBookingStatus(booking.status)
+  const statusMeta = getStatusMeta(booking.status)
 
   return (
-    <div className="bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-card)] overflow-hidden border border-[var(--border-line)] hover:shadow-lg transition-shadow duration-300">
+    <div className="surface-card surface-lift overflow-hidden">
       {/* 头部状态栏 */}
       <div className="px-6 py-4 border-b border-[var(--border-line)]">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${statusStyle.bg} ${statusStyle.text} ${statusStyle.border}`}>
-              {uiStatus}
-            </span>
+            <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
             <span className="text-sm text-[var(--text-secondary)] font-mono">
               ID: {booking.id.substring(0, 8)}...
             </span>

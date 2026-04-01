@@ -29,7 +29,7 @@ export default function Input({
       <div className="relative">
         <input
           id={inputId}
-          className={`w-full rounded-xl border border-[var(--border-line)] bg-[var(--bg-input)] px-4 py-3 text-sm text-[var(--text-main)] transition focus:border-[var(--mclaren-orange)] focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/20 ${className}`}
+          className={`surface-inset w-full px-4 py-3 text-sm text-[var(--text-main)] transition focus:border-[var(--mclaren-orange)] focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/20 ${className}`}
           {...props}
         />
         {rightElement ? (

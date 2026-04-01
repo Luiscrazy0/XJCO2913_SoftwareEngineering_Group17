@@ -1,4 +1,5 @@
 import React from 'react'
+import Badge from './ui/Badge'
 import { Scooter } from '../types'
 
 interface ScooterCardProps {
@@ -23,19 +24,19 @@ const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
       case 'AVAILABLE':
         return {
           text: '可用',
-          color: 'bg-emerald-500/15 text-emerald-200',
+          variant: 'success' as const,
           borderColor: 'border-emerald-400/40'
         }
       case 'UNAVAILABLE':
         return {
           text: '不可用',
-          color: 'bg-rose-500/15 text-rose-200',
+          variant: 'danger' as const,
           borderColor: 'border-rose-400/40'
         }
       default:
         return {
           text: '未知',
-          color: 'bg-white/10 text-[var(--text-secondary)]',
+          variant: 'neutral' as const,
           borderColor: 'border-[var(--border-line)]'
         }
     }
@@ -44,7 +45,7 @@ const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
   const statusInfo = getStatusInfo()
 
   return (
-    <div className={`bg-[var(--bg-card)] rounded-xl shadow-[var(--shadow-card)] overflow-hidden border ${statusInfo.borderColor} hover:shadow-lg transition-shadow duration-300`}>
+    <div className={`surface-card surface-lift overflow-hidden border ${statusInfo.borderColor}`}>
       {/* 车辆图片区域 */}
       <div className="h-48 bg-[var(--bg-input)] flex items-center justify-center">
         <div className="text-center">
@@ -59,9 +60,7 @@ const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
       <div className="p-6">
         {/* 状态标签 */}
         <div className="flex justify-between items-start mb-4">
-          <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${statusInfo.color}`}>
-            {statusInfo.text}
-          </span>
+          <Badge variant={statusInfo.variant}>{statusInfo.text}</Badge>
           <span className="text-xs text-[var(--text-secondary)] font-mono">ID: {scooter.id.substring(0, 8)}...</span>
         </div>
 

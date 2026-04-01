@@ -19,7 +19,16 @@
   
   /* 阴影与深度 */
   --shadow-3d: 0 6px 0 var(--mclaren-orange-depth), 0 12px 20px rgba(0,0,0,0.5);
+  --shadow-3d-hover: 0 8px 0 var(--mclaren-orange-depth), 0 16px 28px rgba(0,0,0,0.6);
   --shadow-card: 0 8px 24px rgba(0,0,0,0.35);
+  --shadow-card-hover: 0 16px 40px rgba(0,0,0,0.45);
+
+  /* 圆角与动效 */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
 
   /* Auth 页面变量（与现有 inline style 对齐） */
   --auth-bg: var(--bg-main);
@@ -68,6 +77,32 @@ body {
   flex-direction: column;
   text-align: left; /* 移除居中文字 */
   border-inline: none; /* 移除侧边细线 */
+}
+
+/* 2.5 原子化表面与动效 */
+.surface-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    border-color var(--motion-fast) ease;
+}
+
+.surface-lift:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 106, 0, 0.35);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.surface-inset {
+  background: var(--bg-input);
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
 }
 
 /* 3. 迈凯伦风排版 */
