@@ -4,6 +4,7 @@ import { scootersApi } from '../api/scooters'
 import ScooterCard from '../components/ScooterCard'
 import BookingModal from '../components/BookingModal'
 import Navbar from '../components/Navbar'
+import Button from '../components/ui/Button'
 import { Scooter } from '../types'
 
 export default function ScooterListPage() {
@@ -99,12 +100,9 @@ export default function ScooterListPage() {
               </div>
             </div>
             <div className="mt-4">
-              <button
-                onClick={() => refetch()}
-                className="inline-flex items-center px-3 py-2 border border-rose-500/30 text-sm leading-4 font-medium rounded-md text-rose-200 bg-rose-500/10 hover:bg-rose-500/20 focus:outline-none focus:ring-2 focus:ring-rose-500/40"
-              >
+              <Button variant="danger" size="sm" onClick={() => refetch()}>
                 重试
-              </button>
+              </Button>
             </div>
           </div>
         </div>
