@@ -31,13 +31,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const value = useMemo(() => ({ showToast }), [showToast])
 
   const getToastStyle = (type: ToastType) => {
+    const baseStyle = 'bg-[#111827] border-[#FF6A00]/60 text-slate-100'
     switch (type) {
       case 'success':
-        return 'bg-green-100 text-green-800 border-green-200'
+        return `${baseStyle} text-emerald-200`
       case 'error':
-        return 'bg-red-100 text-red-800 border-red-200'
+        return `${baseStyle} text-rose-200`
       default:
-        return 'bg-blue-100 text-blue-800 border-blue-200'
+        return `${baseStyle} text-sky-200`
     }
   }
 
@@ -66,4 +67,3 @@ export function useToast() {
   }
   return context
 }
-

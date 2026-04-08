@@ -1,3 +1,5 @@
+//API 模块
+// 封装了与后端预订相关的 API 调用，提供获取预订列表、创建预订和取消预订等功能的接口，
 import axiosClient from '../utils/axiosClient'
 import { Booking, ApiResponse, HireType } from '../types'
 

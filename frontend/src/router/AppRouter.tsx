@@ -1,3 +1,4 @@
+//路由表 定义了应用程序中的不同页面和访问权限
 import { BrowserRouter, Routes, Route } from "react-router-dom"
 
 // Importing the pages

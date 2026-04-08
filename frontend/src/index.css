@@ -1,194 +1,185 @@
 @import "tailwindcss";
 
+/* 1. 定义迈凯伦核心设计变量 */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* 品牌色体系 */
+  --mclaren-orange: #FF6A00;
+  --mclaren-orange-hover: #FF8A00;
+  --mclaren-orange-depth: #C95000;
+  
+  /* 深色背景体系 */
+  --bg-main: #0E0E0E;         /* 纯黑底色 */
+  --bg-card: #111827;         /* 卡片暗灰 */
+  --bg-input: #080808;        /* 输入框深黑 */
+  
+  /* 文字与边框 */
+  --text-main: #F8FAFC;       /* 主文字白 */
+  --text-secondary: #94A3B8;  /* 辅助文字灰 */
+  --border-line: #2D3748;     /* 迈凯伦灰色细线区分 */
+  
+  /* 阴影与深度 */
+  --shadow-3d: 0 6px 0 var(--mclaren-orange-depth), 0 12px 20px rgba(0,0,0,0.5);
+  --shadow-3d-hover: 0 8px 0 var(--mclaren-orange-depth), 0 16px 28px rgba(0,0,0,0.6);
+  --shadow-card: 0 8px 24px rgba(0,0,0,0.35);
+  --shadow-card-hover: 0 16px 40px rgba(0,0,0,0.45);
 
-  /* Auth System Color Tokens */
-  --auth-bg: #f8fafc;
-  --auth-card-bg: #FFFFFF;
-  --auth-text-main: #0F172A;
-  --auth-text-secondary: #64748B;
-  --auth-tab-active: #22C55E;
-  --auth-tab-inactive: #64748B;
-  --auth-tab-hover: #16A34A;
-  --auth-input-bg: #FFFFFF;
-  --auth-input-border: #E2E8F0;
-  --auth-input-text: #0F172A;
-  --auth-input-placeholder: #94A3B8;
-  --auth-input-focus: #22C55E;
-  --auth-input-error: #EF4444;
-  --auth-button-primary: #22C55E;
-  --auth-button-primary-hover: #16A34A;
-  --auth-button-primary-active: #15803D;
-  --auth-button-disabled: #86EFAC;
-  --auth-button-text: #FFFFFF;
-  --auth-link: #3B82F6;
-  --auth-link-hover: #2563EB;
-  --auth-error: #EF4444;
-  --auth-warning: #F59E0B;
-  --auth-success: #10B981;
-  --auth-info: #3B82F6;
+  /* 圆角与动效 */
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --motion-fast: 140ms;
+  --motion-base: 220ms;
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Auth 页面变量（与现有 inline style 对齐） */
+  --auth-bg: var(--bg-main);
+  --auth-card-bg: var(--bg-card);
+  --auth-text-main: var(--text-main);
+  --auth-text-secondary: var(--text-secondary);
+  --auth-input-bg: var(--bg-input);
+  --auth-input-border: var(--border-line);
+  --auth-input-text: var(--text-main);
+  --auth-input-focus: var(--mclaren-orange);
+  --auth-input-error: #ef4444;
+  --auth-button-primary: var(--mclaren-orange);
+  --auth-button-disabled: #4b5563;
+  --auth-button-text: #ffffff;
+  --auth-tab-active: var(--mclaren-orange);
+  --auth-tab-inactive: var(--text-secondary);
+  --auth-link: var(--mclaren-orange);
+  --auth-error: #ef4444;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  /* 字体配置 */
+  --sans: "Inter", system-ui, -apple-system, sans-serif;
+  --mono: "Maple Mono NF CN", "JetBrains Mono", ui-monospace, monospace;
 
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  /* 默认基础配置 */
+  background: var(--bg-main);
+  color: var(--text-main);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.5;
+  color-scheme: dark; /* 强制声明为深色模式 */
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-
-    /* Dark Mode Auth System Color Tokens */
-    --auth-bg: #0F172A;
-    --auth-card-bg: #1E293B;
-    --auth-text-main: #F1F5F9;
-    --auth-text-secondary: #CBD5F5;
-    --auth-input-bg: #1E293B;
-    --auth-input-border: #334155;
-    --auth-input-focus: #22C55E;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+/* 2. 清理 P0 提到的模板遗留布局 */
+body {
+  margin: 0;
+  background-color: var(--bg-main);
 }
 
 #root {
-  width: 1126px;
+  /* 移除固定的 1126px 宽度和居中边框 */
+  width: 100%;
   max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
+  margin: 0;
   min-height: 100svh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
+  text-align: left; /* 移除居中文字 */
+  border-inline: none; /* 移除侧边细线 */
 }
 
-body {
-  margin: 0;
+/* 2.5 原子化表面与动效 */
+.surface-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--motion-fast) ease,
+    box-shadow var(--motion-fast) ease,
+    border-color var(--motion-fast) ease;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+.surface-lift:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 106, 0, 0.35);
+  box-shadow: var(--shadow-card-hover);
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
-  margin: 0;
+.surface-inset {
+  background: var(--bg-input);
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-md);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+  transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
 }
 
-code,
-.counter {
+/* 3. 迈凯伦风排版 */
+h1, h2, h3 {
+  color: var(--text-main);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+code, .counter, .data-value {
   font-family: var(--mono);
+  background: var(--bg-input);
+  color: var(--mclaren-orange);
+}
+
+/* 4. 核心组件美化：3D 按钮 (替换原有的 .auth-button) */
+.mclaren-btn-3d {
+  background: linear-gradient(180deg, var(--mclaren-orange-hover) 0%, var(--mclaren-orange) 100%);
+  color: white;
+  border: 1px solid #FFAC60;
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-weight: 700;
+  text-transform: uppercase;
+  transition: all 0.1s ease;
+  box-shadow: var(--shadow-3d);
+  cursor: pointer;
   display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+  align-items: center;
+  justify-content: center;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+.mclaren-btn-3d:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 0 var(--mclaren-orange-depth), 0 15px 25px rgba(0,0,0,0.6);
 }
 
-/* AuthPage specific styles */
-.inactive-tab:hover {
-  color: var(--auth-tab-hover, #16A34A) !important;
+.mclaren-btn-3d:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 var(--mclaren-orange-depth), 0 5px 10px rgba(0,0,0,0.4);
 }
 
+.mclaren-btn-3d:disabled {
+  background: #374151;
+  border-color: #4B5563;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* 5. 灰色细线区分 (Divider) */
+.mclaren-divider {
+  border-bottom: 1px solid var(--border-line);
+}
+
+/* 6. 兼容旧有的 Auth 类名以确保不直接挂掉，但重定向到新变量 */
 .active-tab {
-  color: var(--auth-tab-active, #22C55E) !important;
-  font-weight: 600 !important;
+  color: var(--mclaren-orange) !important;
+  border-bottom: 2px solid var(--mclaren-orange);
 }
 
-.active-tab::after {
-  content: "" !important;
-  position: absolute !important;
-  bottom: -1px !important;
-  left: 0 !important;
-  right: 0 !important;
-  height: 2px !important;
-  background-color: var(--auth-tab-active, #22C55E) !important;
-  transform: scaleX(1) !important;
-  transition: transform 0.2s ease !important;
+.auth-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-line);
+  box-shadow: var(--shadow-card);
+  border-radius: 16px;
 }
 
-/* Input placeholder styling */
-input::placeholder {
-  color: var(--auth-input-placeholder, #94A3B8) !important;
+input {
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-line) !important;
+  color: var(--text-main) !important;
 }
 
-/* Button hover states */
-.auth-button:hover:not(:disabled) {
-  background-color: var(--auth-button-primary-hover, #16A34A) !important;
-}
-
-.auth-button:active:not(:disabled) {
-  background-color: var(--auth-button-primary-active, #15803D) !important;
-}
-
-.auth-button:disabled {
-  background-color: var(--auth-button-disabled, #86EFAC) !important;
-  cursor: not-allowed !important;
-}
-
-/* Link hover states */
-.auth-link:hover {
-  color: var(--auth-link-hover, #2563EB) !important;
+input:focus {
+  border-color: var(--mclaren-orange) !important;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(255, 106, 0, 0.2);
 }
