@@ -1,5 +1,5 @@
 // backend/src/modules/scooter/scooter.service.ts
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScooterStatus } from '@prisma/client';
 
@@ -32,6 +32,12 @@ export class ScooterService {
   }
 
   async deleteScooter(id: string) {
+    const bookingCount = await this.prisma.booking.count({
+      where: { scooterId: id },
+    });
+    if (bookingCount > 0) {
+      throw new BadRequestException('Scooter has existing bookings');
+    }
     return this.prisma.scooter.delete({
       where: { id },
     });

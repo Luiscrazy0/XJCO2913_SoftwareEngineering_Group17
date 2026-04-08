@@ -1,3 +1,5 @@
+//鉴权门禁组件，确保只有经过身份验证的用户才能访问特定页面，
+//并根据用户角色进行访问控制
 import { Navigate, useLocation } from 'react-router-dom'
 import { useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
@@ -23,8 +25,8 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
   // Show loading state while checking auth
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-slate-50">
-        <div className="w-10 h-10 rounded-full border-4 border-blue-500 border-t-transparent animate-spin" aria-label="loading" />
+      <div className="flex items-center justify-center h-screen bg-[var(--bg-main)]">
+        <div className="w-10 h-10 rounded-full border-4 border-[var(--mclaren-orange)] border-t-transparent animate-spin" aria-label="loading" />
       </div>
     )
   }

@@ -88,11 +88,11 @@ export default function AdminFleetPage() {
   // Loading
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[var(--bg-main)]">
         <Navbar />
         <div className="max-w-6xl mx-auto px-4 py-16 text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
-          <p className="mt-4 text-slate-700">正在加载车队数据…</p>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[var(--mclaren-orange)] border-t-transparent" />
+          <p className="mt-4 text-[var(--text-secondary)]">正在加载车队数据…</p>
         </div>
       </div>
     )
@@ -102,12 +102,12 @@ export default function AdminFleetPage() {
   if (isError) {
     const message = error instanceof Error ? error.message : '未知错误'
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-[var(--bg-main)]">
         <Navbar />
         <div className="max-w-4xl mx-auto px-4 py-16">
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-red-800">加载失败</h2>
-            <p className="mt-2 text-red-700">{message}</p>
+          <div className="rounded-2xl border border-rose-500/40 bg-rose-500/15 p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-rose-200">加载失败</h2>
+            <p className="mt-2 text-rose-200/80">{message}</p>
             <div className="mt-4 flex gap-3">
               <button
                 onClick={() => refetch()}
@@ -117,7 +117,7 @@ export default function AdminFleetPage() {
               </button>
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="px-4 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-white"
+                className="px-4 py-2 rounded-lg border border-rose-500/40 text-rose-200 hover:bg-rose-500/10"
               >
                 直接添加车辆
               </button>
@@ -131,28 +131,28 @@ export default function AdminFleetPage() {
   const hasData = scooters.length > 0
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[var(--bg-main)]">
       <Navbar />
 
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-10 space-y-8">
         <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-slate-500">Admin · Fleet</p>
-            <h1 className="text-3xl font-bold text-slate-900">车队管理后台</h1>
-            <p className="mt-1 text-slate-600">
+            <p className="text-xs uppercase tracking-[0.25em] text-[var(--text-secondary)]">Admin · Fleet</p>
+            <h1 className="text-3xl font-bold text-[var(--text-main)]">车队管理后台</h1>
+            <p className="mt-1 text-[var(--text-secondary)]">
               查看车辆、添加新车、切换可用性，并保持前后端权限一致。
             </p>
           </div>
           <div className="flex gap-3">
             <button
               onClick={() => refetch()}
-              className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-800 hover:bg-white shadow-sm"
+              className="rounded-lg border border-[var(--border-line)] px-4 py-2 text-sm font-semibold text-[var(--text-main)] hover:border-[var(--mclaren-orange)] hover:bg-white/5 shadow-sm"
             >
               刷新
             </button>
             <button
               onClick={() => setIsModalOpen(true)}
-              className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700"
+              className="rounded-lg bg-[var(--mclaren-orange)] px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
             >
               + 添加车辆
             </button>
@@ -162,14 +162,14 @@ export default function AdminFleetPage() {
         {hasData ? (
           <>
             <FleetStats scooters={scooters} />
-            <div className="rounded-2xl border border-slate-200 bg-gradient-to-r from-white via-white to-slate-50 p-5 shadow-sm">
+            <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
               <div className="flex items-center justify-between pb-3">
                 <div>
-                  <p className="text-xs uppercase tracking-[0.2em] text-slate-500">Fleet Table</p>
-                  <h2 className="text-xl font-semibold text-slate-900">车辆列表</h2>
+                  <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Fleet Table</p>
+                  <h2 className="text-xl font-semibold text-[var(--text-main)]">车辆列表</h2>
                 </div>
-                <div className="text-sm text-slate-500">
-                  当前共 <span className="font-semibold text-slate-800">{scooters.length}</span> 辆
+                <div className="text-sm text-[var(--text-secondary)]">
+                  当前共 <span className="font-semibold text-[var(--text-main)]">{scooters.length}</span> 辆
                 </div>
               </div>
               <FleetTable 
@@ -182,18 +182,18 @@ export default function AdminFleetPage() {
             </div>
           </>
         ) : (
-          <div className="rounded-2xl border border-dashed border-slate-300 bg-white p-10 text-center shadow-sm">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-50 text-emerald-600">
+          <div className="rounded-2xl border border-dashed border-[var(--border-line)] bg-[var(--bg-card)] p-10 text-center shadow-[var(--shadow-card)]">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-200">
               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m6-6H6" />
               </svg>
             </div>
-            <h3 className="mt-4 text-lg font-semibold text-slate-900">还没有车辆</h3>
-            <p className="mt-2 text-slate-600">点击下方按钮快速添加第一辆车。</p>
+            <h3 className="mt-4 text-lg font-semibold text-[var(--text-main)]">还没有车辆</h3>
+            <p className="mt-2 text-[var(--text-secondary)]">点击下方按钮快速添加第一辆车。</p>
             <div className="mt-4">
               <button
                 onClick={() => setIsModalOpen(true)}
-                className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-semibold text-white shadow hover:bg-emerald-700"
+                className="rounded-lg bg-[var(--mclaren-orange)] px-5 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
               >
                 添加车辆
               </button>

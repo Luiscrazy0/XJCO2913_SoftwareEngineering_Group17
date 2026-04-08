@@ -25,16 +25,16 @@ const Navbar: React.FC = () => {
   }
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200">
+    <nav className="bg-[var(--bg-card)] shadow-sm border-b border-[var(--border-line)]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16 items-center">
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg className="w-8 h-8 text-[var(--mclaren-orange)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              <span className="ml-2 text-xl font-bold text-gray-900">电动车租赁</span>
+              <span className="ml-2 text-xl font-bold text-[var(--text-main)]">电动车租赁</span>
             </Link>
           </div>
 
@@ -42,7 +42,7 @@ const Navbar: React.FC = () => {
           <div className="flex lg:hidden">
             <button
               type="button"
-              className="inline-flex items-center justify-center p-2 rounded-md text-slate-700 hover:bg-slate-100"
+              className="inline-flex items-center justify-center p-2 rounded-md text-[var(--text-secondary)] hover:bg-white/5"
               onClick={() => setMobileOpen(!mobileOpen)}
               aria-label="Toggle navigation"
             >
@@ -64,8 +64,8 @@ const Navbar: React.FC = () => {
                 to={item.href}
                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
                   isActive(item.href)
-                    ? 'text-green-600 bg-green-50'
-                    : 'text-slate-700 hover:text-green-600 hover:bg-slate-50'
+                    ? 'text-[var(--mclaren-orange)] bg-white/5'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-main)] hover:bg-white/5'
                 }`}
               >
                 {item.name}
@@ -78,19 +78,19 @@ const Navbar: React.FC = () => {
             {user ? (
               <>
                 <div className="flex items-center">
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-medium text-sm">
+                  <div className="w-8 h-8 bg-white/10 rounded-full flex items-center justify-center">
+                    <span className="text-[var(--mclaren-orange)] font-medium text-sm">
                       {user.email.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="ml-3">
-                    <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                    <div className="text-sm font-medium text-[var(--text-main)] flex items-center gap-2">
                       {user.email}
                       {user.role === 'MANAGER' && (
-                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">ADMIN</span>
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full border border-[var(--border-line)] bg-white/10 text-[var(--mclaren-orange)]">ADMIN</span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-[var(--text-secondary)]">
                       {user.role === 'MANAGER' ? '管理员' : '用户'}
                     </div>
                   </div>
@@ -105,7 +105,7 @@ const Navbar: React.FC = () => {
             ) : (
               <Link
                 to="/auth"
-                className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                className="px-4 py-2 text-sm font-medium text-[var(--mclaren-orange)] hover:text-[var(--mclaren-orange-hover)] hover:bg-white/5 rounded-md transition-colors duration-200"
               >
                 登录/注册
               </Link>
@@ -116,7 +116,7 @@ const Navbar: React.FC = () => {
 
       {/* Mobile drawer */}
       {mobileOpen && (
-        <div className="lg:hidden border-t border-slate-200 bg-white px-4 pb-4 space-y-4">
+        <div className="lg:hidden border-t border-[var(--border-line)] bg-[var(--bg-card)] px-4 pb-4 space-y-4">
           <div className="flex flex-col space-y-2 pt-3">
             {filteredNavigation.map((item) => (
               <Link
@@ -124,8 +124,8 @@ const Navbar: React.FC = () => {
                 to={item.href}
                 className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
                   isActive(item.href)
-                    ? 'text-green-600 bg-green-50'
-                    : 'text-slate-700 hover:text-green-600 hover:bg-slate-50'
+                    ? 'text-[var(--mclaren-orange)] bg-white/5'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-main)] hover:bg-white/5'
                 }`}
                 onClick={() => setMobileOpen(false)}
               >
@@ -134,23 +134,23 @@ const Navbar: React.FC = () => {
             ))}
           </div>
 
-          <div className="pt-2 border-t border-slate-100">
+          <div className="pt-2 border-t border-[var(--border-line)]">
             {user ? (
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <div className="w-9 h-9 bg-blue-100 rounded-full flex items-center justify-center">
-                    <span className="text-blue-600 font-medium text-sm">
+                  <div className="w-9 h-9 bg-white/10 rounded-full flex items-center justify-center">
+                    <span className="text-[var(--mclaren-orange)] font-medium text-sm">
                       {user.email.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="ml-3">
-                    <div className="text-sm font-medium text-gray-900 flex items-center gap-2">
+                    <div className="text-sm font-medium text-[var(--text-main)] flex items-center gap-2">
                       {user.email}
                       {user.role === 'MANAGER' && (
-                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">ADMIN</span>
+                        <span className="px-2 py-0.5 text-xs font-semibold rounded-full border border-[var(--border-line)] bg-white/10 text-[var(--mclaren-orange)]">ADMIN</span>
                       )}
                     </div>
-                    <div className="text-xs text-gray-500">{user.role === 'MANAGER' ? '管理员' : '用户'}</div>
+                    <div className="text-xs text-[var(--text-secondary)]">{user.role === 'MANAGER' ? '管理员' : '用户'}</div>
                   </div>
                 </div>
                 <button
@@ -166,7 +166,7 @@ const Navbar: React.FC = () => {
             ) : (
               <Link
                 to="/auth"
-                className="block w-full text-center px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors duration-200"
+                className="block w-full text-center px-4 py-2 text-sm font-medium text-[var(--mclaren-orange)] hover:text-[var(--mclaren-orange-hover)] hover:bg-white/5 rounded-md transition-colors duration-200"
                 onClick={() => setMobileOpen(false)}
               >
                 登录/注册

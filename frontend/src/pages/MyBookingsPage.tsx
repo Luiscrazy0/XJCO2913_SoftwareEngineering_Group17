@@ -1,7 +1,9 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { bookingsApi } from '../api/bookings'
 import { useAuth } from '../context/AuthContext'
+import { useToast } from '../components/ToastProvider'
 import BookingCard from '../components/BookingCard'
 import BookingStats from '../components/BookingStats'
 import BookingSkeleton from '../components/BookingSkeleton'
@@ -12,10 +14,8 @@ import Navbar from '../components/Navbar'
 const MyBookingsPage: React.FC = () => {
   const { user } = useAuth()
   const queryClient = useQueryClient()
-  const [notification, setNotification] = useState<{
-    type: 'success' | 'error'
-    message: string
-  } | null>(null)
+  const { showToast } = useToast()
+  const navigate = useNavigate()
 
   // 获取预约列表
   const {
@@ -43,22 +43,10 @@ const MyBookingsPage: React.FC = () => {
         )
       })
       
-      setNotification({
-        type: 'success',
-        message: '预约已成功取消'
-      })
-      
-      // 3秒后清除通知
-      setTimeout(() => setNotification(null), 3000)
+      showToast('预约已成功取消', 'success')
     },
     onError: (error: any) => {
-      setNotification({
-        type: 'error',
-        message: error.message || '取消预约失败'
-      })
-      
-      // 3秒后清除通知
-      setTimeout(() => setNotification(null), 3000)
+      showToast(error.message || '取消预约失败', 'error')
     }
   })
 
@@ -76,34 +64,7 @@ const MyBookingsPage: React.FC = () => {
 
   // 处理浏览车辆
   const handleBrowseScooters = () => {
-    // 这里可以导航到车辆发现页面
-    window.location.href = '/scooters'
-  }
-
-  // 显示通知
-  const renderNotification = () => {
-    if (!notification) return null
-
-    const bgColor = notification.type === 'success' ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
-    const textColor = notification.type === 'success' ? 'text-green-800' : 'text-red-800'
-    const iconColor = notification.type === 'success' ? 'text-green-400' : 'text-red-400'
-
-    return (
-      <div className={`fixed top-4 right-4 z-50 border rounded-lg p-4 shadow-lg ${bgColor} ${textColor} max-w-md`}>
-        <div className="flex items-center">
-          {notification.type === 'success' ? (
-            <svg className={`w-5 h-5 mr-2 ${iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          ) : (
-            <svg className={`w-5 h-5 mr-2 ${iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          )}
-          <span>{notification.message}</span>
-        </div>
-      </div>
-    )
+    navigate('/scooters')
   }
 
   // 渲染页面内容
@@ -147,18 +108,15 @@ const MyBookingsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[var(--bg-main)]">
       <Navbar />
       
-      {/* 通知 */}
-      {renderNotification()}
-
       {/* 主内容 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 页面标题 */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">我的预约</h1>
-          <p className="text-gray-600 mt-2">
+          <h1 className="text-3xl font-bold text-[var(--text-main)]">我的预约</h1>
+          <p className="text-[var(--text-secondary)] mt-2">
             查看和管理您的所有电动车租赁预约
           </p>
         </div>
@@ -169,10 +127,10 @@ const MyBookingsPage: React.FC = () => {
         {/* 加载状态指示器 */}
         {cancelMutation.isPending && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 shadow-xl">
+            <div className="bg-[var(--bg-card)] rounded-lg p-6 shadow-xl border border-[var(--border-line)]">
               <div className="flex items-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-3"></div>
-                <span className="text-gray-700">正在处理...</span>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--mclaren-orange)] mr-3"></div>
+                <span className="text-[var(--text-secondary)]">正在处理...</span>
               </div>
             </div>
           </div>
