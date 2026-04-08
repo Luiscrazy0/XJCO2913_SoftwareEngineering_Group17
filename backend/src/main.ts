@@ -3,6 +3,8 @@ import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
+import { ResponseInterceptor } from './interceptors/response.interceptor';
+import { HttpExceptionFilter } from './filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -41,18 +43,49 @@ async function bootstrap() {
     })
   );
 
+  // Global response interceptor
+  app.useGlobalInterceptors(new ResponseInterceptor());
+
+  // Global exception filter
+  app.useGlobalFilters(new HttpExceptionFilter());
+
   // Swagger configuration
   const config = new DocumentBuilder()
-    .setTitle('Scooter API')
-    .setDescription('Scooter rental system API')
+    .setTitle('Scooter Rental System API')
+    .setDescription('电动车租赁系统后端API文档')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        name: 'JWT',
+        description: '输入JWT token',
+        in: 'header',
+      },
+      'JWT-auth', // 这个名称将在@ApiBearerAuth('JWT-auth')中使用
+    )
+    .addTag('auth', '认证相关接口')
+    .addTag('scooters', '电动车管理接口')
+    .addTag('bookings', '预约管理接口')
+    .addTag('payments', '支付管理接口')
+    .addTag('users', '用户管理接口')
+    .addTag('health', '健康检查接口')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document);
+  SwaggerModule.setup('api', app, document, {
+    customSiteTitle: 'Scooter API Documentation',
+    customfavIcon: 'https://nestjs.com/img/logo-small.svg',
+    customCss: `
+      .swagger-ui .topbar { display: none }
+      .swagger-ui .info { margin: 20px 0 }
+    `,
+  });
 
   await app.listen(process.env.PORT ?? 3000);
   console.log(`Application is running on: ${await app.getUrl()}`);
+  console.log(`Swagger documentation available at: ${await app.getUrl()}/api`);
 }
 
 bootstrap();
