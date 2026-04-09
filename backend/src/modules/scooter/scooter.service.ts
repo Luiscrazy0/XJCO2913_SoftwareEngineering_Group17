@@ -8,11 +8,18 @@ export class ScooterService {
   constructor(private readonly prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.scooter.findMany();
+    return this.prisma.scooter.findMany({
+      include: {
+        station: true,
+      },
+    });
   }
   async findById(id: string) {
     return this.prisma.scooter.findUnique({
       where: { id },
+      include: {
+        station: true,
+      },
     });
   }
 

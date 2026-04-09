@@ -7,39 +7,45 @@ interface BookingCardProps {
   booking: Booking
   onCancel?: (bookingId: string) => void
   onPay?: (bookingId: string) => void
+  onExtend?: (booking: Booking) => void
 }
 
-const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay }) => {
+const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay, onExtend }) => {
   // 状态映射函数
   // 获取状态信息
   const getStatusMeta = (status: Booking['status']) => {
     switch (status) {
       case 'PENDING_PAYMENT':
         return {
-          label: 'PENDING',
+          label: '待支付',
           variant: 'warning' as const,
         }
       case 'CONFIRMED':
         return {
-          label: 'CONFIRMED',
+          label: '已确认',
           variant: 'success' as const,
         }
       case 'CANCELLED':
         return {
-          label: 'CANCELLED',
+          label: '已取消',
           variant: 'danger' as const,
         }
       case 'COMPLETED':
         return {
-          label: 'COMPLETED',
+          label: '已完成',
           variant: 'neutral' as const,
+        }
+      case 'EXTENDED':
+        return {
+          label: '已续租',
+          variant: 'info' as const,
         }
     }
   }
 
   // 格式化时间
   const formatTime = (isoString: string) => {
-    return dayjs(isoString).format('MMM D, HH:mm')
+    return dayjs(isoString).format('YYYY-MM-DD HH:mm')
   }
 
   // 格式化租赁类型
@@ -60,6 +66,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay }) =
   // Allow cancel unless already completed or cancelled; payment still only when pending
   const canCancel = booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED'
   const canPay = booking.status === 'PENDING_PAYMENT'
+  const canExtend = (booking.status === 'CONFIRMED' || booking.status === 'EXTENDED') && onExtend
 
   const statusMeta = getStatusMeta(booking.status)
 
@@ -76,6 +83,11 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay }) =
           </div>
           <div className="text-sm text-[var(--text-secondary)]">
             租赁类型: <span className="font-medium text-[var(--text-main)]">{formatHireType(booking.hireType)}</span>
+            {booking.extensionCount > 0 && (
+              <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
+                已续租 {booking.extensionCount} 次
+              </span>
+            )}
           </div>
         </div>
       </div>
@@ -103,6 +115,11 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay }) =
                 <span className="text-sm text-[var(--text-secondary)] font-medium">结束时间</span>
               </div>
               <p className="text-[var(--text-main)] font-medium">{formatTime(booking.endTime)}</p>
+              {booking.originalEndTime && (
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  原结束时间: {formatTime(booking.originalEndTime)}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -119,6 +136,11 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay }) =
               <div>
                 <p className="text-[var(--text-main)] mb-1">位置: {booking.scooter.location}</p>
                 <p className="text-sm text-[var(--text-secondary)]">车辆ID: {booking.scooter.id.substring(0, 8)}...</p>
+                {booking.scooter.station && (
+                  <p className="text-sm text-[var(--text-secondary)] mt-1">
+                    站点: {booking.scooter.station.name}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -136,18 +158,18 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay }) =
                 <span className="text-[var(--text-main)]">总费用</span>
               </div>
               <div className="text-2xl font-bold text-[var(--mclaren-orange)]">
-                £{booking.totalCost.toFixed(2)}
+                ¥{booking.totalCost.toFixed(2)}
               </div>
             </div>
           </div>
         </div>
 
         {/* 操作按钮 */}
-        <div className="flex space-x-3">
+        <div className="flex flex-wrap gap-3">
           {canCancel && onCancel && (
             <button
               onClick={() => onCancel(booking.id)}
-              className="flex-1 py-3 px-4 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 focus:ring-2 focus:ring-red-500/40 transition-colors duration-200"
+              className="flex-1 min-w-[120px] py-3 px-4 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 focus:ring-2 focus:ring-red-500/40 transition-colors duration-200"
             >
               取消预约
             </button>
@@ -155,12 +177,20 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay }) =
           {canPay && onPay && (
             <button
               onClick={() => onPay(booking.id)}
-              className="flex-1 py-3 px-4 bg-[var(--mclaren-orange)] text-white rounded-lg font-medium hover:brightness-110 focus:ring-2 focus:ring-[var(--mclaren-orange)]/40 transition-colors duration-200"
+              className="flex-1 min-w-[120px] py-3 px-4 bg-[var(--mclaren-orange)] text-white rounded-lg font-medium hover:brightness-110 focus:ring-2 focus:ring-[var(--mclaren-orange)]/40 transition-colors duration-200"
             >
               立即支付
             </button>
           )}
-          {!canCancel && !canPay && (
+          {canExtend && (
+            <button
+              onClick={() => onExtend(booking)}
+              className="flex-1 min-w-[120px] py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 focus:ring-2 focus:ring-blue-500/40 transition-colors duration-200"
+            >
+              续租
+            </button>
+          )}
+          {!canCancel && !canPay && !canExtend && (
             <div className="flex-1 py-3 px-4 text-center text-[var(--text-secondary)]">
               无可用操作
             </div>

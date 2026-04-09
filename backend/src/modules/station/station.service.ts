@@ -96,6 +96,13 @@ export class StationService {
 
   async getStationsWithAvailableScooters() {
     return this.prisma.station.findMany({
+      where: {
+        scooters: {
+          some: {
+            status: 'AVAILABLE',
+          },
+        },
+      },
       include: {
         scooters: {
           where: {

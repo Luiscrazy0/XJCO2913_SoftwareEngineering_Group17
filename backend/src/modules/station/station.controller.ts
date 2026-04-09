@@ -2,6 +2,9 @@ import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards } fro
 import { StationService } from './station.service';
 import { CreateStationDto } from './dto/create-station.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 
 @ApiTags('stations')
@@ -183,7 +186,8 @@ export class StationController {
   }
 
   @Post()
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MANAGER)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: '创建站点', description: '创建新的滑板车站点（需要管理员权限）' })
   @ApiBody({ type: CreateStationDto })
@@ -227,7 +231,8 @@ export class StationController {
   }
 
   @Put(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MANAGER)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: '更新站点', description: '更新站点信息（需要管理员权限）' })
   @ApiParam({ name: 'id', description: '站点ID', example: 'ST001' })
@@ -286,7 +291,8 @@ export class StationController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MANAGER)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({ summary: '删除站点', description: '删除站点（需要管理员权限）' })
   @ApiParam({ name: 'id', description: '站点ID', example: 'ST001' })

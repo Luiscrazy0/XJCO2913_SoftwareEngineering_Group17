@@ -9,6 +9,7 @@ const Navbar: React.FC = () => {
 
   const navigation = [
     { name: '发现车辆', href: '/scooters' },
+    { name: '站点地图', href: '/map' },
     { name: '我的预约', href: '/bookings' },
     { name: '管理后台', href: '/admin', role: 'MANAGER' as const },
   ]
