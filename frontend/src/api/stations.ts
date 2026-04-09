@@ -1,4 +1,4 @@
-import { axiosClient } from '../utils/axiosClient'
+import axiosClient from '../utils/axiosClient'
 import { ApiResponse, Station, StationQueryParams } from '../types'
 
 export const stationsApi = {

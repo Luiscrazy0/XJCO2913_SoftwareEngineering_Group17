@@ -32,7 +32,7 @@ export const scootersApi = {
   },
 
   // Update scooter status (admin only)
-  updateStatus: async (id: string, status: 'AVAILABLE' | 'UNAVAILABLE'): Promise<Scooter> => {
+  updateStatus: async (id: string, status: Scooter['status']): Promise<Scooter> => {
     const response = await axiosClient.patch<ApiResponse<Scooter>>(`/scooters/${id}/status`, { status })
     if (!response.data.data) {
       throw new Error('Failed to update scooter status')

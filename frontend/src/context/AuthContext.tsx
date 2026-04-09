@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       // 1. 调用登录API
       const response = await authApi.login({ email, password })
-      const accessToken = response.access_token ?? response.token
+      const accessToken = response.access_token
       if (!accessToken) {
         console.error('Login response missing token:', response)
         throw new Error('Failed to decode JWT token: token missing from response')

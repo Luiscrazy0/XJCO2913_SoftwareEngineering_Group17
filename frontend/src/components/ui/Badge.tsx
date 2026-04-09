@@ -1,6 +1,6 @@
 import { HTMLAttributes } from 'react'
 
-type BadgeVariant = 'success' | 'warning' | 'danger' | 'neutral' | 'accent'
+type BadgeVariant = 'success' | 'warning' | 'danger' | 'neutral' | 'accent' | 'info'
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
   variant?: BadgeVariant
@@ -13,6 +13,7 @@ const variantClasses: Record<BadgeVariant, string> = {
   danger: 'bg-rose-500/15 text-rose-200 border-rose-400/30',
   neutral: 'bg-slate-500/15 text-slate-200 border-slate-400/30',
   accent: 'bg-[rgba(255,106,0,0.18)] text-[var(--mclaren-orange)] border-[rgba(255,106,0,0.45)]',
+  info: 'bg-blue-500/15 text-blue-200 border-blue-400/30',
 }
 
 const dotClasses: Record<BadgeVariant, string> = {
@@ -21,6 +22,7 @@ const dotClasses: Record<BadgeVariant, string> = {
   danger: 'bg-rose-400',
   neutral: 'bg-slate-400',
   accent: 'bg-[var(--mclaren-orange)]',
+  info: 'bg-blue-400',
 }
 
 export default function Badge({

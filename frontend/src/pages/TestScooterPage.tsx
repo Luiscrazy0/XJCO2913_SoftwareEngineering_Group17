@@ -6,22 +6,26 @@ const testScooters: Scooter[] = [
   {
     id: '47ac4ef5-aa8c-4ae1-b158-3b8b963098d5',
     location: 'Campus Gate A - Main Entrance',
-    status: 'AVAILABLE'
+    status: 'AVAILABLE',
+    updatedAt: '2024-01-01T00:00:00Z'
   },
   {
     id: '551c0400-4a1d-424c-a8f2-7092b6dfac26',
     location: 'Library Building - West Side',
-    status: 'AVAILABLE'
+    status: 'AVAILABLE',
+    updatedAt: '2024-01-01T00:00:00Z'
   },
   {
     id: '789c0400-4a1d-424c-a8f2-7092b6dfac99',
     location: 'Student Center - Parking Lot B',
-    status: 'UNAVAILABLE'
+    status: 'UNAVAILABLE',
+    updatedAt: '2024-01-01T00:00:00Z'
   },
   {
     id: '123c0400-4a1d-424c-a8f2-7092b6dfac00',
     location: 'Science Building - North Entrance',
-    status: 'AVAILABLE'
+    status: 'AVAILABLE',
+    updatedAt: '2024-01-01T00:00:00Z'
   }
 ]
 
