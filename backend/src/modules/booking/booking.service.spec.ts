@@ -17,7 +17,9 @@ describe('BookingService', () => {
     },
     scooter: {
       findUnique: jest.fn(),
+      update: jest.fn(),
     },
+    $transaction: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -35,6 +37,9 @@ describe('BookingService', () => {
     prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
+    mockPrismaService.$transaction.mockImplementation(async (fn: (tx: typeof mockPrismaService) => unknown) => {
+      return fn(mockPrismaService);
+    });
   });
 
   it('模块应该被成功定义', () => {
@@ -117,11 +122,16 @@ describe('BookingService', () => {
           endTime,
           totalCost: 5,
           status: BookingStatus.PENDING_PAYMENT,
+          originalEndTime: endTime,
         },
         include: {
           scooter: true,
           user: true,
         },
+      });
+      expect(mockPrismaService.scooter.update).toHaveBeenCalledWith({
+        where: { id: scooterId },
+        data: { status: ScooterStatus.RENTED },
       });
       expect(result).toEqual(mockCreatedBooking);
     });

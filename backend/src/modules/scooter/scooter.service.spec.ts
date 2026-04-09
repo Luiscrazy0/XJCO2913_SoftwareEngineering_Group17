@@ -73,6 +73,7 @@ describe('ScooterService', () => {
 
       expect(mockPrismaService.scooter.findUnique).toHaveBeenCalledWith({
         where: { id: testId },
+        include: { station: true },
       });
       expect(result).toEqual(mockScooter);
     });
