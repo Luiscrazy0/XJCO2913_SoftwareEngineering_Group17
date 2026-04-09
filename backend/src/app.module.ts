@@ -9,6 +9,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { ScooterModule } from './modules/scooter/scooter.module';
 import { BookingModule } from './modules/booking/booking.module';
 import { PaymentModule } from './modules/payment/payment.module'; // <- PaymentModule registration
+import { StationModule } from './modules/station/station.module'; // <- 新增StationModule
 
 @Module({
   imports: [
@@ -19,6 +20,7 @@ import { PaymentModule } from './modules/payment/payment.module'; // <- PaymentM
     ScooterModule,
     BookingModule,
     PaymentModule, // <- PaymentModule registration
+    StationModule, // <- 新增StationModule
   ],
   controllers: [AppController],
   providers: [AppService],

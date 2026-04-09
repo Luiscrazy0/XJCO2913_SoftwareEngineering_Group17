@@ -2,6 +2,7 @@ import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/co
 import { BookingService } from './booking.service';
 import { HireType } from '@prisma/client';
 import { CreateBookingDto } from './dto/create-booking.dto';
+import { ExtendBookingDto } from './dto/extend-booking.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
 
@@ -207,6 +208,90 @@ export class BookingController {
       new Date(body.startTime),
       new Date(body.endTime),
     );
+  }
+
+  @Patch(':id/extend')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '续租预约', description: '延长已确认的预约时间（需要登录）' })
+  @ApiParam({ name: 'id', description: '预约ID', example: 'clx1234567890' })
+  @ApiBody({ type: ExtendBookingDto })
+  @ApiResponse({ 
+    status: 200, 
+    description: '续租成功',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: 'clx1234567890',
+          userId: 'clx0987654321',
+          scooterId: 'clx1234567890',
+          hireType: 'HOUR_1',
+          startTime: '2024-01-01T10:00:00.000Z',
+          endTime: '2024-01-01T13:00:00.000Z', // 延长了2小时
+          status: 'EXTENDED',
+          totalCost: 20.0, // 原价10元 + 续租10元
+          extensionCount: 1,
+          scooter: {
+            id: 'clx1234567890',
+            location: 'Main Street, Building 5',
+            status: 'AVAILABLE'
+          },
+          user: {
+            id: 'clx0987654321',
+            email: 'user@example.com',
+            role: 'CUSTOMER'
+          }
+        },
+        message: 'Booking extended successfully',
+        timestamp: '2024-01-01T00:00:00.000Z'
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 400, 
+    description: '无法续租',
+    schema: {
+      example: {
+        success: false,
+        error: 'Bad Request',
+        message: 'Only confirmed or extended bookings can be extended',
+        statusCode: 400,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        path: '/bookings/clx1234567890/extend'
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 401, 
+    description: '未授权访问',
+    schema: {
+      example: {
+        success: false,
+        error: 'Unauthorized',
+        message: 'Unauthorized',
+        statusCode: 401,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        path: '/bookings/clx1234567890/extend'
+      }
+    }
+  })
+  @ApiResponse({ 
+    status: 404, 
+    description: '预约不存在',
+    schema: {
+      example: {
+        success: false,
+        error: 'Not Found',
+        message: 'Booking not found',
+        statusCode: 404,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        path: '/bookings/clx1234567890/extend'
+      }
+    }
+  })
+  extend(@Param('id') id: string, @Body() body: ExtendBookingDto) {
+    return this.bookingService.extendBooking(id, body.additionalHours);
   }
 
   @Patch(':id/cancel')
