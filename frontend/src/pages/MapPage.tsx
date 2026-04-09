@@ -139,7 +139,7 @@ const MapPage: React.FC = () => {
                       key={station.id}
                       className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
                         selectedStation?.id === station.id
-                          ? 'border-[var(--mclaren-orange)] bg-orange-50'
+                          ? 'border-[var(--mclaren-orange)] bg-[rgba(255,106,0,0.16)]'
                           : 'border-[var(--border-line)] bg-[var(--bg-card)]'
                       }`}
                       onClick={() => handleStationClick(station)}
@@ -238,34 +238,34 @@ const MapPage: React.FC = () => {
                       onClick={() => handleStationClick(station)}
                       title={`${station.name} (${availableCount}辆可用)`}
                     >
-                      <div className="absolute inset-0 flex items-center justify-center text-white font-bold">
-                        {index + 1}
-                      </div>
-                    </div>
-                  )
-                })}
-
-                {/* 地图说明 */}
-                <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg p-3 shadow-lg">
-                  <div className="space-y-2">
-                    <div className="flex items-center">
-                      <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
-                      <span className="text-sm">您的位置</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-                      <span className="text-sm">有可用车辆</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
-                      <span className="text-sm">无可用车辆</span>
-                    </div>
-                    <div className="flex items-center">
-                      <div className="w-4 h-4 bg-[var(--mclaren-orange)] rounded-full mr-2"></div>
-                      <span className="text-sm">选中站点</span>
+                    <div className="absolute inset-0 flex items-center justify-center text-white font-bold">
+                      {index + 1}
                     </div>
                   </div>
+                )
+              })}
+
+              {/* 地图说明 */}
+              <div className="absolute bottom-4 left-4 bg-slate-900/85 text-slate-100 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-white/10">
+                <div className="space-y-2 text-sm">
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
+                    <span>您的位置</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
+                    <span>有可用车辆</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
+                    <span>无可用车辆</span>
+                  </div>
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 bg-[var(--mclaren-orange)] rounded-full mr-2"></div>
+                    <span>选中站点</span>
+                  </div>
                 </div>
+              </div>
               </div>
 
               {/* 站点详情 */}
@@ -322,8 +322,8 @@ const MapPage: React.FC = () => {
                                 </div>
                                 <button
                                   onClick={() => {
-                                    // 导航到车辆列表页面进行预订
-                                    window.location.href = `/scooters?highlight=${scooter.id}`
+                                    // 导航到车辆列表页面并自动打开预订
+                                    window.location.href = `/scooters?highlight=${scooter.id}&book=1`
                                   }}
                                   className="px-3 py-1 bg-[var(--mclaren-orange)] text-white text-sm rounded-lg hover:brightness-110 transition-colors"
                                 >
