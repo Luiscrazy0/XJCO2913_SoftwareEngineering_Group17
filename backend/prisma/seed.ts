@@ -53,24 +53,110 @@ async function main() {
       },
     });
 
+    // 创建5个取车点（站点）
+    const stations = [
+      { 
+        id: 'ST001', 
+        name: '市中心广场站', 
+        address: '市中心广场A区停车场',
+        latitude: 31.2304, 
+        longitude: 121.4737 
+      },
+      { 
+        id: 'ST002', 
+        name: '火车站站', 
+        address: '火车站东出口停车场',
+        latitude: 31.2479, 
+        longitude: 121.4720 
+      },
+      { 
+        id: 'ST003', 
+        name: '购物中心站', 
+        address: '购物中心北门停车场',
+        latitude: 31.2330, 
+        longitude: 121.4780 
+      },
+      { 
+        id: 'ST004', 
+        name: '大学城站', 
+        address: '大学城图书馆前广场',
+        latitude: 31.2250, 
+        longitude: 121.4650 
+      },
+      { 
+        id: 'ST005', 
+        name: '科技园站', 
+        address: '科技园1号楼停车场',
+        latitude: 31.2400, 
+        longitude: 121.4850 
+      },
+    ];
+
+    for (const stationData of stations) {
+      await prisma.station.upsert({
+        where: { id: stationData.id },
+        update: stationData,
+        create: stationData,
+      });
+    }
+
+    // 更新滑板车数据，添加坐标和站点关联
     const scooters = [
-      { id: 'SC001', location: '市中心广场 - A区', status: ScooterStatus.AVAILABLE },
-      { id: 'SC002', location: '火车站 - 东出口', status: ScooterStatus.AVAILABLE },
-      { id: 'SC003', location: '购物中心 - 北门', status: ScooterStatus.AVAILABLE },
-      { id: 'SC004', location: '大学城 - 图书馆', status: ScooterStatus.AVAILABLE },
-      { id: 'SC005', location: '科技园 - 1号楼', status: ScooterStatus.AVAILABLE },
-      { id: 'SC006', location: '公园南门 - 停车场', status: ScooterStatus.UNAVAILABLE },
+      { 
+        id: 'SC001', 
+        location: '市中心广场 - A区', 
+        status: ScooterStatus.AVAILABLE,
+        latitude: 31.2305,
+        longitude: 121.4738,
+        stationId: 'ST001'
+      },
+      { 
+        id: 'SC002', 
+        location: '火车站 - 东出口', 
+        status: ScooterStatus.AVAILABLE,
+        latitude: 31.2480,
+        longitude: 121.4721,
+        stationId: 'ST002'
+      },
+      { 
+        id: 'SC003', 
+        location: '购物中心 - 北门', 
+        status: ScooterStatus.AVAILABLE,
+        latitude: 31.2331,
+        longitude: 121.4781,
+        stationId: 'ST003'
+      },
+      { 
+        id: 'SC004', 
+        location: '大学城 - 图书馆', 
+        status: ScooterStatus.AVAILABLE,
+        latitude: 31.2251,
+        longitude: 121.4651,
+        stationId: 'ST004'
+      },
+      { 
+        id: 'SC005', 
+        location: '科技园 - 1号楼', 
+        status: ScooterStatus.AVAILABLE,
+        latitude: 31.2401,
+        longitude: 121.4851,
+        stationId: 'ST005'
+      },
+      { 
+        id: 'SC006', 
+        location: '公园南门 - 停车场', 
+        status: ScooterStatus.UNAVAILABLE,
+        latitude: 31.2350,
+        longitude: 121.4800,
+        stationId: 'ST001'
+      },
     ];
 
     for (const scooterData of scooters) {
       await prisma.scooter.upsert({
         where: { id: scooterData.id },
-        update: { location: scooterData.location, status: scooterData.status },
-        create: {
-          id: scooterData.id,
-          location: scooterData.location,
-          status: scooterData.status,
-        },
+        update: scooterData,
+        create: scooterData,
       });
     }
 
@@ -126,6 +212,13 @@ async function main() {
     console.log('Sample bookings:');
     console.log(`  - ${pendingBooking.id} (PENDING_PAYMENT)`);
     console.log(`  - ${confirmedBooking.id} (CONFIRMED + Payment)`);
+    console.log('');
+    console.log('Stations created:');
+    console.log('  - 市中心广场站 (ST001)');
+    console.log('  - 火车站站 (ST002)');
+    console.log('  - 购物中心站 (ST003)');
+    console.log('  - 大学城站 (ST004)');
+    console.log('  - 科技园站 (ST005)');
   } finally {
     await prisma.$disconnect();
   }

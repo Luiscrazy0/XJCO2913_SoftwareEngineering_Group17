@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
 
@@ -57,22 +57,76 @@ export class BookingService {
     const totalCost = this.calculateCost(hireType);
     // Calculate total cost based on hire type
 
-    return this.prisma.booking.create({
-        // Create booking in database and include related user and scooter details
-      data: {
-        userId,
-        scooterId,
-        hireType,
-        startTime,
-        endTime,
-        totalCost,
-        status: BookingStatus.PENDING_PAYMENT,
-        // Set status to PENDING_PAYMENT
-      },
-      include: {
-        user: true,
-        scooter: true,
-      },
+    // 开始事务：创建预订并更新滑板车状态
+    return this.prisma.$transaction(async (tx) => {
+      // 创建预订
+      const booking = await tx.booking.create({
+        data: {
+          userId,
+          scooterId,
+          hireType,
+          startTime,
+          endTime,
+          totalCost,
+          status: BookingStatus.PENDING_PAYMENT,
+          originalEndTime: endTime, // 保存原始结束时间
+        },
+        include: {
+          user: true,
+          scooter: true,
+        },
+      });
+
+      // 更新滑板车状态为已租用
+      await tx.scooter.update({
+        where: { id: scooterId },
+        data: { status: ScooterStatus.RENTED },
+      });
+
+      return booking;
+    });
+  }
+
+  async extendBooking(bookingId: string, additionalHours: number) {
+    // 查找预订
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { scooter: true },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    // 检查预订状态是否可以续租
+    if (booking.status !== BookingStatus.CONFIRMED && booking.status !== BookingStatus.EXTENDED) {
+      throw new BadRequestException('Only confirmed or extended bookings can be extended');
+    }
+
+    // 计算续租费用（按小时计费）
+    const extensionCost = additionalHours * 5; // 每小时5元
+
+    // 计算新的结束时间
+    const newEndTime = new Date(booking.endTime.getTime() + additionalHours * 60 * 60 * 1000);
+
+    // 开始事务：更新预订
+    return this.prisma.$transaction(async (tx) => {
+      // 更新预订
+      const updatedBooking = await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          endTime: newEndTime,
+          totalCost: booking.totalCost + extensionCost,
+          status: BookingStatus.EXTENDED,
+          extensionCount: booking.extensionCount + 1,
+        },
+        include: {
+          user: true,
+          scooter: true,
+        },
+      });
+
+      return updatedBooking;
     });
   }
 

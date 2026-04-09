@@ -20,6 +20,7 @@ enum Role {
 enum ScooterStatus {
   AVAILABLE
   UNAVAILABLE
+  RENTED
 }
 
 enum BookingStatus {
@@ -27,6 +28,7 @@ enum BookingStatus {
   CONFIRMED
   CANCELLED
   COMPLETED
+  EXTENDED
 }
 
 enum HireType {
@@ -34,6 +36,18 @@ enum HireType {
   HOUR_4
   DAY_1
   WEEK_1
+}
+
+// 取车点/站点模型
+model Station {
+  id        String    @id @default(uuid())
+  name      String
+  address   String
+  latitude  Float
+  longitude Float
+  scooters  Scooter[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 }
 
 model User {
@@ -45,24 +59,34 @@ model User {
 }
 
 model Scooter {
-  id       String        @id @default(uuid())
-  location String
-  status   ScooterStatus @default(AVAILABLE)
-  bookings Booking[]
+  id          String        @id @default(uuid())
+  location    String
+  status      ScooterStatus @default(AVAILABLE)
+  latitude    Float?
+  longitude   Float?
+  stationId   String?
+  station     Station?      @relation(fields: [stationId], references: [id])
+  bookings    Booking[]
+  updatedAt   DateTime      @updatedAt
 }
 
 model Booking {
-  id        String        @id @default(uuid())
-  user      User          @relation(fields: [userId], references: [id])
-  userId    String
-  scooter   Scooter       @relation(fields: [scooterId], references: [id])
-  scooterId String
-  hireType  HireType
-  startTime DateTime
-  endTime   DateTime
-  status    BookingStatus @default(PENDING_PAYMENT)
-  totalCost Float
-  payment   Payment?
+  id              String        @id @default(uuid())
+  user            User          @relation(fields: [userId], references: [id])
+  userId          String
+  scooter         Scooter       @relation(fields: [scooterId], references: [id])
+  scooterId       String
+  hireType        HireType
+  originalEndTime DateTime?     // 原始结束时间（用于续租）
+  startTime       DateTime
+  endTime         DateTime
+  status          BookingStatus @default(PENDING_PAYMENT)
+  totalCost       Float
+  extensionCount  Int           @default(0)  // 续租次数
+  extendedFrom    String?       // 原始预订ID（如果是续租）
+  payment         Payment?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 }
 
 model Payment {
