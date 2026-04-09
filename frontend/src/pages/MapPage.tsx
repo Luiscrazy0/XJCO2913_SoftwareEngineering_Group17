@@ -4,7 +4,7 @@ import { stationsApi } from '../api/stations'
 import { scootersApi } from '../api/scooters'
 import Navbar from '../components/Navbar'
 import { useToast } from '../components/ToastProvider'
-import { Station, Scooter } from '../types'
+import { Station } from '../types'
 
 const MapPage: React.FC = () => {
   const { showToast } = useToast()

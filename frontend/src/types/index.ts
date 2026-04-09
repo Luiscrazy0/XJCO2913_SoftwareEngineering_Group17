@@ -8,6 +8,14 @@ export type ScooterStatus = 'AVAILABLE' | 'UNAVAILABLE' | 'RENTED'
 
 export type BookingStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'EXTENDED'
 
+export type ToastType = 'success' | 'error' | 'warning' | 'info'
+
+export type ModalSize = 'sm' | 'md' | 'lg' | 'xl' | 'full'
+
+export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
+
+export type BadgeVariant = 'success' | 'warning' | 'danger' | 'neutral' | 'accent' | 'info'
+
 export interface User {
   id: string
   email: string
