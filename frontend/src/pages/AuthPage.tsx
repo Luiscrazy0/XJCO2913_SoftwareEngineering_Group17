@@ -151,7 +151,9 @@ export default function AuthPage() {
   const getInputStyle = (field: string, hasError?: boolean) => {
     const baseStyle = {
       padding: '12px 16px',
-      border: '1px solid var(--auth-input-border, #E2E8F0)',
+      borderWidth: '1px',
+      borderStyle: 'solid',
+      borderColor: 'var(--auth-input-border, #E2E8F0)',
       borderRadius: '8px',
       fontSize: '16px',
       color: 'var(--auth-input-text, #0F172A)',
