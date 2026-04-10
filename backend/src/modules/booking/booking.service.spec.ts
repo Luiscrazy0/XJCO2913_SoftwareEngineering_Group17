@@ -93,7 +93,7 @@ describe('BookingService', () => {
     it('【异常路径】如果滑板车状态不是 AVAILABLE，应该抛出 Scooter not available 错误', async () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
-        status: ScooterStatus.IN_USE,
+        status: ScooterStatus.RENTED,
       });
 
       await expect(
