@@ -223,3 +223,118 @@
   "timestamp": "2024-01-01T00:00:00.000Z"
 }
 ```
+
+## 统计模块 (Statistics)
+
+### 按租赁类型查看周收入
+**端点**: `GET /statistics/revenue/weekly`
+
+**权限**: 需要管理员权限
+
+**查询参数**:
+- `startDate`: 开始日期 (YYYY-MM-DD)
+- `endDate`: 结束日期 (YYYY-MM-DD)
+
+**响应**:
+```json
+{
+  "success": true,
+  "data": {
+    "startDate": "2024-01-01",
+    "endDate": "2024-01-07",
+    "data": [
+      {
+        "hireType": "HOUR_1",
+        "hireTypeName": "1小时租赁",
+        "totalRevenue": 150.0,
+        "bookingCount": 30,
+        "averageRevenue": 5.0
+      },
+      {
+        "hireType": "DAY_1",
+        "hireTypeName": "1天租赁",
+        "totalRevenue": 120.0,
+        "bookingCount": 4,
+        "averageRevenue": 30.0
+      }
+    ],
+    "totalRevenue": 270.0,
+    "totalBookings": 34
+  },
+  "message": "成功获取周收入数据",
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### 查看一周内的每日综合收入
+**端点**: `GET /statistics/revenue/daily`
+
+**权限**: 需要管理员权限
+
+**查询参数**:
+- `startDate`: 开始日期 (YYYY-MM-DD)
+- `endDate`: 结束日期 (YYYY-MM-DD)
+
+**响应**:
+```json
+{
+  "success": true,
+  "data": {
+    "startDate": "2024-01-01",
+    "endDate": "2024-01-07",
+    "data": [
+      {
+        "date": "2024-01-01",
+        "totalRevenue": 50.0,
+        "bookingCount": 10,
+        "hireTypes": [
+          {
+            "hireType": "HOUR_1",
+            "hireTypeName": "1小时租赁",
+            "revenue": 30.0
+          },
+          {
+            "hireType": "HOUR_4",
+            "hireTypeName": "4小时租赁",
+            "revenue": 20.0
+          }
+        ]
+      }
+    ],
+    "totalRevenue": 270.0,
+    "totalBookings": 34
+  },
+  "message": "成功获取每日收入数据",
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
+
+### 获取收入图表数据
+**端点**: `GET /statistics/revenue/chart`
+
+**权限**: 需要管理员权限
+
+**查询参数**:
+- `period`: 统计周期 (week, month, year) - 默认: week
+- `type`: 图表类型 (bar, line, pie) - 默认: bar
+
+**响应**:
+```json
+{
+  "success": true,
+  "data": {
+    "labels": ["2024-01-01", "2024-01-02", "2024-01-03"],
+    "datasets": [
+      {
+        "label": "Daily Revenue",
+        "data": [50.0, 60.0, 45.0],
+        "backgroundColor": "#36A2EB"
+      }
+    ],
+    "chartType": "bar",
+    "period": "week"
+  },
+  "message": "成功获取图表数据",
+  "timestamp": "2024-01-01T00:00:00.000Z"
+}
+```
