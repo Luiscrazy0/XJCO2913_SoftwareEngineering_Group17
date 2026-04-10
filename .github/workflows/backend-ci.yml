@@ -3,11 +3,11 @@ name: Backend CI Pipeline
 # 修复了缩进问题，明确告诉系统什么时候触发
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "dev" ,"feat/**"]
     paths:
       - 'backend/**'
   pull_request:
-    branches: [ "main", "dev", "test/sprint2-coverage"]
+    branches: [ "main", "dev", "feat/**"]
     paths:
       - 'backend/**'
   workflow_dispatch:
