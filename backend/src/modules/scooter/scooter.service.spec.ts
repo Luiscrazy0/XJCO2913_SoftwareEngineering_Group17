@@ -14,7 +14,11 @@ describe('ScooterService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
     },
+    booking: {
+      count: jest.fn(),  
+    }
   };
 
   beforeEach(async () => {
@@ -132,3 +136,41 @@ describe('ScooterService', () => {
     });
   });
 });
+
+// ==========================================
+  // 测试组: deleteScooter (关键分支测试)
+  // ==========================================
+  describe('deleteScooter', () => {
+    const scooterId = 'scooter-123';
+
+    it('【异常路径】如果该滑板车还有关联的订单，应该抛出 BadRequestException 错误', async () => {
+      // 模拟：去数据库查，发现这辆车还有 1 个历史订单
+      mockPrismaService.booking.count.mockResolvedValue(1);
+
+      await expect(scooterService.deleteScooter(scooterId)).rejects.toThrow(
+        new BadRequestException('Scooter has existing bookings')
+      );
+      
+      // 严谨验证：既然有订单报错了，真正的 delete 动作绝对不能被执行！
+      expect(mockPrismaService.scooter.delete).not.toHaveBeenCalled();
+    });
+
+    it('【正常路径】如果该滑板车没有关联订单，应该成功删除', async () => {
+      // 模拟：去数据库查，发现这辆车 0 个订单，干干净净
+      mockPrismaService.booking.count.mockResolvedValue(0);
+      
+      const mockDeletedScooter = { id: scooterId, location: 'Campus A' };
+      mockPrismaService.scooter.delete.mockResolvedValue(mockDeletedScooter);
+
+      const result = await scooterService.deleteScooter(scooterId);
+
+      // 验证：有没有乖乖去查订单？有没有执行删除？
+      expect(mockPrismaService.booking.count).toHaveBeenCalledWith({
+        where: { scooterId },
+      });
+      expect(mockPrismaService.scooter.delete).toHaveBeenCalledWith({
+        where: { id: scooterId },
+      });
+      expect(result).toEqual(mockDeletedScooter);
+    });
+  });
