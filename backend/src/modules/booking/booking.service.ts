@@ -2,12 +2,14 @@ import { Injectable, BadRequestException, NotFoundException } from '@nestjs/comm
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
 import { DiscountService } from './discount.service';
+import { EmailService } from './email.service';
 
 @Injectable()
 export class BookingService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly discountService: DiscountService,
+    private readonly emailService: EmailService,
   ) {}
 
   async findAll() {
@@ -95,7 +97,16 @@ export class BookingService {
 
       return booking;
     });
-  }
+
+    // 发送预订确认邮件
+    try {
+      await this.emailService.sendBookingConfirmation(booking, finalCost);
+    } catch (error) {
+      console.error('发送预订确认邮件失败:', error);
+      // 不抛出错误，以免影响主要业务流程
+    }
+
+    return booking;
 
   async extendBooking(bookingId: string, additionalHours: number) {
     // 查找预订
@@ -138,7 +149,16 @@ export class BookingService {
 
       return updatedBooking;
     });
-  }
+
+    // 发送续租确认邮件
+    try {
+      await this.emailService.sendExtensionConfirmation(updatedBooking, extensionCost, newEndTime);
+    } catch (error) {
+      console.error('发送续租确认邮件失败:', error);
+      // 不抛出错误，以免影响主要业务流程
+    }
+
+    return updatedBooking;
 
   async cancelBooking(id: string) {
     // Cancel booking by ID
