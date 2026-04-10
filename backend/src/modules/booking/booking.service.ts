@@ -1,12 +1,22 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
+<<<<<<< HEAD
 import { EmailService } from '../email/email.service';
+=======
+import { DiscountService } from './discount.service';
+import { EmailService } from './email.service';
+import * as bcrypt from 'bcrypt';
+>>>>>>> feature/p2-revenue-statistics
 
 @Injectable()
 export class BookingService {
   constructor(
     private readonly prisma: PrismaService,
+<<<<<<< HEAD
+=======
+    private readonly discountService: DiscountService,
+>>>>>>> feature/p2-revenue-statistics
     private readonly emailService: EmailService,
   ) {}
 
@@ -50,18 +60,25 @@ export class BookingService {
     }
 
     const totalCost = this.calculateCost(hireType);
+<<<<<<< HEAD
+=======
+    const discountResult = await this.discountService.calculateDiscountedPrice(
+      userId,
+      totalCost,
+      hireType,
+    );
+    const finalCost = discountResult.discountedPrice;
+>>>>>>> feature/p2-revenue-statistics
 
-    // 开始事务：创建预订并更新滑板车状态
-    return this.prisma.$transaction(async (tx) => {
-      // 创建预订
-      const booking = await tx.booking.create({
+    const booking = await this.prisma.$transaction(async (tx) => {
+      const createdBooking = await tx.booking.create({
         data: {
           userId,
           scooterId,
           hireType,
           startTime,
           endTime,
-          totalCost,
+          totalCost: finalCost,
           status: BookingStatus.PENDING_PAYMENT,
           originalEndTime: endTime,
         },
@@ -71,17 +88,28 @@ export class BookingService {
         },
       });
 
-      // 更新滑板车状态为已租用
       await tx.scooter.update({
         where: { id: scooterId },
         data: { status: ScooterStatus.RENTED },
       });
 
+<<<<<<< HEAD
       // 发送预订确认邮件（异步）
       this.sendBookingConfirmationEmail(booking);
 
       return booking;
+=======
+      return createdBooking;
+>>>>>>> feature/p2-revenue-statistics
     });
+
+    try {
+      await this.emailService.sendBookingConfirmation(booking, finalCost);
+    } catch (error) {
+      console.error('发送预订确认邮件失败:', error);
+    }
+
+    return booking;
   }
 
   async extendBooking(bookingId: string, additionalHours: number) {
@@ -101,8 +129,13 @@ export class BookingService {
     const extensionCost = additionalHours * 5;
     const newEndTime = new Date(booking.endTime.getTime() + additionalHours * 60 * 60 * 1000);
 
+<<<<<<< HEAD
     return this.prisma.$transaction(async (tx) => {
       const updatedBooking = await tx.booking.update({
+=======
+    const updatedBooking = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.booking.update({
+>>>>>>> feature/p2-revenue-statistics
         where: { id: bookingId },
         data: {
           endTime: newEndTime,
@@ -116,8 +149,16 @@ export class BookingService {
         },
       });
 
-      return updatedBooking;
+      return result;
     });
+
+    try {
+      await this.emailService.sendExtensionConfirmation(updatedBooking, extensionCost, newEndTime);
+    } catch (error) {
+      console.error('发送续租确认邮件失败:', error);
+    }
+
+    return updatedBooking;
   }
 
   async cancelBooking(id: string) {
@@ -131,6 +172,119 @@ export class BookingService {
     });
   }
 
+<<<<<<< HEAD
+=======
+  async createBookingForCustomer(
+    employeeId: string,
+    customerEmail: string,
+    scooterId: string,
+    hireType: HireType,
+    startTime: Date,
+    endTime: Date,
+  ) {
+    // 验证员工权限
+    const employee = await this.prisma.user.findUnique({
+      where: { id: employeeId },
+    });
+
+    if (!employee || employee.role !== 'MANAGER') {
+      throw new BadRequestException('只有管理员可以进行代订操作');
+    }
+
+    // 查找或创建客户用户
+    let customer = await this.prisma.user.findUnique({
+      where: { email: customerEmail },
+    });
+
+    if (!customer) {
+      // 为新客户创建账户，使用临时密码
+      const tempPassword = Math.random().toString(36).slice(-8);
+      const tempPasswordHash = await bcrypt.hash(tempPassword, 10);
+
+      customer = await this.prisma.user.create({
+        data: {
+          email: customerEmail,
+          passwordHash: tempPasswordHash,
+          role: 'CUSTOMER',
+        },
+      });
+
+      // TODO: 发送账户创建通知邮件给客户
+      console.log(`为客户 ${customerEmail} 创建了新账户，临时密码: ${tempPassword}`);
+    }
+
+    // 检查滑板车可用性
+    const scooter = await this.prisma.scooter.findUnique({
+      where: { id: scooterId },
+    });
+
+    if (!scooter) {
+      throw new BadRequestException('滑板车不存在');
+    }
+
+    if (scooter.status !== ScooterStatus.AVAILABLE) {
+      throw new BadRequestException('滑板车当前不可用');
+    }
+
+    // 计算费用（包含折扣）
+    const totalCost = this.calculateCost(hireType);
+    const discountResult = await this.discountService.calculateDiscountedPrice(
+      customer.id,
+      totalCost,
+      hireType,
+    );
+    const finalCost = discountResult.discountedPrice;
+
+    // 创建预订
+    const booking = await this.prisma.$transaction(async (tx) => {
+      // 创建预订
+      const booking = await tx.booking.create({
+        data: {
+          userId: customer.id,
+          scooterId,
+          hireType,
+          startTime,
+          endTime,
+          totalCost: finalCost,
+          status: BookingStatus.CONFIRMED, // 代订直接确认
+          originalEndTime: endTime,
+        },
+        include: {
+          user: true,
+          scooter: true,
+        },
+      });
+
+      // 更新滑板车状态
+      await tx.scooter.update({
+        where: { id: scooterId },
+        data: { status: ScooterStatus.RENTED },
+      });
+
+      // 创建支付记录（代订自动支付）
+      await tx.payment.create({
+        data: {
+          bookingId: booking.id,
+          amount: finalCost,
+          status: 'SUCCESS',
+        },
+      });
+
+      return booking;
+    });
+
+    // 发送代订确认邮件
+    try {
+      await this.emailService.sendBookingConfirmation(booking, finalCost);
+      // TODO: 如果是新用户，发送账户信息邮件
+    } catch (error) {
+      console.error('发送代订确认邮件失败:', error);
+    }
+
+    return booking;
+  }
+
+>>>>>>> feature/p2-revenue-statistics
   private calculateCost(hireType: HireType): number {
     switch (hireType) {
       case HireType.HOUR_1:
@@ -138,12 +292,13 @@ export class BookingService {
       case HireType.HOUR_4:
         return 15;
       case HireType.DAY_1:
-        return 40;
+        return 30;
       case HireType.WEEK_1:
-        return 200;
+        return 90;
       default:
         return 0;
     }
+<<<<<<< HEAD
   }
 
   private async sendBookingConfirmationEmail(booking: any): Promise<void> {
@@ -159,3 +314,6 @@ export class BookingService {
     }
   }
 }
+=======
+  }}
+>>>>>>> feature/p2-revenue-statistics
