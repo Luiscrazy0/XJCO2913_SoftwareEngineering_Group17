@@ -423,4 +423,38 @@ export class BookingController {
     // 从JWT token获取用户ID
     return this.paymentCardService.deletePaymentCard('user-id');
   }
+
+  // 员工代订API
+  @Post('staff-booking')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '员工代订', description: '管理员为客户代订滑板车（需要管理员权限）' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        customerEmail: { type: 'string', example: 'customer@example.com' },
+        scooterId: { type: 'string', example: 'scooter-123' },
+        hireType: { type: 'string', enum: ['HOUR_1', 'HOUR_4', 'DAY_1', 'WEEK_1'], example: 'HOUR_1' },
+        startTime: { type: 'string', format: 'date-time', example: '2024-01-01T10:00:00.000Z' },
+        endTime: { type: 'string', format: 'date-time', example: '2024-01-01T11:00:00.000Z' },
+      },
+      required: ['customerEmail', 'scooterId', 'hireType', 'startTime', 'endTime'],
+    },
+  })
+  @ApiResponse({ status: 201, description: '代订成功' })
+  @ApiResponse({ status: 403, description: '权限不足' })
+  @ApiResponse({ status: 400, description: '请求参数错误' })
+  createStaffBooking(@Body() bookingData: any) {
+    // 从JWT token获取员工ID（实际实现中需要从Auth装饰器获取）
+    // 这里暂时使用模拟的员工ID，实际项目中需要正确获取
+    return this.bookingService.createBookingForCustomer(
+      'employee-id', // 员工ID
+      bookingData.customerEmail,
+      bookingData.scooterId,
+      bookingData.hireType,
+      new Date(bookingData.startTime),
+      new Date(bookingData.endTime),
+    );
+  }
 }
