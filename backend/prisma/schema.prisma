@@ -17,6 +17,13 @@ enum Role {
   MANAGER
 }
 
+enum UserType {
+  NORMAL
+  STUDENT
+  SENIOR
+  FREQUENT
+}
+
 enum ScooterStatus {
   AVAILABLE
   UNAVAILABLE
@@ -55,6 +62,7 @@ model User {
   email        String   @unique
   passwordHash String
   role         Role     @default(CUSTOMER)
+  userType     UserType @default(NORMAL)
   bookings     Booking[]
 }
 

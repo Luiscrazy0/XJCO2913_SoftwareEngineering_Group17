@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient, BookingStatus, HireType, Role, ScooterStatus } from '@prisma/client';
+import { PrismaClient, BookingStatus, HireType, Role, ScooterStatus, UserType } from '@prisma/client';
 
 
 function requireEnv(name: string): string {
@@ -35,21 +35,45 @@ async function main() {
 
     const user1 = await prisma.user.upsert({
       where: { email: 'test1@example.com' },
-      update: { role: Role.CUSTOMER },
+      update: { role: Role.CUSTOMER, userType: UserType.FREQUENT },
       create: {
         email: 'test1@example.com',
         passwordHash: userPasswordHash,
         role: Role.CUSTOMER,
+        userType: UserType.FREQUENT, // 高频用户
       },
     });
 
     const user2 = await prisma.user.upsert({
       where: { email: 'test2@example.com' },
-      update: { role: Role.CUSTOMER },
+      update: { role: Role.CUSTOMER, userType: UserType.STUDENT },
       create: {
         email: 'test2@example.com',
         passwordHash: userPasswordHash,
         role: Role.CUSTOMER,
+        userType: UserType.STUDENT, // 学生用户
+      },
+    });
+
+    const user3 = await prisma.user.upsert({
+      where: { email: 'test3@example.com' },
+      update: { role: Role.CUSTOMER, userType: UserType.SENIOR },
+      create: {
+        email: 'test3@example.com',
+        passwordHash: userPasswordHash,
+        role: Role.CUSTOMER,
+        userType: UserType.SENIOR, // 老年人用户
+      },
+    });
+
+    const user4 = await prisma.user.upsert({
+      where: { email: 'test4@example.com' },
+      update: { role: Role.CUSTOMER, userType: UserType.NORMAL },
+      create: {
+        email: 'test4@example.com',
+        passwordHash: userPasswordHash,
+        role: Role.CUSTOMER,
+        userType: UserType.NORMAL, // 普通用户
       },
     });
 
@@ -161,7 +185,152 @@ async function main() {
     }
 
     const now = new Date();
+    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+    // 创建历史预订数据（过去7天）
+    const historicalBookings = [
+      // 第1天：各种租赁类型
+      {
+        id: 'BOOKING_HIST_001',
+        userId: user1.id,
+        scooterId: 'SC001',
+        hireType: HireType.HOUR_1,
+        startTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000),
+        endTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
+        status: BookingStatus.COMPLETED,
+        totalCost: 5,
+      },
+      {
+        id: 'BOOKING_HIST_002',
+        userId: user2.id,
+        scooterId: 'SC002',
+        hireType: HireType.HOUR_4,
+        startTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+        endTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000),
+        status: BookingStatus.COMPLETED,
+        totalCost: 12, // 学生折扣8折: 15 * 0.8 = 12
+      },
+      // 第2天：更多预订
+      {
+        id: 'BOOKING_HIST_003',
+        userId: user1.id,
+        scooterId: 'SC003',
+        hireType: HireType.DAY_1,
+        startTime: new Date(oneWeekAgo.getTime() + 2 * 24 * 60 * 60 * 1000),
+        endTime: new Date(oneWeekAgo.getTime() + 3 * 24 * 60 * 60 * 1000),
+        status: BookingStatus.COMPLETED,
+        totalCost: 30,
+      },
+      {
+        id: 'BOOKING_HIST_004',
+        userId: user2.id,
+        scooterId: 'SC004',
+        hireType: HireType.HOUR_1,
+        startTime: new Date(oneWeekAgo.getTime() + 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+        endTime: new Date(oneWeekAgo.getTime() + 2 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
+        status: BookingStatus.COMPLETED,
+        totalCost: 5,
+      },
+      // 第3天：周租赁
+      {
+        id: 'BOOKING_HIST_005',
+        userId: user1.id,
+        scooterId: 'SC005',
+        hireType: HireType.WEEK_1,
+        startTime: new Date(oneWeekAgo.getTime() + 3 * 24 * 60 * 60 * 1000),
+        endTime: new Date(oneWeekAgo.getTime() + 10 * 24 * 60 * 60 * 1000),
+        status: BookingStatus.CONFIRMED,
+        totalCost: 150,
+      },
+      // 第4天：混合类型
+      {
+        id: 'BOOKING_HIST_006',
+        userId: user2.id,
+        scooterId: 'SC001',
+        hireType: HireType.HOUR_4,
+        startTime: new Date(oneWeekAgo.getTime() + 4 * 24 * 60 * 60 * 1000),
+        endTime: new Date(oneWeekAgo.getTime() + 4 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
+        status: BookingStatus.COMPLETED,
+        totalCost: 15,
+      },
+      {
+        id: 'BOOKING_HIST_007',
+        userId: user1.id,
+        scooterId: 'SC002',
+        hireType: HireType.DAY_1,
+        startTime: new Date(oneWeekAgo.getTime() + 4 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000),
+        endTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000),
+        status: BookingStatus.COMPLETED,
+        totalCost: 30,
+      },
+      // 第5天：更多1小时租赁
+      {
+        id: 'BOOKING_HIST_008',
+        userId: user2.id,
+        scooterId: 'SC003',
+        hireType: HireType.HOUR_1,
+        startTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000),
+        endTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
+        status: BookingStatus.COMPLETED,
+        totalCost: 5,
+      },
+      {
+        id: 'BOOKING_HIST_009',
+        userId: user1.id,
+        scooterId: 'SC004',
+        hireType: HireType.HOUR_1,
+        startTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
+        endTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
+        status: BookingStatus.COMPLETED,
+        totalCost: 5,
+      },
+      // 第6天：4小时租赁
+      {
+        id: 'BOOKING_HIST_010',
+        userId: user2.id,
+        scooterId: 'SC005',
+        hireType: HireType.HOUR_4,
+        startTime: new Date(oneWeekAgo.getTime() + 6 * 24 * 60 * 60 * 1000),
+        endTime: new Date(oneWeekAgo.getTime() + 6 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
+        status: BookingStatus.COMPLETED,
+        totalCost: 15,
+      },
+      // 第7天（今天）：已确认的预订
+      {
+        id: 'BOOKING_HIST_011',
+        userId: user1.id,
+        scooterId: 'SC001',
+        hireType: HireType.DAY_1,
+        startTime: new Date(now.getTime() - 2 * 60 * 60 * 1000),
+        endTime: new Date(now.getTime() + 22 * 60 * 60 * 1000),
+        status: BookingStatus.CONFIRMED,
+        totalCost: 30,
+      },
+    ];
+
+    // 创建历史预订
+    for (const bookingData of historicalBookings) {
+      const booking = await prisma.booking.upsert({
+        where: { id: bookingData.id },
+        update: bookingData,
+        create: bookingData,
+      });
+
+      // 为已完成的预订创建支付记录
+      if (bookingData.status === BookingStatus.COMPLETED || bookingData.status === BookingStatus.CONFIRMED) {
+        await prisma.payment.upsert({
+          where: { bookingId: booking.id },
+          update: { amount: bookingData.totalCost, status: 'SUCCESS' },
+          create: {
+            bookingId: booking.id,
+            amount: bookingData.totalCost,
+            status: 'SUCCESS',
+          },
+        });
+      }
+    }
+
+    // 原有的测试预订
     const pendingBooking = await prisma.booking.upsert({
       where: { id: 'BOOKING_PENDING_001' },
       update: {},
@@ -212,6 +381,9 @@ async function main() {
     console.log('Sample bookings:');
     console.log(`  - ${pendingBooking.id} (PENDING_PAYMENT)`);
     console.log(`  - ${confirmedBooking.id} (CONFIRMED + Payment)`);
+    console.log('');
+    console.log('Historical bookings created:');
+    console.log(`  - ${historicalBookings.length} historical bookings for statistics`);
     console.log('');
     console.log('Stations created:');
     console.log('  - 市中心广场站 (ST001)');
