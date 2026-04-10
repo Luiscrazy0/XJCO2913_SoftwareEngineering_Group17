@@ -1,18 +1,16 @@
 name: Backend CI Pipeline
 
-# 修复了缩进问题，明确告诉系统什么时候触发
 on:
   push:
-    branches: [ "main", "dev" ,"feat/**"]
+    branches: [ "main", "dev", "feat/**" ]
     paths:
       - 'backend/**'
   pull_request:
-    branches: [ "main", "dev", "feat/**"]
+    branches: [ "main", "dev", "feat/**" ]
     paths:
       - 'backend/**'
   workflow_dispatch:
 
-# 加上这行环境变量，彻底消除 Node 20 的烦人警告
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
@@ -40,6 +38,14 @@ jobs:
 
     - name: Generate Prisma Client
       run: npx prisma generate
+
+    # 🌟 新增：Lint 自动化检查（规范）
+    - name: Run Lint Check
+      run: npm run lint
+
+    # 🌟 新增：Prettier 自动化检查（格式）
+    - name: Check Formatting
+      run: npx prettier --check "src/**/*.ts" "test/**/*.ts"
 
     - name: Run Unit Tests with Coverage Gate
       run: npm run test:cov
