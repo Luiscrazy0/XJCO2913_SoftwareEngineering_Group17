@@ -53,10 +53,10 @@ describe('PaymentService', () => {
       // 模拟第一步：查无此订单
       mockPrismaService.booking.findUnique.mockResolvedValue(null);
 
-      await expect(paymentService.createPayment(targetBookingId, paymentAmount))
-        .rejects
-        .toThrow(new BadRequestException('Booking not found'));
-      
+      await expect(
+        paymentService.createPayment(targetBookingId, paymentAmount),
+      ).rejects.toThrow(new BadRequestException('Booking not found'));
+
       // 确保后续的创建和更新操作绝不会被执行
       expect(mockPrismaService.payment.create).not.toHaveBeenCalled();
       expect(mockPrismaService.booking.update).not.toHaveBeenCalled();
@@ -69,9 +69,9 @@ describe('PaymentService', () => {
         status: BookingStatus.CANCELLED,
       });
 
-      await expect(paymentService.createPayment(targetBookingId, paymentAmount))
-        .rejects
-        .toThrow(new BadRequestException('Booking cannot be paid'));
+      await expect(
+        paymentService.createPayment(targetBookingId, paymentAmount),
+      ).rejects.toThrow(new BadRequestException('Booking cannot be paid'));
 
       // 同样，确保护城河生效，不能进行扣款
       expect(mockPrismaService.payment.create).not.toHaveBeenCalled();
@@ -100,7 +100,10 @@ describe('PaymentService', () => {
       });
 
       // 执行测试操作
-      const result = await paymentService.createPayment(targetBookingId, paymentAmount);
+      const result = await paymentService.createPayment(
+        targetBookingId,
+        paymentAmount,
+      );
 
       // 断言 1: 验证是否正确检查了订单
       expect(mockPrismaService.booking.findUnique).toHaveBeenCalledWith({

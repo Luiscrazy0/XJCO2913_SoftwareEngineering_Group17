@@ -7,7 +7,6 @@ import { BookingStatus } from '@prisma/client';
  */
 @Injectable()
 export class PaymentService {
-  
   constructor(private readonly prisma: PrismaService) {}
 
   async createPayment(bookingId: string, amount: number) {

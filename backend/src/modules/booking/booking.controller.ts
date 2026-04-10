@@ -1,10 +1,25 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Patch,
+  Param,
+  Body,
+  UseGuards,
+} from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { HireType } from '@prisma/client';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ExtendBookingDto } from './dto/extend-booking.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 
 @ApiTags('bookings')
 @Controller('bookings')
@@ -14,9 +29,12 @@ export class BookingController {
   @Get()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '获取所有预约', description: '获取当前用户的所有预约记录（需要登录）' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiOperation({
+    summary: '获取所有预约',
+    description: '获取当前用户的所有预约记录（需要登录）',
+  })
+  @ApiResponse({
+    status: 200,
     description: '获取成功',
     schema: {
       example: {
@@ -34,22 +52,22 @@ export class BookingController {
             scooter: {
               id: 'clx1234567890',
               location: 'Main Street, Building 5',
-              status: 'AVAILABLE'
+              status: 'AVAILABLE',
             },
             user: {
               id: 'clx0987654321',
               email: 'user@example.com',
-              role: 'CUSTOMER'
-            }
-          }
+              role: 'CUSTOMER',
+            },
+          },
         ],
         message: 'Request successful',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: '未授权访问',
     schema: {
       example: {
@@ -58,9 +76,9 @@ export class BookingController {
         message: 'Unauthorized',
         statusCode: 401,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/bookings'
-      }
-    }
+        path: '/bookings',
+      },
+    },
   })
   findAll() {
     return this.bookingService.findAll();
@@ -69,10 +87,13 @@ export class BookingController {
   @Get(':id')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '获取单个预约', description: '根据ID获取预约详细信息（需要登录）' })
+  @ApiOperation({
+    summary: '获取单个预约',
+    description: '根据ID获取预约详细信息（需要登录）',
+  })
   @ApiParam({ name: 'id', description: '预约ID', example: 'clx1234567890' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: '获取成功',
     schema: {
       example: {
@@ -89,21 +110,21 @@ export class BookingController {
           scooter: {
             id: 'clx1234567890',
             location: 'Main Street, Building 5',
-            status: 'AVAILABLE'
+            status: 'AVAILABLE',
           },
           user: {
             id: 'clx0987654321',
             email: 'user@example.com',
-            role: 'CUSTOMER'
-          }
+            role: 'CUSTOMER',
+          },
         },
         message: 'Request successful',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: '未授权访问',
     schema: {
       example: {
@@ -112,12 +133,12 @@ export class BookingController {
         message: 'Unauthorized',
         statusCode: 401,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/bookings/clx1234567890'
-      }
-    }
+        path: '/bookings/clx1234567890',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 404, 
+  @ApiResponse({
+    status: 404,
     description: '预约不存在',
     schema: {
       example: {
@@ -126,9 +147,9 @@ export class BookingController {
         message: 'Booking not found',
         statusCode: 404,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/bookings/clx1234567890'
-      }
-    }
+        path: '/bookings/clx1234567890',
+      },
+    },
   })
   findOne(@Param('id') id: string) {
     return this.bookingService.findById(id);
@@ -137,10 +158,13 @@ export class BookingController {
   @Post()
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '创建预约', description: '创建新的电动车预约（需要登录）' })
+  @ApiOperation({
+    summary: '创建预约',
+    description: '创建新的电动车预约（需要登录）',
+  })
   @ApiBody({ type: CreateBookingDto })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: '创建成功',
     schema: {
       example: {
@@ -157,21 +181,21 @@ export class BookingController {
           scooter: {
             id: 'clx1234567890',
             location: 'Main Street, Building 5',
-            status: 'AVAILABLE'
+            status: 'AVAILABLE',
           },
           user: {
             id: 'clx0987654321',
             email: 'user@example.com',
-            role: 'CUSTOMER'
-          }
+            role: 'CUSTOMER',
+          },
         },
         message: 'Resource created successfully',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: '请求参数错误',
     schema: {
       example: {
@@ -180,12 +204,12 @@ export class BookingController {
         message: 'Invalid request parameters',
         statusCode: 400,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/bookings'
-      }
-    }
+        path: '/bookings',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: '未授权访问',
     schema: {
       example: {
@@ -194,13 +218,12 @@ export class BookingController {
         message: 'Unauthorized',
         statusCode: 401,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/bookings'
-      }
-    }
+        path: '/bookings',
+      },
+    },
   })
-  create(@Body()body: CreateBookingDto)
-  // Dto
-  {
+  create(@Body() body: CreateBookingDto) {
+    // Dto
     return this.bookingService.createBooking(
       body.userId,
       body.scooterId,
@@ -213,11 +236,14 @@ export class BookingController {
   @Patch(':id/extend')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '续租预约', description: '延长已确认的预约时间（需要登录）' })
+  @ApiOperation({
+    summary: '续租预约',
+    description: '延长已确认的预约时间（需要登录）',
+  })
   @ApiParam({ name: 'id', description: '预约ID', example: 'clx1234567890' })
   @ApiBody({ type: ExtendBookingDto })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: '续租成功',
     schema: {
       example: {
@@ -235,21 +261,21 @@ export class BookingController {
           scooter: {
             id: 'clx1234567890',
             location: 'Main Street, Building 5',
-            status: 'AVAILABLE'
+            status: 'AVAILABLE',
           },
           user: {
             id: 'clx0987654321',
             email: 'user@example.com',
-            role: 'CUSTOMER'
-          }
+            role: 'CUSTOMER',
+          },
         },
         message: 'Booking extended successfully',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: '无法续租',
     schema: {
       example: {
@@ -258,12 +284,12 @@ export class BookingController {
         message: 'Only confirmed or extended bookings can be extended',
         statusCode: 400,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/bookings/clx1234567890/extend'
-      }
-    }
+        path: '/bookings/clx1234567890/extend',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: '未授权访问',
     schema: {
       example: {
@@ -272,12 +298,12 @@ export class BookingController {
         message: 'Unauthorized',
         statusCode: 401,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/bookings/clx1234567890/extend'
-      }
-    }
+        path: '/bookings/clx1234567890/extend',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 404, 
+  @ApiResponse({
+    status: 404,
     description: '预约不存在',
     schema: {
       example: {
@@ -286,9 +312,9 @@ export class BookingController {
         message: 'Booking not found',
         statusCode: 404,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/bookings/clx1234567890/extend'
-      }
-    }
+        path: '/bookings/clx1234567890/extend',
+      },
+    },
   })
   extend(@Param('id') id: string, @Body() body: ExtendBookingDto) {
     return this.bookingService.extendBooking(id, body.additionalHours);
@@ -297,10 +323,13 @@ export class BookingController {
   @Patch(':id/cancel')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '取消预约', description: '取消已创建的预约（需要登录）' })
+  @ApiOperation({
+    summary: '取消预约',
+    description: '取消已创建的预约（需要登录）',
+  })
   @ApiParam({ name: 'id', description: '预约ID', example: 'clx1234567890' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: '取消成功',
     schema: {
       example: {
@@ -317,21 +346,21 @@ export class BookingController {
           scooter: {
             id: 'clx1234567890',
             location: 'Main Street, Building 5',
-            status: 'AVAILABLE'
+            status: 'AVAILABLE',
           },
           user: {
             id: 'clx0987654321',
             email: 'user@example.com',
-            role: 'CUSTOMER'
-          }
+            role: 'CUSTOMER',
+          },
         },
         message: 'Request successful',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: '预约无法取消',
     schema: {
       example: {
@@ -340,12 +369,12 @@ export class BookingController {
         message: 'Booking cannot be cancelled',
         statusCode: 400,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/bookings/clx1234567890/cancel'
-      }
-    }
+        path: '/bookings/clx1234567890/cancel',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: '未授权访问',
     schema: {
       example: {
@@ -354,12 +383,12 @@ export class BookingController {
         message: 'Unauthorized',
         statusCode: 401,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/bookings/clx1234567890/cancel'
-      }
-    }
+        path: '/bookings/clx1234567890/cancel',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 404, 
+  @ApiResponse({
+    status: 404,
     description: '预约不存在',
     schema: {
       example: {
@@ -368,9 +397,9 @@ export class BookingController {
         message: 'Booking not found',
         statusCode: 404,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/bookings/clx1234567890/cancel'
-      }
-    }
+        path: '/bookings/clx1234567890/cancel',
+      },
+    },
   })
   cancel(@Param('id') id: string) {
     return this.bookingService.cancelBooking(id);

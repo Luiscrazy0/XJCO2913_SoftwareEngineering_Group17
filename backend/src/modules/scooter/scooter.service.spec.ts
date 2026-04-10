@@ -18,8 +18,8 @@ describe('ScooterService', () => {
       delete: jest.fn(),
     },
     booking: {
-      count: jest.fn(),  
-    }
+      count: jest.fn(),
+    },
   };
 
   beforeEach(async () => {
@@ -73,7 +73,11 @@ describe('ScooterService', () => {
     const testId = 'test-scooter-id';
 
     it('【正常路径】如果 ID 存在，应该返回对应的滑板车对象', async () => {
-      const mockScooter = { id: testId, location: 'North Campus', status: ScooterStatus.AVAILABLE };
+      const mockScooter = {
+        id: testId,
+        location: 'North Campus',
+        status: ScooterStatus.AVAILABLE,
+      };
       mockPrismaService.scooter.findUnique.mockResolvedValue(mockScooter);
 
       const result = await scooterService.findById(testId);
@@ -100,10 +104,10 @@ describe('ScooterService', () => {
   describe('createScooter', () => {
     it('应该成功在指定位置创建一辆新滑板车', async () => {
       const newLocation = 'Engineering Building';
-      const mockCreatedScooter = { 
-        id: '3', 
-        location: newLocation, 
-        status: ScooterStatus.AVAILABLE 
+      const mockCreatedScooter = {
+        id: '3',
+        location: newLocation,
+        status: ScooterStatus.AVAILABLE,
       };
 
       mockPrismaService.scooter.create.mockResolvedValue(mockCreatedScooter);
@@ -123,8 +127,12 @@ describe('ScooterService', () => {
   describe('updateStatus', () => {
     it('应该成功更新指定滑板车的状态', async () => {
       const targetId = '1';
-      const newStatus = ScooterStatus.MAINTENANCE; 
-      const mockUpdatedScooter = { id: targetId, location: 'South Campus', status: newStatus };
+      const newStatus = ScooterStatus.MAINTENANCE;
+      const mockUpdatedScooter = {
+        id: targetId,
+        location: 'South Campus',
+        status: newStatus,
+      };
 
       mockPrismaService.scooter.update.mockResolvedValue(mockUpdatedScooter);
 
@@ -149,15 +157,15 @@ describe('ScooterService', () => {
       mockPrismaService.booking.count.mockResolvedValue(1);
 
       await expect(scooterService.deleteScooter(scooterId)).rejects.toThrow(
-        new BadRequestException('Scooter has existing bookings')
+        new BadRequestException('Scooter has existing bookings'),
       );
-      
+
       expect(mockPrismaService.scooter.delete).not.toHaveBeenCalled();
     });
 
     it('【正常路径】如果该滑板车没有关联订单，应该成功删除', async () => {
       mockPrismaService.booking.count.mockResolvedValue(0);
-      
+
       const mockDeletedScooter = { id: scooterId, location: 'Campus A' };
       mockPrismaService.scooter.delete.mockResolvedValue(mockDeletedScooter);
 

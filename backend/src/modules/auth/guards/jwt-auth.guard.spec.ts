@@ -47,9 +47,9 @@ describe('JwtAuthGuard', () => {
   it('【异常路径】如果没有 Authorization header，应该抛出 UnauthorizedException', () => {
     const req = { headers: {} }; // 啥也没传
     const context = createMockContext(req);
-    
+
     expect(() => guard.canActivate(context)).toThrow(
-      new UnauthorizedException('Missing or invalid Authorization header')
+      new UnauthorizedException('Missing or invalid Authorization header'),
     );
   });
 
@@ -59,9 +59,9 @@ describe('JwtAuthGuard', () => {
   it('【异常路径】如果 header 不是以 Bearer 开头，应该抛出 UnauthorizedException', () => {
     const req = { headers: { authorization: 'Basic badtoken123' } }; // 格式错误
     const context = createMockContext(req);
-    
+
     expect(() => guard.canActivate(context)).toThrow(
-      new UnauthorizedException('Missing or invalid Authorization header')
+      new UnauthorizedException('Missing or invalid Authorization header'),
     );
   });
 
@@ -71,14 +71,14 @@ describe('JwtAuthGuard', () => {
   it('【异常路径】如果 token 解析失败或过期，应该抛出 UnauthorizedException', () => {
     const req = { headers: { authorization: 'Bearer fake-token' } };
     const context = createMockContext(req);
-    
+
     // 模拟 JwtService 验证失败抛出异常
     mockJwtService.verify.mockImplementation(() => {
       throw new Error('jwt expired');
     });
 
     expect(() => guard.canActivate(context)).toThrow(
-      new UnauthorizedException('Invalid or expired token')
+      new UnauthorizedException('Invalid or expired token'),
     );
   });
 
