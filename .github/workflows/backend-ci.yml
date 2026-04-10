@@ -31,7 +31,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '22' # 保持与你们项目一致
+        node-version: '22' 
         cache: 'npm'
         cache-dependency-path: ./backend/package-lock.json
 
@@ -41,8 +41,8 @@ jobs:
     - name: Generate Prisma Client
       run: npx prisma generate
 
-    - name: Run Unit Tests
-      run: npm run test
+    - name: Run Unit Tests with Coverage Gate
+      run: npm run test:cov
       
     - name: Run E2E tests
       run: npm run test:e2e
