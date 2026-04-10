@@ -30,7 +30,7 @@ const RevenueStatisticsPage: React.FC = () => {
   
   const loadData = async () => {
     if (!user || user.role !== 'MANAGER') {
-      showToast('只有管理员可以查看收入统计', 'warning');
+      showToast({ message: '只有管理员可以查看收入统计', type: 'warning' });
       return;
     }
     
@@ -47,7 +47,7 @@ const RevenueStatisticsPage: React.FC = () => {
       setChartData(chart);
     } catch (error) {
       console.error('加载统计数据失败:', error);
-      showToast('加载统计数据失败，请重试', 'error');
+      showToast({ message: '加载统计数据失败，请重试', type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -275,7 +275,7 @@ const RevenueStatisticsPage: React.FC = () => {
       <div className="min-h-screen bg-gray-50 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-center items-center h-64">
-            <LoadingSpinner size="lg" />
+            <LoadingSpinner size="large" />
           </div>
         </div>
       </div>
