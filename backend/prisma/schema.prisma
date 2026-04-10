@@ -56,6 +56,8 @@ model User {
   passwordHash String
   role         Role     @default(CUSTOMER)
   bookings     Booking[]
+  paymentCards PaymentCard[]
+  employeeBookings EmployeeBooking[] // 员工代订记录
 }
 
 model Scooter {
@@ -85,6 +87,7 @@ model Booking {
   extensionCount  Int           @default(0)  // 续租次数
   extendedFrom    String?       // 原始预订ID（如果是续租）
   payment         Payment?
+  employeeBooking EmployeeBooking? // 员工代订记录
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 }
@@ -96,3 +99,29 @@ model Payment {
   amount    Float
   status    String
 }
+
+// 银行卡信息模型（P3任务：存储客户银行卡信息）
+model PaymentCard {
+  id              String   @id @default(uuid())
+  user            User     @relation(fields: [userId], references: [id])
+  userId          String
+  lastFourDigits  String   // 只存储最后4位数字
+  expiryDate      String   // 格式：MM/YY
+  cardHolder      String
+  isDefault       Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// 员工代订记录模型（P3任务：员工为未注册用户代订）
+model EmployeeBooking {
+  id         String   @id @default(uuid())
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  bookingId  String   @unique
+  employee   User     @relation(fields: [employeeId], references: [id])
+  employeeId String
+  guestEmail String
+  guestName  String
+  createdAt  DateTime @default(now())
+}
+
