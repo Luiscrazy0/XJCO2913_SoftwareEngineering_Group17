@@ -7,7 +7,7 @@ on:
     paths:
       - 'backend/**'
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: [ "main", "dev", "test/sprint2-coverage"]
     paths:
       - 'backend/**'
   workflow_dispatch:
