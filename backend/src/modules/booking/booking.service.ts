@@ -38,31 +38,25 @@ export class BookingService {
   }
 
   async createBooking(
-    // booking creation
     userId: string,
     scooterId: string,
     hireType: HireType,
     startTime: Date,
     endTime: Date,
   ) {
-    
     const scooter = await this.prisma.scooter.findUnique({
-        // Find scooter by ID
       where: { id: scooterId },
     });
 
     if (!scooter) {
-        // Check if scooter exists
       throw new BadRequestException('Scooter not found');
     }
 
     if (scooter.status !== ScooterStatus.AVAILABLE) {
-        // Check if scooter is available
       throw new BadRequestException('Scooter not available');
     }
 
     const totalCost = this.calculateCost(hireType);
-    // 计算折扣
     const discountResult = await this.discountService.calculateDiscountedPrice(
       userId,
       totalCost,
@@ -70,10 +64,8 @@ export class BookingService {
     );
     const finalCost = discountResult.discountedPrice;
 
-    // 开始事务：创建预订并更新滑板车状态
-    return this.prisma.$transaction(async (tx) => {
-      // 创建预订
-      const booking = await tx.booking.create({
+    const booking = await this.prisma.$transaction(async (tx) => {
+      const createdBooking = await tx.booking.create({
         data: {
           userId,
           scooterId,
@@ -82,7 +74,7 @@ export class BookingService {
           endTime,
           totalCost: finalCost,
           status: BookingStatus.PENDING_PAYMENT,
-          originalEndTime: endTime, // 保存原始结束时间
+          originalEndTime: endTime,
         },
         include: {
           user: true,
@@ -90,27 +82,24 @@ export class BookingService {
         },
       });
 
-      // 更新滑板车状态为已租用
       await tx.scooter.update({
         where: { id: scooterId },
         data: { status: ScooterStatus.RENTED },
       });
 
-      return booking;
+      return createdBooking;
     });
 
-    // 发送预订确认邮件
     try {
       await this.emailService.sendBookingConfirmation(booking, finalCost);
     } catch (error) {
       console.error('发送预订确认邮件失败:', error);
-      // 不抛出错误，以免影响主要业务流程
     }
 
     return booking;
+  }
 
   async extendBooking(bookingId: string, additionalHours: number) {
-    // 查找预订
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
       include: { scooter: true },
@@ -120,21 +109,15 @@ export class BookingService {
       throw new NotFoundException('Booking not found');
     }
 
-    // 检查预订状态是否可以续租
     if (booking.status !== BookingStatus.CONFIRMED && booking.status !== BookingStatus.EXTENDED) {
       throw new BadRequestException('Only confirmed or extended bookings can be extended');
     }
 
-    // 计算续租费用（按小时计费）
-    const extensionCost = additionalHours * 5; // 每小时5元
-
-    // 计算新的结束时间
+    const extensionCost = additionalHours * 5;
     const newEndTime = new Date(booking.endTime.getTime() + additionalHours * 60 * 60 * 1000);
 
-    // 开始事务：更新预订
-    return this.prisma.$transaction(async (tx) => {
-      // 更新预订
-      const updatedBooking = await tx.booking.update({
+    const updatedBooking = await this.prisma.$transaction(async (tx) => {
+      const result = await tx.booking.update({
         where: { id: bookingId },
         data: {
           endTime: newEndTime,
@@ -148,18 +131,17 @@ export class BookingService {
         },
       });
 
-      return updatedBooking;
+      return result;
     });
 
-    // 发送续租确认邮件
     try {
       await this.emailService.sendExtensionConfirmation(updatedBooking, extensionCost, newEndTime);
     } catch (error) {
       console.error('发送续租确认邮件失败:', error);
-      // 不抛出错误，以免影响主要业务流程
     }
 
     return updatedBooking;
+  }
 
   async cancelBooking(id: string) {
     // Cancel booking by ID
@@ -283,3 +265,18 @@ export class BookingService {
 
     return booking;
   }
+
+  private calculateCost(hireType: HireType): number {
+    switch (hireType) {
+      case HireType.HOUR_1:
+        return 5;
+      case HireType.HOUR_4:
+        return 15;
+      case HireType.DAY_1:
+        return 30;
+      case HireType.WEEK_1:
+        return 90;
+      default:
+        return 0;
+    }
+  }}
