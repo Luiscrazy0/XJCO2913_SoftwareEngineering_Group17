@@ -1,5 +1,6 @@
-import { Controller, Get, Post, Patch, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, UseGuards, Delete } from '@nestjs/common';
 import { BookingService } from './booking.service';
+import { PaymentCardService } from './payment-card.service';
 import { HireType } from '@prisma/client';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ExtendBookingDto } from './dto/extend-booking.dto';
@@ -9,7 +10,10 @@ import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth } 
 @ApiTags('bookings')
 @Controller('bookings')
 export class BookingController {
-  constructor(private readonly bookingService: BookingService) {}
+  constructor(
+    private readonly bookingService: BookingService,
+    private readonly paymentCardService: PaymentCardService,
+  ) {}
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -374,5 +378,49 @@ export class BookingController {
   })
   cancel(@Param('id') id: string) {
     return this.bookingService.cancelBooking(id);
+  }
+
+  // 银行卡管理API
+  @Post('payment-card')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '保存银行卡信息', description: '保存用户的银行卡信息用于快速预订' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        cardNumber: { type: 'string', example: '4111111111111111' },
+        cardExpiry: { type: 'string', example: '12/25' },
+        cardHolder: { type: 'string', example: 'John Doe' },
+      },
+      required: ['cardNumber', 'cardExpiry', 'cardHolder'],
+    },
+  })
+  @ApiResponse({ status: 201, description: '银行卡保存成功' })
+  @ApiResponse({ status: 400, description: '银行卡信息无效' })
+  savePaymentCard(@Body() cardData: any) {
+    // 从JWT token获取用户ID（实际实现中需要从Auth装饰器获取）
+    // 这里暂时使用模拟的用户ID，实际项目中需要正确获取
+    return this.paymentCardService.savePaymentCard('user-id', cardData);
+  }
+
+  @Get('payment-card')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '获取银行卡信息', description: '获取用户保存的银行卡信息（卡号部分隐藏）' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  getPaymentCard() {
+    // 从JWT token获取用户ID
+    return this.paymentCardService.getPaymentCard('user-id');
+  }
+
+  @Delete('payment-card')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '删除银行卡信息', description: '删除用户保存的银行卡信息' })
+  @ApiResponse({ status: 200, description: '删除成功' })
+  deletePaymentCard() {
+    // 从JWT token获取用户ID
+    return this.paymentCardService.deletePaymentCard('user-id');
   }
 }

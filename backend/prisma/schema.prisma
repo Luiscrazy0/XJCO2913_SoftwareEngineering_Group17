@@ -63,6 +63,10 @@ model User {
   passwordHash String
   role         Role     @default(CUSTOMER)
   userType     UserType @default(NORMAL)
+  // 银行卡信息（加密存储）
+  cardNumber   String?  // 加密后的卡号
+  cardExpiry   String?  // 过期日期 (MM/YY)
+  cardHolder   String?  // 持卡人姓名
   bookings     Booking[]
 }
 
