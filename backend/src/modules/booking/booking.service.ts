@@ -1,22 +1,15 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
-<<<<<<< HEAD
-import { EmailService } from '../email/email.service';
-=======
 import { DiscountService } from './discount.service';
 import { EmailService } from './email.service';
 import * as bcrypt from 'bcrypt';
->>>>>>> feature/p2-revenue-statistics
 
 @Injectable()
 export class BookingService {
   constructor(
     private readonly prisma: PrismaService,
-<<<<<<< HEAD
-=======
     private readonly discountService: DiscountService,
->>>>>>> feature/p2-revenue-statistics
     private readonly emailService: EmailService,
   ) {}
 
@@ -60,15 +53,12 @@ export class BookingService {
     }
 
     const totalCost = this.calculateCost(hireType);
-<<<<<<< HEAD
-=======
     const discountResult = await this.discountService.calculateDiscountedPrice(
       userId,
       totalCost,
       hireType,
     );
     const finalCost = discountResult.discountedPrice;
->>>>>>> feature/p2-revenue-statistics
 
     const booking = await this.prisma.$transaction(async (tx) => {
       const createdBooking = await tx.booking.create({
@@ -93,14 +83,7 @@ export class BookingService {
         data: { status: ScooterStatus.RENTED },
       });
 
-<<<<<<< HEAD
-      // 发送预订确认邮件（异步）
-      this.sendBookingConfirmationEmail(booking);
-
-      return booking;
-=======
       return createdBooking;
->>>>>>> feature/p2-revenue-statistics
     });
 
     try {
@@ -129,13 +112,8 @@ export class BookingService {
     const extensionCost = additionalHours * 5;
     const newEndTime = new Date(booking.endTime.getTime() + additionalHours * 60 * 60 * 1000);
 
-<<<<<<< HEAD
-    return this.prisma.$transaction(async (tx) => {
-      const updatedBooking = await tx.booking.update({
-=======
     const updatedBooking = await this.prisma.$transaction(async (tx) => {
       const result = await tx.booking.update({
->>>>>>> feature/p2-revenue-statistics
         where: { id: bookingId },
         data: {
           endTime: newEndTime,
@@ -172,8 +150,6 @@ export class BookingService {
     });
   }
 
-<<<<<<< HEAD
-=======
   async createBookingForCustomer(
     employeeId: string,
     customerEmail: string,
@@ -284,7 +260,6 @@ export class BookingService {
     return booking;
   }
 
->>>>>>> feature/p2-revenue-statistics
   private calculateCost(hireType: HireType): number {
     switch (hireType) {
       case HireType.HOUR_1:
@@ -298,22 +273,5 @@ export class BookingService {
       default:
         return 0;
     }
-<<<<<<< HEAD
-  }
-
-  private async sendBookingConfirmationEmail(booking: any): Promise<void> {
-    try {
-      await this.emailService.sendBookingConfirmation(
-        booking.user.email,
-        booking.id,
-        booking.totalCost
-      );
-    } catch (error) {
-      console.error('发送预订确认邮件失败:', error);
-      // 邮件发送失败不应该影响主要业务流程
-    }
   }
 }
-=======
-  }}
->>>>>>> feature/p2-revenue-statistics
