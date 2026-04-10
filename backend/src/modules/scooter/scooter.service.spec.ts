@@ -2,6 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ScooterService } from './scooter.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScooterStatus } from '@prisma/client';
+import { BadRequestException } from '@nestjs/common';
 
 describe('ScooterService', () => {
   let scooterService: ScooterService;
@@ -49,7 +50,6 @@ describe('ScooterService', () => {
   // ==========================================
   describe('findAll', () => {
     it('应该成功返回所有滑板车的列表', async () => {
-      // 准备假数据
       const mockScooters = [
         { id: '1', location: 'South Campus', status: ScooterStatus.AVAILABLE },
         { id: '2', location: 'Library', status: ScooterStatus.IN_USE },
@@ -58,7 +58,10 @@ describe('ScooterService', () => {
 
       const result = await scooterService.findAll();
 
-      expect(mockPrismaService.scooter.findMany).toHaveBeenCalled();
+      // 🌟 修复：对齐真实代码里的 include
+      expect(mockPrismaService.scooter.findMany).toHaveBeenCalledWith({
+        include: { station: true },
+      });
       expect(result).toEqual(mockScooters);
     });
   });
@@ -100,7 +103,6 @@ describe('ScooterService', () => {
       const mockCreatedScooter = { 
         id: '3', 
         location: newLocation, 
-        // 假设 Prisma schema 里设置了默认状态是 AVAILABLE
         status: ScooterStatus.AVAILABLE 
       };
 
@@ -121,7 +123,7 @@ describe('ScooterService', () => {
   describe('updateStatus', () => {
     it('应该成功更新指定滑板车的状态', async () => {
       const targetId = '1';
-      const newStatus = ScooterStatus.MAINTENANCE; // 比如把状态改成维修中
+      const newStatus = ScooterStatus.MAINTENANCE; 
       const mockUpdatedScooter = { id: targetId, location: 'South Campus', status: newStatus };
 
       mockPrismaService.scooter.update.mockResolvedValue(mockUpdatedScooter);
@@ -135,28 +137,25 @@ describe('ScooterService', () => {
       expect(result).toEqual(mockUpdatedScooter);
     });
   });
-});
 
-// ==========================================
-  // 测试组: deleteScooter (关键分支测试)
   // ==========================================
+  // 测试组 5: deleteScooter (关键分支测试)
+  // ==========================================
+  // 🌟 修复：现在它被正确地包在最外层的 describe 里面了！
   describe('deleteScooter', () => {
     const scooterId = 'scooter-123';
 
     it('【异常路径】如果该滑板车还有关联的订单，应该抛出 BadRequestException 错误', async () => {
-      // 模拟：去数据库查，发现这辆车还有 1 个历史订单
       mockPrismaService.booking.count.mockResolvedValue(1);
 
       await expect(scooterService.deleteScooter(scooterId)).rejects.toThrow(
         new BadRequestException('Scooter has existing bookings')
       );
       
-      // 严谨验证：既然有订单报错了，真正的 delete 动作绝对不能被执行！
       expect(mockPrismaService.scooter.delete).not.toHaveBeenCalled();
     });
 
     it('【正常路径】如果该滑板车没有关联订单，应该成功删除', async () => {
-      // 模拟：去数据库查，发现这辆车 0 个订单，干干净净
       mockPrismaService.booking.count.mockResolvedValue(0);
       
       const mockDeletedScooter = { id: scooterId, location: 'Campus A' };
@@ -164,7 +163,6 @@ describe('ScooterService', () => {
 
       const result = await scooterService.deleteScooter(scooterId);
 
-      // 验证：有没有乖乖去查订单？有没有执行删除？
       expect(mockPrismaService.booking.count).toHaveBeenCalledWith({
         where: { scooterId },
       });
@@ -174,3 +172,4 @@ describe('ScooterService', () => {
       expect(result).toEqual(mockDeletedScooter);
     });
   });
+}); // 🌟 整个测试文件的大括号在这里才真正结束！
