@@ -1,6 +1,7 @@
 import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus } from '@prisma/client';
+import { EmailService } from '../booking/email.service';
 
 /**
  * PaymentService class handles payment-related operations.
@@ -8,7 +9,10 @@ import { BookingStatus } from '@prisma/client';
 @Injectable()
 export class PaymentService {
   
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly emailService: EmailService,
+  ) {}
 
   async createPayment(bookingId: string, amount: number) {
     //第一步：检查 booking 是否存在。
@@ -49,6 +53,20 @@ export class PaymentService {
         status: BookingStatus.CONFIRMED,
       },
     });
+
+    // 发送支付收据邮件
+    try {
+      const bookingWithUser = await this.prisma.booking.findUnique({
+        where: { id: bookingId },
+        include: { user: true },
+      });
+      if (bookingWithUser) {
+        await this.emailService.sendPaymentReceipt(bookingWithUser, amount);
+      }
+    } catch (error) {
+      console.error('发送支付收据邮件失败:', error);
+      // 不抛出错误，以免影响主要业务流程
+    }
 
     return payment;
   }
