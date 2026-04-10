@@ -12,6 +12,7 @@ const Navbar: React.FC = () => {
     { name: '站点地图', href: '/map' },
     { name: '我的预约', href: '/bookings' },
     { name: '管理后台', href: '/admin', role: 'MANAGER' as const },
+    { name: '收入统计', href: '/statistics', role: 'MANAGER' as const },
   ]
 
   const filteredNavigation = navigation.filter(item => {

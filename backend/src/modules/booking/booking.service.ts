@@ -1,10 +1,14 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
+import { DiscountService } from './discount.service';
 
 @Injectable()
 export class BookingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly discountService: DiscountService,
+  ) {}
 
   async findAll() {
     return this.prisma.booking.findMany({
@@ -55,7 +59,13 @@ export class BookingService {
     }
 
     const totalCost = this.calculateCost(hireType);
-    // Calculate total cost based on hire type
+    // 计算折扣
+    const discountResult = await this.discountService.calculateDiscountedPrice(
+      userId,
+      totalCost,
+      hireType,
+    );
+    const finalCost = discountResult.discountedPrice;
 
     // 开始事务：创建预订并更新滑板车状态
     return this.prisma.$transaction(async (tx) => {
@@ -67,7 +77,7 @@ export class BookingService {
           hireType,
           startTime,
           endTime,
-          totalCost,
+          totalCost: finalCost,
           status: BookingStatus.PENDING_PAYMENT,
           originalEndTime: endTime, // 保存原始结束时间
         },
