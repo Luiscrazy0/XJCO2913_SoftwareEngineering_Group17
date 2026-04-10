@@ -17,7 +17,7 @@ describe('AppController (e2e)', () => {
       imports: [AppModule],
     })
       .overrideProvider(PrismaService) // 拦截真实的数据库服务
-      .useValue(mockPrismaService)     // 换成我们写的空壳服务
+      .useValue(mockPrismaService) // 换成我们写的空壳服务
       .compile();
 
     app = moduleFixture.createNestApplication();

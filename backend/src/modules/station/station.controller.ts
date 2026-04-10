@@ -1,11 +1,29 @@
-import { Controller, Get, Post, Put, Delete, Param, Body, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Put,
+  Delete,
+  Param,
+  Body,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { StationService } from './station.service';
 import { CreateStationDto } from './dto/create-station.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Role } from '@prisma/client';
-import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 
 @ApiTags('stations')
 @Controller('stations')
@@ -13,9 +31,12 @@ export class StationController {
   constructor(private readonly stationService: StationService) {}
 
   @Get()
-  @ApiOperation({ summary: '获取所有站点', description: '获取所有滑板车站点信息' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiOperation({
+    summary: '获取所有站点',
+    description: '获取所有滑板车站点信息',
+  })
+  @ApiResponse({
+    status: 200,
     description: '获取成功',
     schema: {
       example: {
@@ -36,24 +57,27 @@ export class StationController {
                 status: 'AVAILABLE',
                 latitude: 31.2305,
                 longitude: 121.4738,
-                stationId: 'ST001'
-              }
-            ]
-          }
+                stationId: 'ST001',
+              },
+            ],
+          },
         ],
         message: 'Request successful',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
   findAll() {
     return this.stationService.findAll();
   }
 
   @Get('available')
-  @ApiOperation({ summary: '获取有可用滑板车的站点', description: '获取所有有可用滑板车的站点信息' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiOperation({
+    summary: '获取有可用滑板车的站点',
+    description: '获取所有有可用滑板车的站点信息',
+  })
+  @ApiResponse({
+    status: 200,
     description: '获取成功',
     schema: {
       example: {
@@ -72,27 +96,35 @@ export class StationController {
                 status: 'AVAILABLE',
                 latitude: 31.2305,
                 longitude: 121.4738,
-                stationId: 'ST001'
-              }
-            ]
-          }
+                stationId: 'ST001',
+              },
+            ],
+          },
         ],
         message: 'Request successful',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
   getStationsWithAvailableScooters() {
     return this.stationService.getStationsWithAvailableScooters();
   }
 
   @Get('nearby')
-  @ApiOperation({ summary: '获取附近站点', description: '根据经纬度获取附近的滑板车站点' })
+  @ApiOperation({
+    summary: '获取附近站点',
+    description: '根据经纬度获取附近的滑板车站点',
+  })
   @ApiQuery({ name: 'latitude', description: '纬度', example: 31.2304 })
   @ApiQuery({ name: 'longitude', description: '经度', example: 121.4737 })
-  @ApiQuery({ name: 'radius', description: '搜索半径（公里）', example: 5, required: false })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiQuery({
+    name: 'radius',
+    description: '搜索半径（公里）',
+    example: 5,
+    required: false,
+  })
+  @ApiResponse({
+    status: 200,
     description: '获取成功',
     schema: {
       example: {
@@ -112,15 +144,15 @@ export class StationController {
                 status: 'AVAILABLE',
                 latitude: 31.2305,
                 longitude: 121.4738,
-                stationId: 'ST001'
-              }
-            ]
-          }
+                stationId: 'ST001',
+              },
+            ],
+          },
         ],
         message: 'Request successful',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
   getNearbyStations(
     @Query('latitude') latitude: string,
@@ -130,15 +162,18 @@ export class StationController {
     return this.stationService.getNearbyStations(
       parseFloat(latitude),
       parseFloat(longitude),
-      radius ? parseFloat(radius) : 5
+      radius ? parseFloat(radius) : 5,
     );
   }
 
   @Get(':id')
-  @ApiOperation({ summary: '获取单个站点', description: '根据ID获取站点详细信息' })
+  @ApiOperation({
+    summary: '获取单个站点',
+    description: '根据ID获取站点详细信息',
+  })
   @ApiParam({ name: 'id', description: '站点ID', example: 'ST001' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: '获取成功',
     schema: {
       example: {
@@ -158,17 +193,17 @@ export class StationController {
               status: 'AVAILABLE',
               latitude: 31.2305,
               longitude: 121.4738,
-              stationId: 'ST001'
-            }
-          ]
+              stationId: 'ST001',
+            },
+          ],
         },
         message: 'Request successful',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 404, 
+  @ApiResponse({
+    status: 404,
     description: '站点不存在',
     schema: {
       example: {
@@ -177,9 +212,9 @@ export class StationController {
         message: 'Station not found',
         statusCode: 404,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/stations/ST001'
-      }
-    }
+        path: '/stations/ST001',
+      },
+    },
   })
   findOne(@Param('id') id: string) {
     return this.stationService.findById(id);
@@ -189,10 +224,13 @@ export class StationController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.MANAGER)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '创建站点', description: '创建新的滑板车站点（需要管理员权限）' })
+  @ApiOperation({
+    summary: '创建站点',
+    description: '创建新的滑板车站点（需要管理员权限）',
+  })
   @ApiBody({ type: CreateStationDto })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: '创建成功',
     schema: {
       example: {
@@ -205,15 +243,15 @@ export class StationController {
           longitude: 121.4737,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T00:00:00.000Z',
-          scooters: []
+          scooters: [],
         },
         message: 'Resource created successfully',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: '未授权访问',
     schema: {
       example: {
@@ -222,9 +260,9 @@ export class StationController {
         message: 'Unauthorized',
         statusCode: 401,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/stations'
-      }
-    }
+        path: '/stations',
+      },
+    },
   })
   create(@Body() body: CreateStationDto) {
     return this.stationService.createStation(body);
@@ -234,11 +272,14 @@ export class StationController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.MANAGER)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '更新站点', description: '更新站点信息（需要管理员权限）' })
+  @ApiOperation({
+    summary: '更新站点',
+    description: '更新站点信息（需要管理员权限）',
+  })
   @ApiParam({ name: 'id', description: '站点ID', example: 'ST001' })
   @ApiBody({ type: CreateStationDto })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: '更新成功',
     schema: {
       example: {
@@ -251,15 +292,15 @@ export class StationController {
           longitude: 121.4737,
           createdAt: '2024-01-01T00:00:00.000Z',
           updatedAt: '2024-01-01T01:00:00.000Z',
-          scooters: []
+          scooters: [],
         },
         message: 'Request successful',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: '未授权访问',
     schema: {
       example: {
@@ -268,12 +309,12 @@ export class StationController {
         message: 'Unauthorized',
         statusCode: 401,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/stations/ST001'
-      }
-    }
+        path: '/stations/ST001',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 404, 
+  @ApiResponse({
+    status: 404,
     description: '站点不存在',
     schema: {
       example: {
@@ -282,9 +323,9 @@ export class StationController {
         message: 'Station not found',
         statusCode: 404,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/stations/ST001'
-      }
-    }
+        path: '/stations/ST001',
+      },
+    },
   })
   update(@Param('id') id: string, @Body() body: CreateStationDto) {
     return this.stationService.updateStation(id, body);
@@ -294,10 +335,13 @@ export class StationController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.MANAGER)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '删除站点', description: '删除站点（需要管理员权限）' })
+  @ApiOperation({
+    summary: '删除站点',
+    description: '删除站点（需要管理员权限）',
+  })
   @ApiParam({ name: 'id', description: '站点ID', example: 'ST001' })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: '删除成功',
     schema: {
       example: {
@@ -309,15 +353,15 @@ export class StationController {
           latitude: 31.2304,
           longitude: 121.4737,
           createdAt: '2024-01-01T00:00:00.000Z',
-          updatedAt: '2024-01-01T00:00:00.000Z'
+          updatedAt: '2024-01-01T00:00:00.000Z',
         },
         message: 'Request successful',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: '未授权访问',
     schema: {
       example: {
@@ -326,12 +370,12 @@ export class StationController {
         message: 'Unauthorized',
         statusCode: 401,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/stations/ST001'
-      }
-    }
+        path: '/stations/ST001',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 404, 
+  @ApiResponse({
+    status: 404,
     description: '站点不存在',
     schema: {
       example: {
@@ -340,9 +384,9 @@ export class StationController {
         message: 'Station not found',
         statusCode: 404,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/stations/ST001'
-      }
-    }
+        path: '/stations/ST001',
+      },
+    },
   })
   delete(@Param('id') id: string) {
     return this.stationService.deleteStation(id);

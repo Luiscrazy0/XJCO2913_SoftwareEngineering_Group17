@@ -55,7 +55,7 @@ describe('RolesGuard', () => {
     const context = createMockContext({ id: 'user-1' }); // 不传 role
 
     expect(() => guard.canActivate(context)).toThrow(
-      new ForbiddenException('Role information missing')
+      new ForbiddenException('Role information missing'),
     );
   });
 
@@ -65,7 +65,7 @@ describe('RolesGuard', () => {
     const context = createMockContext({ id: 'user-1', role: 'USER' });
 
     expect(() => guard.canActivate(context)).toThrow(
-      new ForbiddenException('Insufficient role')
+      new ForbiddenException('Insufficient role'),
     );
   });
 

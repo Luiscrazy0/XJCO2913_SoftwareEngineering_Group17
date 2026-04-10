@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
 
@@ -11,15 +15,13 @@ export class BookingService {
       include: {
         // Include user and scooter details
         user: true,
-        scooter: true, 
-
+        scooter: true,
       },
     });
   }
 
-  
   async findById(id: string) {
-    // Find booking by ID and include user and scooter 
+    // Find booking by ID and include user and scooter
     return this.prisma.booking.findUnique({
       where: { id }, // Use where clause to find booking by ID
       include: {
@@ -38,19 +40,18 @@ export class BookingService {
     startTime: Date,
     endTime: Date,
   ) {
-    
     const scooter = await this.prisma.scooter.findUnique({
-        // Find scooter by ID
+      // Find scooter by ID
       where: { id: scooterId },
     });
 
     if (!scooter) {
-        // Check if scooter exists
+      // Check if scooter exists
       throw new BadRequestException('Scooter not found');
     }
 
     if (scooter.status !== ScooterStatus.AVAILABLE) {
-        // Check if scooter is available
+      // Check if scooter is available
       throw new BadRequestException('Scooter not available');
     }
 
@@ -99,15 +100,22 @@ export class BookingService {
     }
 
     // 检查预订状态是否可以续租
-    if (booking.status !== BookingStatus.CONFIRMED && booking.status !== BookingStatus.EXTENDED) {
-      throw new BadRequestException('Only confirmed or extended bookings can be extended');
+    if (
+      booking.status !== BookingStatus.CONFIRMED &&
+      booking.status !== BookingStatus.EXTENDED
+    ) {
+      throw new BadRequestException(
+        'Only confirmed or extended bookings can be extended',
+      );
     }
 
     // 计算续租费用（按小时计费）
     const extensionCost = additionalHours * 5; // 每小时5元
 
     // 计算新的结束时间
-    const newEndTime = new Date(booking.endTime.getTime() + additionalHours * 60 * 60 * 1000);
+    const newEndTime = new Date(
+      booking.endTime.getTime() + additionalHours * 60 * 60 * 1000,
+    );
 
     // 开始事务：更新预订
     return this.prisma.$transaction(async (tx) => {
@@ -133,7 +141,7 @@ export class BookingService {
   async cancelBooking(id: string) {
     // Cancel booking by ID
     return this.prisma.booking.update({
-        // Update booking status to CANCELLED
+      // Update booking status to CANCELLED
       where: { id },
       data: { status: BookingStatus.CANCELLED },
       include: {
@@ -146,8 +154,7 @@ export class BookingService {
   private calculateCost(hireType: HireType): number {
     // Calculate cost based on hire type
     switch (hireType) {
-
-        // Define cost for each hire type
+      // Define cost for each hire type
       case HireType.HOUR_1:
         return 5;
       case HireType.HOUR_4:
