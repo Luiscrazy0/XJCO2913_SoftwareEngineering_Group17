@@ -6,7 +6,6 @@ import { BadRequestException } from '@nestjs/common';
 
 describe('ScooterService', () => {
   let scooterService: ScooterService;
-  let prismaService: PrismaService;
 
   // 1. 创建假的 PrismaService（代替真实数据库）
   const mockPrismaService = {
@@ -35,7 +34,6 @@ describe('ScooterService', () => {
     }).compile();
 
     scooterService = module.get<ScooterService>(ScooterService);
-    prismaService = module.get<PrismaService>(PrismaService);
 
     // 每次测试前清空调用记录，防止互相干扰
     jest.clearAllMocks();
@@ -126,14 +124,14 @@ describe('ScooterService', () => {
   // ==========================================
   describe('updateStatus', () => {
     it('应该成功更新指定滑板车的状态', async () => {
+      // 🌟 修复：删掉了重复声明的 targetId
       const targetId = '1';
-const targetId = '1';
-const newStatus = ScooterStatus.UNAVAILABLE;
-const mockUpdatedScooter = {
-  id: targetId,
-  location: 'South Campus',
-  status: newStatus,
-};
+      const newStatus = ScooterStatus.UNAVAILABLE;
+      const mockUpdatedScooter = {
+        id: targetId,
+        location: 'South Campus',
+        status: newStatus,
+      };
 
       mockPrismaService.scooter.update.mockResolvedValue(mockUpdatedScooter);
 
@@ -150,7 +148,6 @@ const mockUpdatedScooter = {
   // ==========================================
   // 测试组 5: deleteScooter (关键分支测试)
   // ==========================================
-  // 🌟 修复：现在它被正确地包在最外层的 describe 里面了！
   describe('deleteScooter', () => {
     const scooterId = 'scooter-123';
 
@@ -181,4 +178,4 @@ const mockUpdatedScooter = {
       expect(result).toEqual(mockDeletedScooter);
     });
   });
-}); // 🌟 整个测试文件的大括号在这里才真正结束！
+});
