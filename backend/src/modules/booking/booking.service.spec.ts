@@ -1,4 +1,4 @@
-import { EmailService } from "../email/email.service";
+import { EmailService } from "./email.service";
 import { DiscountService } from "./discount.service"; // 🌟 补上了队友新加的 DiscountService
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingService } from './booking.service';
