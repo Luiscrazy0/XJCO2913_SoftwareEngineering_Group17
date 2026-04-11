@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentService } from './payment.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EmailService } from '../booking/email.service';
 import { BookingStatus } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 
@@ -21,6 +22,10 @@ describe('PaymentService', () => {
     },
   };
 
+  const mockEmailService = {
+    sendPaymentReceipt: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -28,6 +33,10 @@ describe('PaymentService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
         },
       ],
     }).compile();
