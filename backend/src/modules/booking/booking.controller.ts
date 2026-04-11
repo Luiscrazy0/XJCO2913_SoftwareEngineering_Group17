@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { PaymentCardService } from './payment-card.service';
-import { HireType } from '@prisma/client';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ExtendBookingDto } from './dto/extend-booking.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
