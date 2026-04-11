@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BookingController } from './booking.controller';
 import { BookingService } from './booking.service';
 import { EmployeeBookingController } from './employee-booking.controller';
@@ -11,7 +11,7 @@ import { AuthModule } from '../auth/auth.module';
 import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, EmailModule],
+  imports: [PrismaModule, forwardRef(() => AuthModule), EmailModule],
   controllers: [BookingController, EmployeeBookingController],
   providers: [BookingService, EmployeeBookingService, DiscountService, EmailService, PaymentCardService],
   exports: [BookingService, EmployeeBookingService, DiscountService, EmailService, PaymentCardService],
