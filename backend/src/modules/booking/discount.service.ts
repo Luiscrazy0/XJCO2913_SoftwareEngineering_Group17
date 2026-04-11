@@ -10,13 +10,13 @@ export class DiscountService {
    * 计算用户折扣后的价格
    * @param userId 用户ID
    * @param originalCost 原始价格
-   * @param hireType 租赁类型
+   * @param _hireType 租赁类型
    * @returns 折扣后的价格和折扣信息
    */
   async calculateDiscountedPrice(
     userId: string,
     originalCost: number,
-    hireType: HireType,
+    _hireType: HireType, // 🌟 修改点 1：加了下划线，告诉 ESLint 这个参数暂时不用，消除警告
   ): Promise<{ discountedPrice: number; discountAmount: number; discountReason: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -43,7 +43,7 @@ export class DiscountService {
         discountRate = 0.3; // 老年人7折
         discountReason = '老年人折扣 (7折)';
         break;
-      case UserType.FREQUENT:
+      case UserType.FREQUENT: { // 🌟 修改点 2：加上了左大括号，限制 const 变量的作用域，消除红灯 Error！
         // 高频用户：检查过去30天内的租赁小时数
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -63,9 +63,7 @@ export class DiscountService {
         // 计算总租赁小时数
         let totalHours = 0;
         recentBookings.forEach(booking => {
-          const duration = booking.endTime.getTime() - booking.startTime.getTime();
-          const hours = duration / (1000 * 60 * 60);
-
+          // 🌟 修改点 3：删除了没用到的 duration 和 hours 变量计算，消除警告
           switch (booking.hireType) {
             case HireType.HOUR_1:
               totalHours += 1;
@@ -90,6 +88,7 @@ export class DiscountService {
           discountReason = '活跃用户折扣 (8.5折)';
         }
         break;
+      } // 🌟 修改点 2：加上了右大括号
       default:
         discountRate = 0;
         discountReason = '无折扣';
