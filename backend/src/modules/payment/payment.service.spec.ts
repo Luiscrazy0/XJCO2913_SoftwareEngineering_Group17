@@ -3,7 +3,7 @@ import { PaymentService } from './payment.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
-import { EmailService } from '../email/email.service'; // 🌟 引入刚被队友加入的邮件服务
+import { EmailService } from '../booking/email.service'; // 🌟 引入刚被队友加入的邮件服务
 
 describe('PaymentService', () => {
   let paymentService: PaymentService;
