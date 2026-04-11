@@ -14,7 +14,10 @@ async function bootstrap() {
   const corsOriginRegex = /^https?:\/\/(localhost|127\.0\.0\.1):51[0-9]{2}$/;
 
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) {
         callback(null, true);
@@ -26,7 +29,7 @@ async function bootstrap() {
         callback(null, true);
       } else {
         console.warn(`CORS blocked: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
+        callback(new Error('Not allowed by CORS'), false);
       }
     },
     credentials: true,
@@ -88,4 +91,4 @@ async function bootstrap() {
   console.log(`Swagger documentation available at: ${await app.getUrl()}/api`);
 }
 
-bootstrap();
+void bootstrap();

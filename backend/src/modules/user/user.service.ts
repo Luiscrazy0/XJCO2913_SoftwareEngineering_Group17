@@ -32,7 +32,11 @@ export class UserService {
     passwordHash: string,
     role: Role = Role.CUSTOMER,
   ) {
+ feat/sprint2-tests
     return await this.prisma.user.create({
+
+    return this.prisma.user.create({
+ dev
       data: { email, passwordHash, role },
     });
   }

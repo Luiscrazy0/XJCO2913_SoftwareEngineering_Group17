@@ -12,12 +12,15 @@ import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 @Controller('employee-bookings')
 @UseGuards(JwtAuthGuard)
 export class EmployeeBookingController {
-  constructor(private readonly employeeBookingService: EmployeeBookingService) {}
+  constructor(
+    private readonly employeeBookingService: EmployeeBookingService,
+  ) {}
 
   @Post()
   async createBookingForGuest(
     @Request() req,
-    @Body() bookingData: {
+    @Body()
+    bookingData: {
       guestEmail: string;
       guestName: string;
       scooterId: string;

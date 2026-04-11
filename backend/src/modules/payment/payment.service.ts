@@ -8,8 +8,11 @@ import { EmailService } from '../booking/email.service';
  */
 @Injectable()
 export class PaymentService {
+ feat/sprint2-tests
 
   
+
+ dev
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,

@@ -9,6 +9,10 @@ import { Role } from '@prisma/client';
 import { ROLES_KEY } from '../roles.decorator';
 import { Request } from 'express';
 
+interface RequestWithUser extends Request {
+  user?: { role?: Role };
+}
+
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private readonly reflector: Reflector) {}
@@ -23,8 +27,8 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<Request>();
-    const user = (request as any).user as { role?: Role } | undefined;
+    const request = context.switchToHttp().getRequest<RequestWithUser>();
+    const user = request.user;
 
     if (!user?.role) {
       throw new ForbiddenException('Role information missing');

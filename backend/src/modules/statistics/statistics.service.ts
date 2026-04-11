@@ -48,7 +48,11 @@ export class StatisticsService {
     const bookings = await this.prisma.booking.findMany({
       where: {
         status: {
-          in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.EXTENDED],
+          in: [
+            BookingStatus.CONFIRMED,
+            BookingStatus.COMPLETED,
+            BookingStatus.EXTENDED,
+          ],
         },
         startTime: {
           gte: start,
@@ -61,10 +65,16 @@ export class StatisticsService {
     });
 
     // 按租赁类型分组统计
-    const revenueByHireType = new Map<HireType, { revenue: number; count: number }>();
+    const revenueByHireType = new Map<
+      HireType,
+      { revenue: number; count: number }
+    >();
 
     bookings.forEach((booking) => {
-      const current = revenueByHireType.get(booking.hireType) || { revenue: 0, count: 0 };
+      const current = revenueByHireType.get(booking.hireType) || {
+        revenue: 0,
+        count: 0,
+      };
       current.revenue += booking.totalCost;
       current.count += 1;
       revenueByHireType.set(booking.hireType, current);
@@ -88,7 +98,10 @@ export class StatisticsService {
   /**
    * 查看一周内的每日综合收入
    */
-  async getDailyRevenue(startDate: string, endDate: string): Promise<DailyRevenue[]> {
+  async getDailyRevenue(
+    startDate: string,
+    endDate: string,
+  ): Promise<DailyRevenue[]> {
     const start = new Date(startDate);
     const end = new Date(endDate);
     end.setHours(23, 59, 59, 999);
@@ -96,7 +109,11 @@ export class StatisticsService {
     const bookings = await this.prisma.booking.findMany({
       where: {
         status: {
-          in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.EXTENDED],
+          in: [
+            BookingStatus.CONFIRMED,
+            BookingStatus.COMPLETED,
+            BookingStatus.EXTENDED,
+          ],
         },
         startTime: {
           gte: start,
@@ -113,7 +130,7 @@ export class StatisticsService {
 
     bookings.forEach((booking) => {
       const dateStr = booking.startTime.toISOString().split('T')[0];
-      
+
       if (!revenueByDate.has(dateStr)) {
         revenueByDate.set(dateStr, {
           date: dateStr,
@@ -151,7 +168,7 @@ export class StatisticsService {
    */
   async getRevenueChartData(period: string, type: string): Promise<ChartData> {
     const endDate = new Date();
-    let startDate = new Date();
+    const startDate = new Date();
 
     // 根据周期设置开始日期
     switch (period) {
@@ -191,7 +208,9 @@ export class StatisticsService {
       });
 
       const hireTypes = Array.from(hireTypeRevenue.keys());
-      const revenueByType = hireTypes.map((hireType) => hireTypeRevenue.get(hireType) || 0);
+      const revenueByType = hireTypes.map(
+        (hireType) => hireTypeRevenue.get(hireType) || 0,
+      );
 
       datasets = [
         {
