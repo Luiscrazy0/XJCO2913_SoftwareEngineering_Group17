@@ -3,13 +3,12 @@ import { PaymentService } from './payment.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
+import { EmailService } from '../email/email.service'; // 🌟 引入刚被队友加入的邮件服务
 
 describe('PaymentService', () => {
   let paymentService: PaymentService;
-  let prismaService: PrismaService;
 
   // 1. 创建假的 PrismaService
-  // 这里需要模拟 booking(订单) 和 payment(支付) 两个表
   const mockPrismaService = {
     booking: {
       findUnique: jest.fn(),
@@ -21,6 +20,11 @@ describe('PaymentService', () => {
     },
   };
 
+  // 🌟 2. 创建假的 EmailService，防止注入报错
+  const mockEmailService = {
+    sendPaymentReceipt: jest.fn(), // 随便 mock 一个可能用到的方法
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -29,11 +33,15 @@ describe('PaymentService', () => {
           provide: PrismaService,
           useValue: mockPrismaService,
         },
+        // 🌟 3. 将假的 EmailService 注册到测试模块中
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
+        },
       ],
     }).compile();
 
     paymentService = module.get<PaymentService>(PaymentService);
-    prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
   });
