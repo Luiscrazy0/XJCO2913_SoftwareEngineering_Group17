@@ -1,21 +1,20 @@
-import { EmailService } from "./email.service";
-import { DiscountService } from "./discount.service"; // 🌟 补上了队友新加的 DiscountService
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingService } from './booking.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
+// 🌟 终极修复：使用同目录下的相对路径
+import { EmailService } from './email.service'; 
+import { DiscountService } from './discount.service'; 
 
 describe('BookingService', () => {
   let bookingService: BookingService;
   let prismaService: PrismaService;
-  // 🌟 清理了没用到的 let emailService: EmailService; 避免 lint 警告
 
   const mockEmailService = {
     sendBookingConfirmation: jest.fn(),
   };
 
-  // 🌟 创建假的 DiscountService，防止注入报错
   const mockDiscountService = {
     calculateDiscountedPrice: jest.fn(),
     updateUserType: jest.fn(),
@@ -43,7 +42,6 @@ describe('BookingService', () => {
           provide: EmailService,
           useValue: mockEmailService,
         },
-        // 🌟 将假的 DiscountService 注册到测试模块中
         {
           provide: DiscountService,
           useValue: mockDiscountService,
@@ -246,7 +244,6 @@ describe('BookingService', () => {
         status: ScooterStatus.AVAILABLE,
       });
       mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking' });
-      // 强行传入未知的枚举类型测试 default 分支
       await bookingService.createBooking(
         userId,
         scooterId,
@@ -264,7 +261,7 @@ describe('BookingService', () => {
 
   describe('extendBooking', () => {
     const bookingId = 'booking-123';
-    const additionalHours = 2; // 续租 2 小时
+    const additionalHours = 2; 
 
     it('【异常路径】如果找不到预订记录，应该抛出 NotFoundException', async () => {
       mockPrismaService.booking.findUnique.mockResolvedValue(null);
@@ -276,7 +273,7 @@ describe('BookingService', () => {
     it('【异常路径】如果预订状态不是确认或已续租状态，应该抛出 BadRequestException', async () => {
       mockPrismaService.booking.findUnique.mockResolvedValue({
         id: bookingId,
-        status: BookingStatus.CANCELLED, // 取消状态不能续租
+        status: BookingStatus.CANCELLED,
       });
       await expect(
         bookingService.extendBooking(bookingId, additionalHours),
@@ -288,7 +285,6 @@ describe('BookingService', () => {
     });
 
     it('【正常路径】应该成功续租，并正确计算新时间和费用', async () => {
-      // 初始数据：假设已经借了，原本下午 2 点还，花过 10 块钱
       const initialEndTime = new Date('2026-04-01T14:00:00Z');
       const mockExistingBooking = {
         id: bookingId,
@@ -308,11 +304,10 @@ describe('BookingService', () => {
 
       await bookingService.extendBooking(bookingId, additionalHours);
 
-      // 计算预期的新时间：加 2 个小时 (2 * 60 * 60 * 1000 毫秒)
       const expectedNewEndTime = new Date(
         initialEndTime.getTime() + additionalHours * 60 * 60 * 1000,
       );
-      const expectedNewCost = 10 + 2 * 5; // 原本的 10 + 续租 2 小时*5元
+      const expectedNewCost = 10 + 2 * 5; 
 
       expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
         where: { id: bookingId },
@@ -320,7 +315,7 @@ describe('BookingService', () => {
           endTime: expectedNewEndTime,
           totalCost: expectedNewCost,
           status: BookingStatus.EXTENDED,
-          extensionCount: 1, // 续租次数加 1
+          extensionCount: 1, 
         },
         include: {
           user: true,
