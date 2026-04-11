@@ -10,8 +10,6 @@ jest.mock('bcrypt');
 
 describe('AuthService', () => {
   let authService: AuthService;
-  let userService: UserService;
-  let jwtService: JwtService;
 
   const mockUserService = {
     findByEmail: jest.fn(),
@@ -32,8 +30,6 @@ describe('AuthService', () => {
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
-    userService = module.get<UserService>(UserService);
-    jwtService = module.get<JwtService>(JwtService);
 
     jest.clearAllMocks();
   });
