@@ -1,6 +1,11 @@
+ feat/sprint2-tests
+
+import { EmailService } from './email.service';
+ dev
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingService } from './booking.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DiscountService } from './discount.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { EmailService } from './email.service';
@@ -16,6 +21,7 @@ describe('BookingService', () => {
   };
 
   const mockDiscountService = {
+ feat/sprint2-tests
     calculateDiscountedPrice: jest.fn().mockImplementation((userId, cost, hireType) => {
       return Promise.resolve({
         discountedPrice: cost,
@@ -25,6 +31,9 @@ describe('BookingService', () => {
     }),
     updateUserType: jest.fn(),
     getUserDiscountInfo: jest.fn(),
+
+    calculateDiscountedPrice: jest.fn(),
+ dev
   };
 
   const mockPrismaService = {
@@ -69,6 +78,16 @@ describe('BookingService', () => {
         return fn(mockPrismaService);
       },
     );
+feat/sprint2-tests
+
+
+    // 设置默认的折扣服务返回值
+    mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
+      discountedPrice: 5,
+      discountApplied: 0,
+      discountType: null,
+    });
+ dev
   });
 
   it('模块应该被成功定义', () => {
@@ -184,11 +203,16 @@ describe('BookingService', () => {
       expect(result).toEqual(mockCreatedBooking);
     });
 
+feat/sprint2-tests
     it('【正常路径】应该正确计算 4 小时的费用 (15)', async () => {
+
+    it('【正常路径】应该成功创建预订，并正确计算 1 天的费用 (30)', async () => {
+ dev
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
         status: ScooterStatus.AVAILABLE,
       });
+ feat/sprint2-tests
       mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking' });
       await bookingService.createBooking(
         userId,
@@ -211,6 +235,18 @@ describe('BookingService', () => {
         status: ScooterStatus.AVAILABLE,
       });
       mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking' });
+
+      mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
+        discountedPrice: 30,
+        discountApplied: 0,
+        discountType: null,
+      });
+      mockPrismaService.booking.create.mockResolvedValue({
+        id: 'new-booking',
+        totalCost: 30,
+      });
+
+ dev
       await bookingService.createBooking(
         userId,
         scooterId,
@@ -218,12 +254,15 @@ describe('BookingService', () => {
         startTime,
         endTime,
       );
+ feat/sprint2-tests
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ totalCost: 30 }),
         }),
       );
     });
+
+ dev
 
     // 🌟 修复：对齐队友修改后的价格 (90)
     it('【正常路径】应该正确计算 1 周的费用 (90)', async () => {
@@ -241,6 +280,7 @@ describe('BookingService', () => {
       );
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
         expect.objectContaining({
+ feat/sprint2-tests
           data: expect.objectContaining({ totalCost: 90 }),
         }),
       );
@@ -262,6 +302,9 @@ describe('BookingService', () => {
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ totalCost: 0 }),
+
+          data: expect.objectContaining({ totalCost: 30 }),
+ dev
         }),
       );
     });
@@ -337,6 +380,10 @@ describe('BookingService', () => {
     it('应该成功将预订状态更新为 CANCELLED，并返回包含 user 和 scooter 的信息', async () => {
       const targetId = 'booking-123';
 
+ feat/sprint2-tests
+
+      // 模拟返回的数据
+ dev
       const mockCancelledBooking = {
         id: targetId,
         status: BookingStatus.CANCELLED,

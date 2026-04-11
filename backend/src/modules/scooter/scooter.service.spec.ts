@@ -105,6 +105,10 @@ describe('ScooterService', () => {
       const mockCreatedScooter = {
         id: '3',
         location: newLocation,
+ feat/sprint2-tests
+
+        // 假设 Prisma schema 里设置了默认状态是 AVAILABLE
+ dev
         status: ScooterStatus.AVAILABLE,
       };
 
@@ -126,7 +130,11 @@ describe('ScooterService', () => {
     it('应该成功更新指定滑板车的状态', async () => {
       // 🌟 修复：删掉了重复声明的 targetId
       const targetId = '1';
+ feat/sprint2-tests
       const newStatus = ScooterStatus.UNAVAILABLE;
+
+      const newStatus = ScooterStatus.UNAVAILABLE; // 比如把状态改成不可用
+ dev
       const mockUpdatedScooter = {
         id: targetId,
         location: 'South Campus',

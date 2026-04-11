@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentService } from './payment.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { EmailService } from '../booking/email.service';
 import { BookingStatus } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 // 🌟 终极修复：完美对齐真实代码里的路径！
@@ -59,6 +60,10 @@ describe('PaymentService', () => {
         paymentService.createPayment(targetBookingId, paymentAmount),
       ).rejects.toThrow(new BadRequestException('Booking not found'));
 
+feat/sprint2-tests
+
+      // 确保后续的创建和更新操作绝不会被执行
+ dev
       expect(mockPrismaService.payment.create).not.toHaveBeenCalled();
       expect(mockPrismaService.booking.update).not.toHaveBeenCalled();
     });
@@ -95,6 +100,10 @@ describe('PaymentService', () => {
         status: BookingStatus.CONFIRMED,
       });
 
+ feat/sprint2-tests
+
+      // 执行测试操作
+ dev
       const result = await paymentService.createPayment(
         targetBookingId,
         paymentAmount,

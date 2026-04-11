@@ -10,7 +10,6 @@ import {
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { PaymentCardService } from './payment-card.service';
-import { HireType } from '@prisma/client';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ExtendBookingDto } from './dto/extend-booking.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -414,7 +413,10 @@ export class BookingController {
   @Post('payment-card')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '保存银行卡信息', description: '保存用户的银行卡信息用于快速预订' })
+  @ApiOperation({
+    summary: '保存银行卡信息',
+    description: '保存用户的银行卡信息用于快速预订',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -437,7 +439,10 @@ export class BookingController {
   @Get('payment-card')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '获取银行卡信息', description: '获取用户保存的银行卡信息（卡号部分隐藏）' })
+  @ApiOperation({
+    summary: '获取银行卡信息',
+    description: '获取用户保存的银行卡信息（卡号部分隐藏）',
+  })
   @ApiResponse({ status: 200, description: '获取成功' })
   getPaymentCard() {
     // 从JWT token获取用户ID
@@ -447,7 +452,10 @@ export class BookingController {
   @Delete('payment-card')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '删除银行卡信息', description: '删除用户保存的银行卡信息' })
+  @ApiOperation({
+    summary: '删除银行卡信息',
+    description: '删除用户保存的银行卡信息',
+  })
   @ApiResponse({ status: 200, description: '删除成功' })
   deletePaymentCard() {
     // 从JWT token获取用户ID
@@ -458,18 +466,39 @@ export class BookingController {
   @Post('staff-booking')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '员工代订', description: '管理员为客户代订滑板车（需要管理员权限）' })
+  @ApiOperation({
+    summary: '员工代订',
+    description: '管理员为客户代订滑板车（需要管理员权限）',
+  })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
         customerEmail: { type: 'string', example: 'customer@example.com' },
         scooterId: { type: 'string', example: 'scooter-123' },
-        hireType: { type: 'string', enum: ['HOUR_1', 'HOUR_4', 'DAY_1', 'WEEK_1'], example: 'HOUR_1' },
-        startTime: { type: 'string', format: 'date-time', example: '2024-01-01T10:00:00.000Z' },
-        endTime: { type: 'string', format: 'date-time', example: '2024-01-01T11:00:00.000Z' },
+        hireType: {
+          type: 'string',
+          enum: ['HOUR_1', 'HOUR_4', 'DAY_1', 'WEEK_1'],
+          example: 'HOUR_1',
+        },
+        startTime: {
+          type: 'string',
+          format: 'date-time',
+          example: '2024-01-01T10:00:00.000Z',
+        },
+        endTime: {
+          type: 'string',
+          format: 'date-time',
+          example: '2024-01-01T11:00:00.000Z',
+        },
       },
-      required: ['customerEmail', 'scooterId', 'hireType', 'startTime', 'endTime'],
+      required: [
+        'customerEmail',
+        'scooterId',
+        'hireType',
+        'startTime',
+        'endTime',
+      ],
     },
   })
   @ApiResponse({ status: 201, description: '代订成功' })

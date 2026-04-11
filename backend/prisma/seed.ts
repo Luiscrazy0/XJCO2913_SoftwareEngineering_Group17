@@ -35,45 +35,45 @@ async function main() {
 
     const user1 = await prisma.user.upsert({
       where: { email: 'test1@example.com' },
-      update: { role: Role.CUSTOMER, userType: UserType.FREQUENT },
+      update: { role: Role.CUSTOMER, userType: 'FREQUENT' },
       create: {
         email: 'test1@example.com',
         passwordHash: userPasswordHash,
         role: Role.CUSTOMER,
-        userType: UserType.FREQUENT, // 高频用户
+        userType: 'FREQUENT', // 高频用户
       },
     });
 
     const user2 = await prisma.user.upsert({
       where: { email: 'test2@example.com' },
-      update: { role: Role.CUSTOMER, userType: UserType.STUDENT },
+      update: { role: Role.CUSTOMER, userType: 'STUDENT' },
       create: {
         email: 'test2@example.com',
         passwordHash: userPasswordHash,
         role: Role.CUSTOMER,
-        userType: UserType.STUDENT, // 学生用户
+        userType: 'STUDENT', // 学生用户
       },
     });
 
     const user3 = await prisma.user.upsert({
       where: { email: 'test3@example.com' },
-      update: { role: Role.CUSTOMER, userType: UserType.SENIOR },
+      update: { role: Role.CUSTOMER, userType: 'SENIOR' },
       create: {
         email: 'test3@example.com',
         passwordHash: userPasswordHash,
         role: Role.CUSTOMER,
-        userType: UserType.SENIOR, // 老年人用户
+        userType: 'SENIOR', // 老年人用户
       },
     });
 
     const user4 = await prisma.user.upsert({
       where: { email: 'test4@example.com' },
-      update: { role: Role.CUSTOMER, userType: UserType.NORMAL },
+      update: { role: Role.CUSTOMER, userType: 'NORMAL' },
       create: {
         email: 'test4@example.com',
         passwordHash: userPasswordHash,
         role: Role.CUSTOMER,
-        userType: UserType.NORMAL, // 普通用户
+        userType: 'NORMAL', // 普通用户
       },
     });
 

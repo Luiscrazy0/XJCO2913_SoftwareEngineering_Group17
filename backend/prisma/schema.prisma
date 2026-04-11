@@ -1,15 +1,94 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
+}
+
+model Station {
+  id        String    @id @default(uuid())
+  name      String
+  address   String
+  latitude  Float
+  longitude Float
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  scooters  Scooter[]
+}
+
+model User {
+  id               String            @id @default(uuid())
+  email            String            @unique
+  passwordHash     String
+  role             Role              @default(CUSTOMER)
+  userType         UserType          @default(NORMAL)
+  bookings         Booking[]
+  employeeBookings EmployeeBooking[]
+  paymentCards     PaymentCard[]
+}
+
+model Scooter {
+  id        String        @id @default(uuid())
+  location  String
+  status    ScooterStatus @default(AVAILABLE)
+  latitude  Float?
+  longitude Float?
+  stationId String?
+  updatedAt DateTime      @updatedAt
+  bookings  Booking[]
+  station   Station?      @relation(fields: [stationId], references: [id])
+}
+
+model Booking {
+  id              String           @id @default(uuid())
+  userId          String
+  scooterId       String
+  hireType        HireType
+  originalEndTime DateTime?
+  startTime       DateTime
+  endTime         DateTime
+  status          BookingStatus    @default(PENDING_PAYMENT)
+  totalCost       Float
+  extensionCount  Int              @default(0)
+  extendedFrom    String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  scooter         Scooter          @relation(fields: [scooterId], references: [id])
+  user            User             @relation(fields: [userId], references: [id])
+  employeeBooking EmployeeBooking?
+  payment         Payment?
+}
+
+model Payment {
+  id        String  @id @default(uuid())
+  bookingId String  @unique
+  amount    Float
+  status    String
+  booking   Booking @relation(fields: [bookingId], references: [id])
+}
+
+model PaymentCard {
+  id             String   @id @default(uuid())
+  userId         String
+  lastFourDigits String
+  expiryDate     String
+  cardHolder     String
+  isDefault      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  user           User     @relation(fields: [userId], references: [id])
+}
+
+model EmployeeBooking {
+  id         String   @id @default(uuid())
+  bookingId  String   @unique
+  employeeId String
+  guestEmail String
+  guestName  String
+  createdAt  DateTime @default(now())
+  booking    Booking  @relation(fields: [bookingId], references: [id])
+  employee   User     @relation(fields: [employeeId], references: [id])
 }
 
 enum Role {
@@ -44,96 +123,3 @@ enum HireType {
   DAY_1
   WEEK_1
 }
-
-// 取车点/站点模型
-model Station {
-  id        String    @id @default(uuid())
-  name      String
-  address   String
-  latitude  Float
-  longitude Float
-  scooters  Scooter[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-}
-
-model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(CUSTOMER)
-  userType     UserType @default(NORMAL)
-  // 银行卡信息（加密存储）
-  cardNumber   String?  // 加密后的卡号
-  cardExpiry   String?  // 过期日期 (MM/YY)
-  cardHolder   String?  // 持卡人姓名
-  bookings     Booking[]
-  paymentCards PaymentCard[]
-  employeeBookings EmployeeBooking[] // 员工代订记录
-}
-
-model Scooter {
-  id          String        @id @default(uuid())
-  location    String
-  status      ScooterStatus @default(AVAILABLE)
-  latitude    Float?
-  longitude   Float?
-  stationId   String?
-  station     Station?      @relation(fields: [stationId], references: [id])
-  bookings    Booking[]
-  updatedAt   DateTime      @updatedAt
-}
-
-model Booking {
-  id              String        @id @default(uuid())
-  user            User          @relation(fields: [userId], references: [id])
-  userId          String
-  scooter         Scooter       @relation(fields: [scooterId], references: [id])
-  scooterId       String
-  hireType        HireType
-  originalEndTime DateTime?     // 原始结束时间（用于续租）
-  startTime       DateTime
-  endTime         DateTime
-  status          BookingStatus @default(PENDING_PAYMENT)
-  totalCost       Float
-  extensionCount  Int           @default(0)  // 续租次数
-  extendedFrom    String?       // 原始预订ID（如果是续租）
-  payment         Payment?
-  employeeBooking EmployeeBooking? // 员工代订记录
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
-}
-
-model Payment {
-  id        String   @id @default(uuid())
-  booking   Booking  @relation(fields: [bookingId], references: [id])
-  bookingId String   @unique
-  amount    Float
-  status    String
-}
-
-// 银行卡信息模型（P3任务：存储客户银行卡信息）
-model PaymentCard {
-  id              String   @id @default(uuid())
-  user            User     @relation(fields: [userId], references: [id])
-  userId          String
-  lastFourDigits  String   // 只存储最后4位数字
-  expiryDate      String   // 格式：MM/YY
-  cardHolder      String
-  isDefault       Boolean  @default(false)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-}
-
-// 员工代订记录模型（P3任务：员工为未注册用户代订）
-model EmployeeBooking {
-  id         String   @id @default(uuid())
-  booking    Booking  @relation(fields: [bookingId], references: [id])
-  bookingId  String   @unique
-  employee   User     @relation(fields: [employeeId], references: [id])
-  employeeId String
-  guestEmail String
-  guestName  String
-  createdAt  DateTime @default(now())
-}
-

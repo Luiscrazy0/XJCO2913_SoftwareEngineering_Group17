@@ -22,7 +22,10 @@ export class EmailService {
   /**
    * 发送预订确认邮件
    */
-  async sendBookingConfirmation(booking: Booking & { user: User; scooter: any }, paymentAmount: number) {
+  async sendBookingConfirmation(
+    booking: Booking & { user: User; scooter: any },
+    paymentAmount: number,
+  ) {
     const subject = '滑板车租赁预订确认';
     const html = this.generateBookingConfirmationHtml(booking, paymentAmount);
 
@@ -32,7 +35,10 @@ export class EmailService {
   /**
    * 发送支付收据邮件
    */
-  async sendPaymentReceipt(booking: Booking & { user: User }, paymentAmount: number) {
+  async sendPaymentReceipt(
+    booking: Booking & { user: User },
+    paymentAmount: number,
+  ) {
     const subject = '滑板车租赁支付收据';
     const html = this.generatePaymentReceiptHtml(booking, paymentAmount);
 
@@ -42,9 +48,17 @@ export class EmailService {
   /**
    * 发送续租确认邮件
    */
-  async sendExtensionConfirmation(booking: Booking & { user: User }, extensionCost: number, newEndTime: Date) {
+  async sendExtensionConfirmation(
+    booking: Booking & { user: User },
+    extensionCost: number,
+    newEndTime: Date,
+  ) {
     const subject = '滑板车租赁续租确认';
-    const html = this.generateExtensionConfirmationHtml(booking, extensionCost, newEndTime);
+    const html = this.generateExtensionConfirmationHtml(
+      booking,
+      extensionCost,
+      newEndTime,
+    );
 
     await this.sendEmail(booking.user.email, subject, html);
   }
@@ -73,7 +87,10 @@ export class EmailService {
   /**
    * 生成预订确认邮件HTML
    */
-  private generateBookingConfirmationHtml(booking: Booking & { user: User; scooter: any }, paymentAmount: number): string {
+  private generateBookingConfirmationHtml(
+    booking: Booking & { user: User; scooter: any },
+    paymentAmount: number,
+  ): string {
     const hireTypeNames = {
       HOUR_1: '1小时租赁',
       HOUR_4: '4小时租赁',
@@ -137,7 +154,10 @@ export class EmailService {
   /**
    * 生成支付收据邮件HTML
    */
-  private generatePaymentReceiptHtml(booking: Booking & { user: User }, paymentAmount: number): string {
+  private generatePaymentReceiptHtml(
+    booking: Booking & { user: User },
+    paymentAmount: number,
+  ): string {
     return `
       <!DOCTYPE html>
       <html>
@@ -189,7 +209,11 @@ export class EmailService {
   /**
    * 生成续租确认邮件HTML
    */
-  private generateExtensionConfirmationHtml(booking: Booking & { user: User }, extensionCost: number, newEndTime: Date): string {
+  private generateExtensionConfirmationHtml(
+    booking: Booking & { user: User },
+    extensionCost: number,
+    newEndTime: Date,
+  ): string {
     return `
       <!DOCTYPE html>
       <html>
