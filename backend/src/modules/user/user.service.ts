@@ -15,7 +15,7 @@ export class UserService {
 
   //获取所有用户的异步方法。@returns 用户列表。
   async findAll() {
-    return this.prisma.user.findMany({
+    return await this.prisma.user.findMany({
       select: { id: true, email: true, role: true },
     });
   }
@@ -32,7 +32,11 @@ export class UserService {
     passwordHash: string,
     role: Role = Role.CUSTOMER,
   ) {
+ feat/sprint2-tests
+    return await this.prisma.user.create({
+
     return this.prisma.user.create({
+ dev
       data: { email, passwordHash, role },
     });
   }
@@ -43,6 +47,6 @@ export class UserService {
    * @returns 匹配的用户对象，如果不存在则返回 null。
    */
   async findByEmail(email: string) {
-    return this.prisma.user.findUnique({ where: { email } });
+    return await this.prisma.user.findUnique({ where: { email } });
   }
 }
