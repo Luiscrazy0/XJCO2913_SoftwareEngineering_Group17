@@ -1,17 +1,25 @@
 import { EmailService } from "../email/email.service";
+import { DiscountService } from "./discount.service"; // 🌟 补上了队友新加的 DiscountService
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingService } from './booking.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
-import { BadRequestException, NotFoundException } from '@nestjs/common'; // 🌟 补上了 NotFoundException
+import { BadRequestException, NotFoundException } from '@nestjs/common';
 
 describe('BookingService', () => {
   let bookingService: BookingService;
-  let emailService: EmailService;
   let prismaService: PrismaService;
+  // 🌟 清理了没用到的 let emailService: EmailService; 避免 lint 警告
 
   const mockEmailService = {
     sendBookingConfirmation: jest.fn(),
+  };
+
+  // 🌟 创建假的 DiscountService，防止注入报错
+  const mockDiscountService = {
+    calculateDiscountedPrice: jest.fn(),
+    updateUserType: jest.fn(),
+    getUserDiscountInfo: jest.fn(),
   };
 
   const mockPrismaService = {
@@ -35,6 +43,11 @@ describe('BookingService', () => {
           provide: EmailService,
           useValue: mockEmailService,
         },
+        // 🌟 将假的 DiscountService 注册到测试模块中
+        {
+          provide: DiscountService,
+          useValue: mockDiscountService,
+        },
         BookingService,
         {
           provide: PrismaService,
@@ -44,7 +57,6 @@ describe('BookingService', () => {
     }).compile();
 
     bookingService = module.get<BookingService>(BookingService);
-    emailService = module.get<EmailService>(EmailService);
     prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
@@ -168,7 +180,6 @@ describe('BookingService', () => {
       expect(result).toEqual(mockCreatedBooking);
     });
 
-    // 🌟 补齐所有费用计算分支 (HOUR_4, WEEK_1, default)
     it('【正常路径】应该正确计算 4 小时的费用 (15)', async () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
@@ -251,8 +262,6 @@ describe('BookingService', () => {
     });
   });
 
-  // 🌟 核心增补：全面覆盖续租 (extendBooking) 逻辑
-  // ==========================================
   describe('extendBooking', () => {
     const bookingId = 'booking-123';
     const additionalHours = 2; // 续租 2 小时
