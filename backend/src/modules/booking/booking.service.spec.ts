@@ -1,4 +1,4 @@
-import { EmailService } from '../email/email.service';
+import { EmailService } from './email.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingService } from './booking.service';
 import { PrismaService } from '../../prisma/prisma.service';
