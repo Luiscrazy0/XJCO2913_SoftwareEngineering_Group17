@@ -12,11 +12,10 @@ describe('BookingService', () => {
 
   const mockEmailService = {
     sendBookingConfirmation: jest.fn(),
-    sendExtensionConfirmation: jest.fn(), // 🌟 修复 1：补上续租邮件的方法
+    sendExtensionConfirmation: jest.fn(),
   };
 
   const mockDiscountService = {
-    // 🌟 修复 2：让假服务变聪明，你传进来多少钱，我就原封不动按多少钱返回，保证测试数值对得上
     calculateDiscountedPrice: jest.fn().mockImplementation((userId, cost, hireType) => {
       return Promise.resolve({
         discountedPrice: cost,
@@ -205,7 +204,8 @@ describe('BookingService', () => {
       );
     });
 
-    it('【正常路径】应该正确计算 1 天的费用 (40)', async () => {
+    // 🌟 修复：对齐队友修改后的价格 (30)
+    it('【正常路径】应该正确计算 1 天的费用 (30)', async () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
         status: ScooterStatus.AVAILABLE,
@@ -220,12 +220,13 @@ describe('BookingService', () => {
       );
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ totalCost: 40 }),
+          data: expect.objectContaining({ totalCost: 30 }),
         }),
       );
     });
 
-    it('【正常路径】应该正确计算 1 周的费用 (200)', async () => {
+    // 🌟 修复：对齐队友修改后的价格 (90)
+    it('【正常路径】应该正确计算 1 周的费用 (90)', async () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
         status: ScooterStatus.AVAILABLE,
@@ -240,7 +241,7 @@ describe('BookingService', () => {
       );
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ totalCost: 200 }),
+          data: expect.objectContaining({ totalCost: 90 }),
         }),
       );
     });
