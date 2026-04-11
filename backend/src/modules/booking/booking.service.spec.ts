@@ -3,9 +3,8 @@ import { BookingService } from './booking.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
 import { BadRequestException, NotFoundException } from '@nestjs/common';
-// 🌟 终极修复：使用同目录下的相对路径
-import { EmailService } from './email.service'; 
-import { DiscountService } from './discount.service'; 
+import { EmailService } from './email.service';
+import { DiscountService } from './discount.service';
 
 describe('BookingService', () => {
   let bookingService: BookingService;
@@ -13,10 +12,18 @@ describe('BookingService', () => {
 
   const mockEmailService = {
     sendBookingConfirmation: jest.fn(),
+    sendExtensionConfirmation: jest.fn(), // 🌟 修复 1：补上续租邮件的方法
   };
 
   const mockDiscountService = {
-    calculateDiscountedPrice: jest.fn(),
+    // 🌟 修复 2：让假服务变聪明，你传进来多少钱，我就原封不动按多少钱返回，保证测试数值对得上
+    calculateDiscountedPrice: jest.fn().mockImplementation((userId, cost, hireType) => {
+      return Promise.resolve({
+        discountedPrice: cost,
+        discountAmount: 0,
+        discountReason: '无折扣',
+      });
+    }),
     updateUserType: jest.fn(),
     getUserDiscountInfo: jest.fn(),
   };
