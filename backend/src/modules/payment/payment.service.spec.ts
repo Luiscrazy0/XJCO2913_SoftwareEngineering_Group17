@@ -60,10 +60,6 @@ describe('PaymentService', () => {
         paymentService.createPayment(targetBookingId, paymentAmount),
       ).rejects.toThrow(new BadRequestException('Booking not found'));
 
-feat/sprint2-tests
-
-      // 确保后续的创建和更新操作绝不会被执行
- dev
       expect(mockPrismaService.payment.create).not.toHaveBeenCalled();
       expect(mockPrismaService.booking.update).not.toHaveBeenCalled();
     });
@@ -100,10 +96,6 @@ feat/sprint2-tests
         status: BookingStatus.CONFIRMED,
       });
 
- feat/sprint2-tests
-
-      // 执行测试操作
- dev
       const result = await paymentService.createPayment(
         targetBookingId,
         paymentAmount,

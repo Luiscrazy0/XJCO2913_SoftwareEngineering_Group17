@@ -112,14 +112,6 @@ export class BookingService {
       throw new NotFoundException('Booking not found');
     }
 
- feat/sprint2-tests
-if (booking.status !== BookingStatus.CONFIRMED && booking.status !== BookingStatus.EXTENDED) {
-  throw new BadRequestException('Only confirmed or extended bookings can be extended');
-}
-
-const extensionCost = additionalHours * 5;
-const newEndTime = new Date(booking.endTime.getTime() + additionalHours * 60 * 60 * 1000);
-
     if (
       booking.status !== BookingStatus.CONFIRMED &&
       booking.status !== BookingStatus.EXTENDED
@@ -133,7 +125,6 @@ const newEndTime = new Date(booking.endTime.getTime() + additionalHours * 60 * 6
     const newEndTime = new Date(
       booking.endTime.getTime() + additionalHours * 60 * 60 * 1000,
     );
- dev
 
     const updatedBooking = await this.prisma.$transaction(async (tx) => {
       const result = await tx.booking.update({
