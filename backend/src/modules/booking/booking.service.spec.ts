@@ -61,7 +61,7 @@ describe('BookingService', () => {
         return fn(mockPrismaService);
       },
     );
-    
+
     // 设置默认的折扣服务返回值
     mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
       discountedPrice: 5,
