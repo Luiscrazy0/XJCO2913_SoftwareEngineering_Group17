@@ -66,7 +66,11 @@ describe('ScooterService', () => {
     const testId = 'test-scooter-id';
 
     it('【正常路径】如果 ID 存在，应该返回对应的滑板车对象', async () => {
-      const mockScooter = { id: testId, location: 'North Campus', status: ScooterStatus.AVAILABLE };
+      const mockScooter = {
+        id: testId,
+        location: 'North Campus',
+        status: ScooterStatus.AVAILABLE,
+      };
       mockPrismaService.scooter.findUnique.mockResolvedValue(mockScooter);
 
       const result = await scooterService.findById(testId);
@@ -93,11 +97,11 @@ describe('ScooterService', () => {
   describe('createScooter', () => {
     it('应该成功在指定位置创建一辆新滑板车', async () => {
       const newLocation = 'Engineering Building';
-      const mockCreatedScooter = { 
-        id: '3', 
-        location: newLocation, 
+      const mockCreatedScooter = {
+        id: '3',
+        location: newLocation,
         // 假设 Prisma schema 里设置了默认状态是 AVAILABLE
-        status: ScooterStatus.AVAILABLE 
+        status: ScooterStatus.AVAILABLE,
       };
 
       mockPrismaService.scooter.create.mockResolvedValue(mockCreatedScooter);
@@ -118,7 +122,11 @@ describe('ScooterService', () => {
     it('应该成功更新指定滑板车的状态', async () => {
       const targetId = '1';
       const newStatus = ScooterStatus.UNAVAILABLE; // 比如把状态改成不可用
-      const mockUpdatedScooter = { id: targetId, location: 'South Campus', status: newStatus };
+      const mockUpdatedScooter = {
+        id: targetId,
+        location: 'South Campus',
+        status: newStatus,
+      };
 
       mockPrismaService.scooter.update.mockResolvedValue(mockUpdatedScooter);
 

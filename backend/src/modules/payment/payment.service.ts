@@ -8,7 +8,6 @@ import { EmailService } from '../booking/email.service';
  */
 @Injectable()
 export class PaymentService {
-  
   constructor(
     private readonly prisma: PrismaService,
     private readonly emailService: EmailService,

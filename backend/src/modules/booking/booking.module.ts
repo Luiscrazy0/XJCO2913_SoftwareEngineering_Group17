@@ -13,7 +13,19 @@ import { EmailModule } from '../email/email.module';
 @Module({
   imports: [PrismaModule, forwardRef(() => AuthModule), EmailModule],
   controllers: [BookingController, EmployeeBookingController],
-  providers: [BookingService, EmployeeBookingService, DiscountService, EmailService, PaymentCardService],
-  exports: [BookingService, EmployeeBookingService, DiscountService, EmailService, PaymentCardService],
+  providers: [
+    BookingService,
+    EmployeeBookingService,
+    DiscountService,
+    EmailService,
+    PaymentCardService,
+  ],
+  exports: [
+    BookingService,
+    EmployeeBookingService,
+    DiscountService,
+    EmailService,
+    PaymentCardService,
+  ],
 })
 export class BookingModule {}

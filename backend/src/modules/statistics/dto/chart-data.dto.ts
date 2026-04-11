@@ -7,7 +7,11 @@ export class ChartDatasetDto {
   @ApiProperty({ type: [Number], description: '数据值' })
   data: number[];
 
-  @ApiProperty({ type: [String], required: false, description: '背景颜色（饼图使用）' })
+  @ApiProperty({
+    type: [String],
+    required: false,
+    description: '背景颜色（饼图使用）',
+  })
   backgroundColor?: string[];
 
   @ApiProperty({ required: false, description: '边框颜色' })

@@ -28,10 +28,10 @@ export class UserService {
    * @returns 创建的用户对象。
    */
   async createUser(
-    email: string, 
-    passwordHash: string, 
-    role: Role = Role.CUSTOMER)
-    {
+    email: string,
+    passwordHash: string,
+    role: Role = Role.CUSTOMER,
+  ) {
     return this.prisma.user.create({
       data: { email, passwordHash, role },
     });

@@ -119,7 +119,11 @@ export class StationService {
     });
   }
 
-  async getNearbyStations(latitude: number, longitude: number, radiusKm: number = 5) {
+  async getNearbyStations(
+    latitude: number,
+    longitude: number,
+    radiusKm: number = 5,
+  ) {
     // 简单实现：返回所有站点，实际应用中应该计算距离
     const stations = await this.prisma.station.findMany({
       include: {
@@ -135,35 +139,44 @@ export class StationService {
     });
 
     // 计算距离并过滤
-    return stations.map(station => {
-      const distance = this.calculateDistance(
-        latitude,
-        longitude,
-        station.latitude,
-        station.longitude
-      );
-      return {
-        ...station,
-        distanceKm: distance,
-      };
-    }).filter(station => station.distanceKm <= radiusKm)
+    return stations
+      .map((station) => {
+        const distance = this.calculateDistance(
+          latitude,
+          longitude,
+          station.latitude,
+          station.longitude,
+        );
+        return {
+          ...station,
+          distanceKm: distance,
+        };
+      })
+      .filter((station) => station.distanceKm <= radiusKm)
       .sort((a, b) => a.distanceKm - b.distanceKm);
   }
 
-  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+  private calculateDistance(
+    lat1: number,
+    lon1: number,
+    lat2: number,
+    lon2: number,
+  ): number {
     const R = 6371; // 地球半径，单位：公里
     const dLat = this.deg2rad(lat2 - lat1);
     const dLon = this.deg2rad(lon2 - lon1);
-    const a = 
-      Math.sin(dLat/2) * Math.sin(dLat/2) +
-      Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
-      Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(this.deg2rad(lat1)) *
+        Math.cos(this.deg2rad(lat2)) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     const distance = R * c;
     return Math.round(distance * 100) / 100; // 保留两位小数
   }
 
   private deg2rad(deg: number): number {
-    return deg * (Math.PI/180);
+    return deg * (Math.PI / 180);
   }
 }

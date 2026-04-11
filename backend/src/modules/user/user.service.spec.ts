@@ -21,9 +21,9 @@ describe('UserService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
-        { 
-          provide: PrismaService, 
-          useValue: mockPrismaService 
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
         },
       ],
     }).compile();
@@ -78,7 +78,11 @@ describe('UserService', () => {
       const result = await userService.createUser(testEmail, testPasswordHash);
 
       expect(mockPrismaService.user.create).toHaveBeenCalledWith({
-        data: { email: testEmail, passwordHash: testPasswordHash, role: Role.CUSTOMER },
+        data: {
+          email: testEmail,
+          passwordHash: testPasswordHash,
+          role: Role.CUSTOMER,
+        },
       });
       expect(result).toEqual(mockCreatedUser);
     });

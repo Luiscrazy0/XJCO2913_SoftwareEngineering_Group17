@@ -3,7 +3,7 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './modules/health/health.module';
-import { UserModule } from './modules/user/user.module'; 
+import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ScooterModule } from './modules/scooter/scooter.module';
@@ -14,9 +14,9 @@ import { StatisticsModule } from './modules/statistics/statistics.module'; // <-
 
 @Module({
   imports: [
-    HealthModule, 
-    PrismaModule, 
-    UserModule, 
+    HealthModule,
+    PrismaModule,
+    UserModule,
     AuthModule,
     ScooterModule,
     BookingModule,

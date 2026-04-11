@@ -22,7 +22,10 @@ export class DailyRevenueDto {
   @ApiProperty({ description: '当日预订数量' })
   bookingCount: number;
 
-  @ApiProperty({ type: [DailyHireTypeRevenueDto], description: '按租赁类型统计的收入' })
+  @ApiProperty({
+    type: [DailyHireTypeRevenueDto],
+    description: '按租赁类型统计的收入',
+  })
   hireTypes: DailyHireTypeRevenueDto[];
 }
 

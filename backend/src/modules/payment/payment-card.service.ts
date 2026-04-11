@@ -1,16 +1,25 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Injectable()
 export class PaymentCardService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async addCard(userId: string, cardNumber: string, expiryDate: string, cardHolder: string) {
+  async addCard(
+    userId: string,
+    cardNumber: string,
+    expiryDate: string,
+    cardHolder: string,
+  ) {
     // 在实际项目中，这里应该加密存储银行卡信息
     // 为了快速实现，我们只存储最后4位数字
-    
+
     const lastFourDigits = cardNumber.slice(-4);
-    
+
     return this.prisma.paymentCard.create({
       data: {
         userId,

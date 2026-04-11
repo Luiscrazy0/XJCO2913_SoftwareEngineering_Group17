@@ -25,23 +25,23 @@ export class AuthController {
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: '用户注册', description: '创建新用户账户' })
   @ApiBody({ type: RegisterDto })
-  @ApiResponse({ 
-    status: 201, 
+  @ApiResponse({
+    status: 201,
     description: '用户注册成功',
     schema: {
       example: {
         success: true,
         data: {
           id: 'clx1234567890',
-          email: 'user@example.com'
+          email: 'user@example.com',
         },
         message: 'User registered successfully',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 400, 
+  @ApiResponse({
+    status: 400,
     description: '邮箱已存在或请求参数错误',
     schema: {
       example: {
@@ -50,9 +50,9 @@ export class AuthController {
         message: 'Email already exists',
         statusCode: 400,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/auth/register'
-      }
-    }
+        path: '/auth/register',
+      },
+    },
   })
   async register(@Body() body: RegisterDto) {
     return this.authService.register(body.email, body.password);
@@ -67,22 +67,22 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: '用户登录', description: '用户登录获取访问令牌' })
   @ApiBody({ type: LoginDto })
-  @ApiResponse({ 
-    status: 200, 
+  @ApiResponse({
+    status: 200,
     description: '登录成功',
     schema: {
       example: {
         success: true,
         data: {
-          access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+          access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
         },
         message: 'Login successful',
-        timestamp: '2024-01-01T00:00:00.000Z'
-      }
-    }
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
   })
-  @ApiResponse({ 
-    status: 401, 
+  @ApiResponse({
+    status: 401,
     description: '邮箱或密码错误',
     schema: {
       example: {
@@ -91,11 +91,11 @@ export class AuthController {
         message: 'Invalid credentials',
         statusCode: 401,
         timestamp: '2024-01-01T00:00:00.000Z',
-        path: '/auth/login'
-      }
-    }
+        path: '/auth/login',
+      },
+    },
   })
   async login(@Body() body: LoginDto) {
-  return this.authService.login(body.email, body.password);
+    return this.authService.login(body.email, body.password);
   }
 }

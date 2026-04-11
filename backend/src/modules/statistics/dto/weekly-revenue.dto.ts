@@ -25,7 +25,10 @@ export class WeeklyRevenueResponseDto {
   @ApiProperty({ description: '结束日期' })
   endDate: string;
 
-  @ApiProperty({ type: [WeeklyRevenueByHireTypeDto], description: '按租赁类型统计的收入' })
+  @ApiProperty({
+    type: [WeeklyRevenueByHireTypeDto],
+    description: '按租赁类型统计的收入',
+  })
   data: WeeklyRevenueByHireTypeDto[];
 
   @ApiProperty({ description: '总收入' })

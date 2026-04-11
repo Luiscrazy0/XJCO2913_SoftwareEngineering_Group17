@@ -5,7 +5,11 @@ import * as crypto from 'crypto';
 @Injectable()
 export class PaymentCardService {
   private readonly algorithm = 'aes-256-cbc';
-  private readonly key = crypto.scryptSync(process.env.ENCRYPTION_KEY || 'default-key-change-in-production', 'salt', 32);
+  private readonly key = crypto.scryptSync(
+    process.env.ENCRYPTION_KEY || 'default-key-change-in-production',
+    'salt',
+    32,
+  );
   private readonly iv = crypto.randomBytes(16); // 在生产环境中应该为每个用户生成唯一的IV
 
   constructor(private readonly prisma: PrismaService) {}

@@ -17,7 +17,11 @@ export class DiscountService {
     userId: string,
     originalCost: number,
     hireType: HireType,
-  ): Promise<{ discountedPrice: number; discountAmount: number; discountReason: string }> {
+  ): Promise<{
+    discountedPrice: number;
+    discountAmount: number;
+    discountReason: string;
+  }> {
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { userType: true },
@@ -62,8 +66,9 @@ export class DiscountService {
 
         // 计算总租赁小时数
         let totalHours = 0;
-        recentBookings.forEach(booking => {
-          const duration = booking.endTime.getTime() - booking.startTime.getTime();
+        recentBookings.forEach((booking) => {
+          const duration =
+            booking.endTime.getTime() - booking.startTime.getTime();
           const hours = duration / (1000 * 60 * 60);
 
           switch (booking.hireType) {
@@ -82,10 +87,12 @@ export class DiscountService {
           }
         });
 
-        if (totalHours >= 50) { // 每月50小时以上
+        if (totalHours >= 50) {
+          // 每月50小时以上
           discountRate = 0.25; // 高频用户7.5折
           discountReason = '高频用户折扣 (7.5折)';
-        } else if (totalHours >= 20) { // 每月20小时以上
+        } else if (totalHours >= 20) {
+          // 每月20小时以上
           discountRate = 0.15; // 8.5折
           discountReason = '活跃用户折扣 (8.5折)';
         }
