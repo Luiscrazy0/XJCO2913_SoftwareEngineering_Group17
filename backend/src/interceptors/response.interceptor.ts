@@ -24,9 +24,14 @@ export class ResponseInterceptor<T> implements NestInterceptor<
     context: ExecutionContext,
     next: CallHandler,
   ): Observable<ApiResponse<T>> {
+ feat/sprint2-tests
+    const request = context.switchToHttp().getRequest();
+    const response = context.switchToHttp().getResponse();
+
     const response = context
       .switchToHttp()
       .getResponse<{ statusCode: number }>();
+ dev
 
     return next.handle().pipe(
       map((data: unknown) => {

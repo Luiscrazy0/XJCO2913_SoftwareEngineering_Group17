@@ -45,14 +45,17 @@ export class BookingService {
     endTime: Date,
   ) {
     const scooter = await this.prisma.scooter.findUnique({
+
       where: { id: scooterId },
     });
 
     if (!scooter) {
+
       throw new BadRequestException('Scooter not found');
     }
 
     if (scooter.status !== ScooterStatus.AVAILABLE) {
+
       throw new BadRequestException('Scooter not available');
     }
 
@@ -109,6 +112,14 @@ export class BookingService {
       throw new NotFoundException('Booking not found');
     }
 
+ feat/sprint2-tests
+if (booking.status !== BookingStatus.CONFIRMED && booking.status !== BookingStatus.EXTENDED) {
+  throw new BadRequestException('Only confirmed or extended bookings can be extended');
+}
+
+const extensionCost = additionalHours * 5;
+const newEndTime = new Date(booking.endTime.getTime() + additionalHours * 60 * 60 * 1000);
+
     if (
       booking.status !== BookingStatus.CONFIRMED &&
       booking.status !== BookingStatus.EXTENDED
@@ -122,6 +133,7 @@ export class BookingService {
     const newEndTime = new Date(
       booking.endTime.getTime() + additionalHours * 60 * 60 * 1000,
     );
+ dev
 
     const updatedBooking = await this.prisma.$transaction(async (tx) => {
       const result = await tx.booking.update({
@@ -156,6 +168,7 @@ export class BookingService {
 
   async cancelBooking(id: string) {
     return this.prisma.booking.update({
+
       where: { id },
       data: { status: BookingStatus.CANCELLED },
       include: {
@@ -279,6 +292,7 @@ export class BookingService {
 
   private calculateCost(hireType: HireType): number {
     switch (hireType) {
+
       case HireType.HOUR_1:
         return 5;
       case HireType.HOUR_4:

@@ -2,10 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ScooterService } from './scooter.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ScooterStatus } from '@prisma/client';
+import { BadRequestException } from '@nestjs/common';
 
 describe('ScooterService', () => {
   let scooterService: ScooterService;
-  let prismaService: PrismaService;
 
   // 1. 创建假的 PrismaService（代替真实数据库）
   const mockPrismaService = {
@@ -14,6 +14,10 @@ describe('ScooterService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
+    },
+    booking: {
+      count: jest.fn(),
     },
   };
 
@@ -30,7 +34,6 @@ describe('ScooterService', () => {
     }).compile();
 
     scooterService = module.get<ScooterService>(ScooterService);
-    prismaService = module.get<PrismaService>(PrismaService);
 
     // 每次测试前清空调用记录，防止互相干扰
     jest.clearAllMocks();
@@ -45,7 +48,6 @@ describe('ScooterService', () => {
   // ==========================================
   describe('findAll', () => {
     it('应该成功返回所有滑板车的列表', async () => {
-      // 准备假数据
       const mockScooters = [
         { id: '1', location: 'South Campus', status: ScooterStatus.AVAILABLE },
         { id: '2', location: 'Library', status: ScooterStatus.RENTED },
@@ -54,7 +56,10 @@ describe('ScooterService', () => {
 
       const result = await scooterService.findAll();
 
-      expect(mockPrismaService.scooter.findMany).toHaveBeenCalled();
+      // 🌟 修复：对齐真实代码里的 include
+      expect(mockPrismaService.scooter.findMany).toHaveBeenCalledWith({
+        include: { station: true },
+      });
       expect(result).toEqual(mockScooters);
     });
   });
@@ -100,7 +105,10 @@ describe('ScooterService', () => {
       const mockCreatedScooter = {
         id: '3',
         location: newLocation,
+ feat/sprint2-tests
+
         // 假设 Prisma schema 里设置了默认状态是 AVAILABLE
+ dev
         status: ScooterStatus.AVAILABLE,
       };
 
@@ -120,8 +128,13 @@ describe('ScooterService', () => {
   // ==========================================
   describe('updateStatus', () => {
     it('应该成功更新指定滑板车的状态', async () => {
+      // 🌟 修复：删掉了重复声明的 targetId
       const targetId = '1';
+ feat/sprint2-tests
+      const newStatus = ScooterStatus.UNAVAILABLE;
+
       const newStatus = ScooterStatus.UNAVAILABLE; // 比如把状态改成不可用
+ dev
       const mockUpdatedScooter = {
         id: targetId,
         location: 'South Campus',
@@ -137,6 +150,40 @@ describe('ScooterService', () => {
         data: { status: newStatus },
       });
       expect(result).toEqual(mockUpdatedScooter);
+    });
+  });
+
+  // ==========================================
+  // 测试组 5: deleteScooter (关键分支测试)
+  // ==========================================
+  describe('deleteScooter', () => {
+    const scooterId = 'scooter-123';
+
+    it('【异常路径】如果该滑板车还有关联的订单，应该抛出 BadRequestException 错误', async () => {
+      mockPrismaService.booking.count.mockResolvedValue(1);
+
+      await expect(scooterService.deleteScooter(scooterId)).rejects.toThrow(
+        new BadRequestException('Scooter has existing bookings'),
+      );
+
+      expect(mockPrismaService.scooter.delete).not.toHaveBeenCalled();
+    });
+
+    it('【正常路径】如果该滑板车没有关联订单，应该成功删除', async () => {
+      mockPrismaService.booking.count.mockResolvedValue(0);
+
+      const mockDeletedScooter = { id: scooterId, location: 'Campus A' };
+      mockPrismaService.scooter.delete.mockResolvedValue(mockDeletedScooter);
+
+      const result = await scooterService.deleteScooter(scooterId);
+
+      expect(mockPrismaService.booking.count).toHaveBeenCalledWith({
+        where: { scooterId },
+      });
+      expect(mockPrismaService.scooter.delete).toHaveBeenCalledWith({
+        where: { id: scooterId },
+      });
+      expect(result).toEqual(mockDeletedScooter);
     });
   });
 });
