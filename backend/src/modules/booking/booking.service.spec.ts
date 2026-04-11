@@ -1,3 +1,4 @@
+import { EmailService } from "../email/email.service";
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingService } from './booking.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -6,7 +7,12 @@ import { BadRequestException, NotFoundException } from '@nestjs/common'; // 🌟
 
 describe('BookingService', () => {
   let bookingService: BookingService;
+  let emailService: EmailService;
   let prismaService: PrismaService;
+
+  const mockEmailService = {
+    sendBookingConfirmation: jest.fn(),
+  };
 
   const mockPrismaService = {
     booking: {
@@ -25,6 +31,10 @@ describe('BookingService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
+        },
         BookingService,
         {
           provide: PrismaService,
@@ -34,6 +44,7 @@ describe('BookingService', () => {
     }).compile();
 
     bookingService = module.get<BookingService>(BookingService);
+    emailService = module.get<EmailService>(EmailService);
     prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
@@ -103,7 +114,7 @@ describe('BookingService', () => {
     it('【异常路径】如果滑板车状态不是 AVAILABLE，应该抛出 Scooter not available 错误', async () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
-        status: ScooterStatus.IN_USE,
+        status: ScooterStatus.RENTED,
       });
 
       await expect(

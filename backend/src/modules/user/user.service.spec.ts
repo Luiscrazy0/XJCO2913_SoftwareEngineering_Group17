@@ -47,7 +47,7 @@ describe('UserService', () => {
       // 准备假数据
       const mockUsers = [
         { id: 1, email: 'user1@liverpool.ac.uk', role: Role.CUSTOMER },
-        { id: 2, email: 'admin@liverpool.ac.uk', role: Role.ADMIN },
+        { id: 2, email: 'admin@liverpool.ac.uk', role: Role.MANAGER },
       ];
       // 告诉假数据库：当调用 findMany 时，返回 mockUsers
       mockPrismaService.user.findMany.mockResolvedValue(mockUsers);

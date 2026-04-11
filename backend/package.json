@@ -30,9 +30,11 @@
     "@nestjs/swagger": "^11.2.6",
     "@prisma/adapter-pg": "*",
     "@prisma/client": "^7.4.2",
+    "@types/nodemailer": "^8.0.0",
     "bcrypt": "^6.0.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.4",
+    "nodemailer": "^8.0.5",
     "pg": "*",
     "prisma": "^7.4.2",
     "reflect-metadata": "^0.2.2",
@@ -75,6 +77,11 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
+    },
+    "globals": {
+      "ts-jest": {
+        "tsconfig": "tsconfig.spec.json"
+      }
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

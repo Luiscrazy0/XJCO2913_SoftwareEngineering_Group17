@@ -6,8 +6,10 @@ import {
   Param,
   Body,
   UseGuards,
+  Delete,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
+import { PaymentCardService } from './payment-card.service';
 import { HireType } from '@prisma/client';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ExtendBookingDto } from './dto/extend-booking.dto';
@@ -24,7 +26,10 @@ import {
 @ApiTags('bookings')
 @Controller('bookings')
 export class BookingController {
-  constructor(private readonly bookingService: BookingService) {}
+  constructor(
+    private readonly bookingService: BookingService,
+    private readonly paymentCardService: PaymentCardService,
+  ) {}
 
   @Get()
   @UseGuards(JwtAuthGuard)
@@ -403,5 +408,83 @@ export class BookingController {
   })
   cancel(@Param('id') id: string) {
     return this.bookingService.cancelBooking(id);
+  }
+
+  // 银行卡管理API
+  @Post('payment-card')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '保存银行卡信息', description: '保存用户的银行卡信息用于快速预订' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        cardNumber: { type: 'string', example: '4111111111111111' },
+        cardExpiry: { type: 'string', example: '12/25' },
+        cardHolder: { type: 'string', example: 'John Doe' },
+      },
+      required: ['cardNumber', 'cardExpiry', 'cardHolder'],
+    },
+  })
+  @ApiResponse({ status: 201, description: '银行卡保存成功' })
+  @ApiResponse({ status: 400, description: '银行卡信息无效' })
+  savePaymentCard(@Body() cardData: any) {
+    // 从JWT token获取用户ID（实际实现中需要从Auth装饰器获取）
+    // 这里暂时使用模拟的用户ID，实际项目中需要正确获取
+    return this.paymentCardService.savePaymentCard('user-id', cardData);
+  }
+
+  @Get('payment-card')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '获取银行卡信息', description: '获取用户保存的银行卡信息（卡号部分隐藏）' })
+  @ApiResponse({ status: 200, description: '获取成功' })
+  getPaymentCard() {
+    // 从JWT token获取用户ID
+    return this.paymentCardService.getPaymentCard('user-id');
+  }
+
+  @Delete('payment-card')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '删除银行卡信息', description: '删除用户保存的银行卡信息' })
+  @ApiResponse({ status: 200, description: '删除成功' })
+  deletePaymentCard() {
+    // 从JWT token获取用户ID
+    return this.paymentCardService.deletePaymentCard('user-id');
+  }
+
+  // 员工代订API
+  @Post('staff-booking')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '员工代订', description: '管理员为客户代订滑板车（需要管理员权限）' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        customerEmail: { type: 'string', example: 'customer@example.com' },
+        scooterId: { type: 'string', example: 'scooter-123' },
+        hireType: { type: 'string', enum: ['HOUR_1', 'HOUR_4', 'DAY_1', 'WEEK_1'], example: 'HOUR_1' },
+        startTime: { type: 'string', format: 'date-time', example: '2024-01-01T10:00:00.000Z' },
+        endTime: { type: 'string', format: 'date-time', example: '2024-01-01T11:00:00.000Z' },
+      },
+      required: ['customerEmail', 'scooterId', 'hireType', 'startTime', 'endTime'],
+    },
+  })
+  @ApiResponse({ status: 201, description: '代订成功' })
+  @ApiResponse({ status: 403, description: '权限不足' })
+  @ApiResponse({ status: 400, description: '请求参数错误' })
+  createStaffBooking(@Body() bookingData: any) {
+    // 从JWT token获取员工ID（实际实现中需要从Auth装饰器获取）
+    // 这里暂时使用模拟的员工ID，实际项目中需要正确获取
+    return this.bookingService.createBookingForCustomer(
+      'employee-id', // 员工ID
+      bookingData.customerEmail,
+      bookingData.scooterId,
+      bookingData.hireType,
+      new Date(bookingData.startTime),
+      new Date(bookingData.endTime),
+    );
   }
 }
