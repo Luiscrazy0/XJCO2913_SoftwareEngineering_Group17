@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
 import { DiscountService } from './discount.service';
@@ -105,12 +109,19 @@ export class BookingService {
       throw new NotFoundException('Booking not found');
     }
 
-    if (booking.status !== BookingStatus.CONFIRMED && booking.status !== BookingStatus.EXTENDED) {
-      throw new BadRequestException('Only confirmed or extended bookings can be extended');
+    if (
+      booking.status !== BookingStatus.CONFIRMED &&
+      booking.status !== BookingStatus.EXTENDED
+    ) {
+      throw new BadRequestException(
+        'Only confirmed or extended bookings can be extended',
+      );
     }
 
     const extensionCost = additionalHours * 5;
-    const newEndTime = new Date(booking.endTime.getTime() + additionalHours * 60 * 60 * 1000);
+    const newEndTime = new Date(
+      booking.endTime.getTime() + additionalHours * 60 * 60 * 1000,
+    );
 
     const updatedBooking = await this.prisma.$transaction(async (tx) => {
       const result = await tx.booking.update({
@@ -131,7 +142,11 @@ export class BookingService {
     });
 
     try {
-      await this.emailService.sendExtensionConfirmation(updatedBooking, extensionCost, newEndTime);
+      await this.emailService.sendExtensionConfirmation(
+        updatedBooking,
+        extensionCost,
+        newEndTime,
+      );
     } catch (error) {
       console.error('发送续租确认邮件失败:', error);
     }
@@ -186,7 +201,9 @@ export class BookingService {
       });
 
       // TODO: 发送账户创建通知邮件给客户
-      console.log(`为客户 ${customerEmail} 创建了新账户，临时密码: ${tempPassword}`);
+      console.log(
+        `为客户 ${customerEmail} 创建了新账户，临时密码: ${tempPassword}`,
+      );
     }
 
     // 检查滑板车可用性

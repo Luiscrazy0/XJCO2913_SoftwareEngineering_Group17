@@ -1,5 +1,4 @@
-import { IsEnum, } from 'class-validator';
-
+import { IsEnum } from 'class-validator';
 
 import { ScooterStatus } from '@prisma/client';
 import { ApiProperty } from '@nestjs/swagger';

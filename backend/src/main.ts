@@ -12,21 +12,21 @@ async function bootstrap() {
   // Enable CORS for frontend
   // Allow Vite dev server on any 51xx port (e.g., 5173, 5174, 5175, etc.)
   const corsOriginRegex = /^https?:\/\/(localhost|127\.0\.0\.1):51[0-9]{2}$/;
-  
+
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) {
         callback(null, true);
         return;
       }
-      
+
       // Check if origin matches Vite dev server pattern
       if (corsOriginRegex.test(origin)) {
         callback(null, true);
       } else {
         console.warn(`CORS blocked: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
+        callback(new Error('Not allowed by CORS'), false);
       }
     },
     credentials: true,
@@ -37,10 +37,10 @@ async function bootstrap() {
   // Global validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,              // 自动删除多余字段
-      forbidNonWhitelisted: true,   // 多余字段直接报错
-      transform: true               // 自动类型转换
-    })
+      whitelist: true, // 自动删除多余字段
+      forbidNonWhitelisted: true, // 多余字段直接报错
+      transform: true, // 自动类型转换
+    }),
   );
 
   // Global response interceptor

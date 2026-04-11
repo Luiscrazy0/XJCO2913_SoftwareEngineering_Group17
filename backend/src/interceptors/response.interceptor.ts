@@ -16,11 +16,17 @@ export interface ApiResponse<T> {
 }
 
 @Injectable()
-export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>> {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<ApiResponse<T>> {
+export class ResponseInterceptor<T> implements NestInterceptor<
+  T,
+  ApiResponse<T>
+> {
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler,
+  ): Observable<ApiResponse<T>> {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
-    
+
     return next.handle().pipe(
       map((data) => {
         // 如果已经是标准格式，直接返回
@@ -30,7 +36,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<T, ApiResponse<T>
             timestamp: new Date().toISOString(),
           };
         }
-        
+
         // 转换为标准格式
         return {
           success: true,

@@ -1,4 +1,4 @@
-import { EmailService } from "../email/email.service";
+import { EmailService } from '../email/email.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingService } from './booking.service';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -48,9 +48,11 @@ describe('BookingService', () => {
     prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
-    mockPrismaService.$transaction.mockImplementation(async (fn: (tx: typeof mockPrismaService) => unknown) => {
-      return fn(mockPrismaService);
-    });
+    mockPrismaService.$transaction.mockImplementation(
+      async (fn: (tx: typeof mockPrismaService) => unknown) => {
+        return fn(mockPrismaService);
+      },
+    );
   });
 
   it('模块应该被成功定义', () => {
@@ -59,7 +61,9 @@ describe('BookingService', () => {
 
   describe('findAll', () => {
     it('应该成功返回所有预订记录，并关联用户和滑板车信息', async () => {
-      const mockBookings = [{ id: 'booking-1', userId: 'user-1', scooterId: 'scooter-1' }];
+      const mockBookings = [
+        { id: 'booking-1', userId: 'user-1', scooterId: 'scooter-1' },
+      ];
       mockPrismaService.booking.findMany.mockResolvedValue(mockBookings);
 
       const result = await bookingService.findAll();
@@ -97,7 +101,13 @@ describe('BookingService', () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue(null);
 
       await expect(
-        bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime)
+        bookingService.createBooking(
+          userId,
+          scooterId,
+          HireType.HOUR_1,
+          startTime,
+          endTime,
+        ),
       ).rejects.toThrow(new BadRequestException('Scooter not found'));
     });
 
@@ -108,7 +118,13 @@ describe('BookingService', () => {
       });
 
       await expect(
-        bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime)
+        bookingService.createBooking(
+          userId,
+          scooterId,
+          HireType.HOUR_1,
+          startTime,
+          endTime,
+        ),
       ).rejects.toThrow(new BadRequestException('Scooter not available'));
     });
 
@@ -121,7 +137,13 @@ describe('BookingService', () => {
       const mockCreatedBooking = { id: 'new-booking', totalCost: 5 };
       mockPrismaService.booking.create.mockResolvedValue(mockCreatedBooking);
 
-      const result = await bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime);
+      const result = await bookingService.createBooking(
+        userId,
+        scooterId,
+        HireType.HOUR_1,
+        startTime,
+        endTime,
+      );
 
       // 3. 验证是否以正确的参数写入数据库
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith({
@@ -152,14 +174,23 @@ describe('BookingService', () => {
         id: scooterId,
         status: ScooterStatus.AVAILABLE,
       });
-      mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking', totalCost: 40 });
+      mockPrismaService.booking.create.mockResolvedValue({
+        id: 'new-booking',
+        totalCost: 40,
+      });
 
-      await bookingService.createBooking(userId, scooterId, HireType.DAY_1, startTime, endTime);
+      await bookingService.createBooking(
+        userId,
+        scooterId,
+        HireType.DAY_1,
+        startTime,
+        endTime,
+      );
 
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({ totalCost: 40 }),
-        })
+        }),
       );
     });
   });
@@ -167,13 +198,13 @@ describe('BookingService', () => {
   describe('cancelBooking', () => {
     it('应该成功将预订状态更新为 CANCELLED，并返回包含 user 和 scooter 的信息', async () => {
       const targetId = 'booking-123';
-      
+
       // 模拟返回的数据
-      const mockCancelledBooking = { 
-        id: targetId, 
+      const mockCancelledBooking = {
+        id: targetId,
         status: BookingStatus.CANCELLED,
         user: { id: 'user-1' },
-        scooter: { id: 'scooter-1' }
+        scooter: { id: 'scooter-1' },
       };
       mockPrismaService.booking.update.mockResolvedValue(mockCancelledBooking);
 
@@ -188,7 +219,7 @@ describe('BookingService', () => {
           user: true,
         },
       });
-      
+
       expect(result).toEqual(mockCancelledBooking);
     });
   });

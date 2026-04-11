@@ -30,13 +30,13 @@ export class HttpExceptionFilter implements ExceptionFilter {
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      
+
       if (typeof exceptionResponse === 'string') {
         error = exceptionResponse;
       } else if (typeof exceptionResponse === 'object') {
-        const responseObj = exceptionResponse as any;
-        error = responseObj.error || exception.name;
-        message = responseObj.message || exception.message;
+        const responseObj = exceptionResponse as Record<string, unknown>;
+        error = (responseObj.error as string) || exception.name;
+        message = (responseObj.message as string) || exception.message;
       }
     } else if (exception instanceof Error) {
       error = exception.name;
@@ -53,12 +53,15 @@ export class HttpExceptionFilter implements ExceptionFilter {
     };
 
     // 记录错误日志（生产环境应该使用日志服务）
-    console.error(`[${new Date().toISOString()}] ${request.method} ${request.url}`, {
-      status,
-      error,
-      message,
-      exception: exception instanceof Error ? exception.stack : exception,
-    });
+    console.error(
+      `[${new Date().toISOString()}] ${request.method} ${request.url}`,
+      {
+        status,
+        error,
+        message,
+        exception: exception instanceof Error ? exception.stack : exception,
+      },
+    );
 
     response.status(status).json(errorResponse);
   }

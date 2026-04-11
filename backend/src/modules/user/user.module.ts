@@ -17,7 +17,11 @@ import { AuthModule } from '../auth/auth.module';
  * @param UserService - 负责处理用户逻辑的服务。
  */
 @Module({
-  imports: [PrismaModule, forwardRef(() => BookingModule), forwardRef(() => AuthModule)],
+  imports: [
+    PrismaModule,
+    forwardRef(() => BookingModule),
+    forwardRef(() => AuthModule),
+  ],
   controllers: [UserController],
   providers: [UserService],
   exports: [UserService], // 导出给其他模块使用
