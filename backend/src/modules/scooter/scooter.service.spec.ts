@@ -52,7 +52,7 @@ describe('ScooterService', () => {
     it('应该成功返回所有滑板车的列表', async () => {
       const mockScooters = [
         { id: '1', location: 'South Campus', status: ScooterStatus.AVAILABLE },
-        { id: '2', location: 'Library', status: ScooterStatus.IN_USE },
+        { id: '2', location: 'Library', status: ScooterStatus.RENTED },
       ];
       mockPrismaService.scooter.findMany.mockResolvedValue(mockScooters);
 
@@ -127,12 +127,13 @@ describe('ScooterService', () => {
   describe('updateStatus', () => {
     it('应该成功更新指定滑板车的状态', async () => {
       const targetId = '1';
-      const newStatus = ScooterStatus.MAINTENANCE;
-      const mockUpdatedScooter = {
-        id: targetId,
-        location: 'South Campus',
-        status: newStatus,
-      };
+const targetId = '1';
+const newStatus = ScooterStatus.UNAVAILABLE;
+const mockUpdatedScooter = {
+  id: targetId,
+  location: 'South Campus',
+  status: newStatus,
+};
 
       mockPrismaService.scooter.update.mockResolvedValue(mockUpdatedScooter);
 
