@@ -2,16 +2,21 @@ import { EmailService } from '../email/email.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingService } from './booking.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DiscountService } from './discount.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 
 describe('BookingService', () => {
   let bookingService: BookingService;
-  let emailService: EmailService;
   let prismaService: PrismaService;
 
   const mockEmailService = {
     sendBookingConfirmation: jest.fn(),
+    sendExtensionConfirmation: jest.fn(),
+  };
+
+  const mockDiscountService = {
+    calculateDiscountedPrice: jest.fn(),
   };
 
   const mockPrismaService = {
@@ -35,6 +40,10 @@ describe('BookingService', () => {
           provide: EmailService,
           useValue: mockEmailService,
         },
+        {
+          provide: DiscountService,
+          useValue: mockDiscountService,
+        },
         BookingService,
         {
           provide: PrismaService,
@@ -44,7 +53,6 @@ describe('BookingService', () => {
     }).compile();
 
     bookingService = module.get<BookingService>(BookingService);
-    emailService = module.get<EmailService>(EmailService);
     prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
@@ -53,6 +61,13 @@ describe('BookingService', () => {
         return fn(mockPrismaService);
       },
     );
+    
+    // 设置默认的折扣服务返回值
+    mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
+      discountedPrice: 5,
+      discountApplied: 0,
+      discountType: null,
+    });
   });
 
   it('模块应该被成功定义', () => {
@@ -169,14 +184,19 @@ describe('BookingService', () => {
       expect(result).toEqual(mockCreatedBooking);
     });
 
-    it('【正常路径】应该成功创建预订，并正确计算 1 天的费用 (40)', async () => {
+    it('【正常路径】应该成功创建预订，并正确计算 1 天的费用 (30)', async () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
         status: ScooterStatus.AVAILABLE,
       });
+      mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
+        discountedPrice: 30,
+        discountApplied: 0,
+        discountType: null,
+      });
       mockPrismaService.booking.create.mockResolvedValue({
         id: 'new-booking',
-        totalCost: 40,
+        totalCost: 30,
       });
 
       await bookingService.createBooking(
@@ -189,7 +209,7 @@ describe('BookingService', () => {
 
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ totalCost: 40 }),
+          data: expect.objectContaining({ totalCost: 30 }),
         }),
       );
     });
