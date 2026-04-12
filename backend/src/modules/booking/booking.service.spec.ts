@@ -79,7 +79,11 @@ describe('BookingService', () => {
   describe('findAll', () => {
     it('应该成功返回所有预订记录，并关联用户和滑板车信息', async () => {
       const mockBookings = [
-        { id: 'booking-1', userId: 'user-1', scooterId: 'scooter-1' },
+        { 
+          id: 'adb16cdf-0782-4249-8d81-a27adf58bbb2', 
+          userId: '0199f4f6-8f16-490c-a176-605411b019d4', 
+          scooterId: '3c08fcf4-5607-480c-b8a7-85cc674f51a7' 
+        },
       ];
       mockPrismaService.booking.findMany.mockResolvedValue(mockBookings);
 
@@ -109,8 +113,8 @@ describe('BookingService', () => {
   });
 
   describe('createBooking', () => {
-    const userId = 'user-1';
-    const scooterId = 'scooter-1';
+    const userId = '0199f4f6-8f16-490c-a176-605411b019d4';
+    const scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
     const startTime = new Date('2026-04-01T10:00:00Z');
     const endTime = new Date('2026-04-01T11:00:00Z');
 
