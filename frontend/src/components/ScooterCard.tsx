@@ -73,10 +73,28 @@ const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
             <div>
-              <p className="text-[var(--text-main)]">{scooter.location}</p>
+              {/* 优先显示高德地图解析的真实地址 */}
+              {scooter.amapAddress ? (
+                <>
+                  <p className="text-[var(--text-main)] font-medium">{scooter.amapAddress}</p>
+                  <p className="text-sm text-[var(--text-secondary)] mt-1">
+                    原始位置: {scooter.location}
+                  </p>
+                </>
+              ) : (
+                <p className="text-[var(--text-main)]">{scooter.location}</p>
+              )}
+              
               {scooter.station && (
                 <p className="text-sm text-[var(--text-secondary)] mt-1">
                   站点: {scooter.station.name}
+                </p>
+              )}
+              
+              {/* 显示坐标信息（调试用） */}
+              {import.meta.env.DEV && scooter.latitude && scooter.longitude && (
+                <p className="text-xs text-[var(--text-secondary)] mt-1">
+                  坐标: {scooter.latitude.toFixed(6)}, {scooter.longitude.toFixed(6)}
                 </p>
               )}
             </div>

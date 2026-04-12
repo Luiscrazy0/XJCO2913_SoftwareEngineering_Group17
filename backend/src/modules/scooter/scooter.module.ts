@@ -3,9 +3,10 @@ import { ScooterController } from './scooter.controller';
 import { ScooterService } from './scooter.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
+import { AmapModule } from '../amap/amap.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule],
+  imports: [PrismaModule, AuthModule, AmapModule],
   controllers: [ScooterController],
   providers: [ScooterService],
 })

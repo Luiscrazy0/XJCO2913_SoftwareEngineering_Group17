@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { stationsApi } from '../api/stations'
 import { scootersApi } from '../api/scooters'
 import Navbar from '../components/Navbar'
+import AmapMap from '../components/map/AmapMap'
 import { useToast } from '../components/ToastProvider'
 import { Station } from '../types'
+import { MarkerConfig } from '../types/amap'
 
 const MapPage: React.FC = () => {
   const { showToast } = useToast()
@@ -58,12 +60,73 @@ const MapPage: React.FC = () => {
     setSelectedStation(station)
   }
 
+  // 处理地图标记点击
+  const handleMarkerClick = (marker: MarkerConfig) => {
+    const stationId = marker.extData?.stationId
+    if (stationId) {
+      const station = stations.find(s => s.id === stationId)
+      if (station) {
+        setSelectedStation(station)
+      }
+    }
+  }
+
   // 计算可用滑板车数量
   const getAvailableScootersCount = (stationId: string) => {
     return scooters.filter(
       scooter => scooter.stationId === stationId && scooter.status === 'AVAILABLE'
     ).length
   }
+
+  // 将站点数据转换为地图标记点
+  const mapMarkers = useMemo(() => {
+    return stations.map((station, index): MarkerConfig => {
+      const availableCount = getAvailableScootersCount(station.id)
+      return {
+        position: [station.longitude, station.latitude] as [number, number],
+        title: station.name,
+        content: `
+          <div class="p-3 bg-white rounded-lg shadow-lg max-w-xs">
+            <h4 class="font-bold text-gray-900 mb-2">${station.name}</h4>
+            <p class="text-sm text-gray-600 mb-2">${station.address}</p>
+            <div class="flex items-center justify-between">
+              <span class="text-sm ${availableCount > 0 ? 'text-green-600' : 'text-red-600'}">
+                ${availableCount} 辆可用
+              </span>
+              <button class="text-xs bg-[var(--mclaren-orange)] text-white px-2 py-1 rounded hover:brightness-110">
+                查看详情
+              </button>
+            </div>
+          </div>
+        `,
+        extData: {
+          stationId: station.id,
+          availableCount,
+          index,
+        },
+      }
+    })
+  }, [stations, scooters])
+
+  // 选中的标记点
+  const selectedMarker = useMemo(() => {
+    if (!selectedStation) return null
+    return mapMarkers.find(marker => marker.extData?.stationId === selectedStation.id) || null
+  }, [selectedStation, mapMarkers])
+
+  // 地图配置 - 使用西南交通大学坐标作为默认中心
+  const mapConfig = useMemo(() => {
+    if (userLocation) {
+      return {
+        center: [userLocation.longitude, userLocation.latitude] as [number, number],
+        zoom: 14,
+      }
+    }
+    return {
+      center: [103.989265, 30.763613] as [number, number], // 西南交通大学校区中心点
+      zoom: 15,
+    }
+  }, [userLocation])
 
   // 渲染加载状态
   if (isLoadingStations || isLoadingScooters) {
@@ -193,80 +256,24 @@ const MapPage: React.FC = () => {
                 {selectedStation ? selectedStation.name : '选择站点查看详情'}
               </h2>
 
-              {/* 模拟地图 */}
-              <div className="relative h-[400px] bg-gray-100 rounded-lg overflow-hidden border border-gray-300">
-                {/* 用户位置标记 */}
-                {userLocation && (
-                  <div
-                    className="absolute w-8 h-8 bg-blue-500 rounded-full border-2 border-white shadow-lg"
-                    style={{
-                      left: '50%',
-                      top: '50%',
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                    title="您的位置"
-                  >
-                    <div className="absolute inset-0 flex items-center justify-center text-white text-xs">
-                      👤
-                    </div>
-                  </div>
-                )}
-
-                {/* 站点标记 */}
-                {stations.map((station, index) => {
-                  const angle = (index / stations.length) * 2 * Math.PI
-                  const radius = 150
-                  const x = 200 + radius * Math.cos(angle)
-                  const y = 200 + radius * Math.sin(angle)
-                  const availableCount = getAvailableScootersCount(station.id)
-                  
-                  return (
-                    <div
-                      key={station.id}
-                      className={`absolute w-10 h-10 rounded-full border-2 border-white shadow-lg cursor-pointer transition-transform hover:scale-110 ${
-                        selectedStation?.id === station.id
-                          ? 'bg-[var(--mclaren-orange)]'
-                          : availableCount > 0
-                          ? 'bg-green-500'
-                          : 'bg-red-500'
-                      }`}
-                      style={{
-                        left: `${x}px`,
-                        top: `${y}px`,
-                        transform: 'translate(-50%, -50%)',
-                      }}
-                      onClick={() => handleStationClick(station)}
-                      title={`${station.name} (${availableCount}辆可用)`}
-                    >
-                    <div className="absolute inset-0 flex items-center justify-center text-white font-bold">
-                      {index + 1}
-                    </div>
-                  </div>
-                )
-              })}
-
-              {/* 地图说明 */}
-              <div className="absolute bottom-4 left-4 bg-slate-900/85 text-slate-100 backdrop-blur-sm rounded-lg p-3 shadow-lg border border-white/10">
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-blue-500 rounded-full mr-2"></div>
-                    <span>您的位置</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-green-500 rounded-full mr-2"></div>
-                    <span>有可用车辆</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-red-500 rounded-full mr-2"></div>
-                    <span>无可用车辆</span>
-                  </div>
-                  <div className="flex items-center">
-                    <div className="w-4 h-4 bg-[var(--mclaren-orange)] rounded-full mr-2"></div>
-                    <span>选中站点</span>
-                  </div>
-                </div>
-              </div>
-              </div>
+              {/* 高德地图 */}
+              <AmapMap
+                config={mapConfig}
+                markers={mapMarkers}
+                selectedMarker={selectedMarker}
+                userLocation={userLocation}
+                onMarkerClick={handleMarkerClick}
+                onMapClick={() => {
+                  // 点击地图空白处可以取消选中
+                  setSelectedStation(null)
+                }}
+                className="h-[400px] rounded-lg overflow-hidden border border-gray-300"
+                loading={isLoadingStations || isLoadingScooters}
+                onError={(error) => {
+                  console.error('地图加载错误:', error)
+                  showToast('地图加载失败，请检查网络连接', 'error')
+                }}
+              />
 
               {/* 站点详情 */}
               {selectedStation && (

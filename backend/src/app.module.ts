@@ -11,6 +11,7 @@ import { BookingModule } from './modules/booking/booking.module';
 import { PaymentModule } from './modules/payment/payment.module'; // <- PaymentModule registration
 import { StationModule } from './modules/station/station.module'; // <- 新增StationModule
 import { StatisticsModule } from './modules/statistics/statistics.module'; // <- 新增StatisticsModule
+import { AmapModule } from './modules/amap/amap.module'; // <- 新增AmapModule
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { StatisticsModule } from './modules/statistics/statistics.module'; // <-
     PaymentModule, // <- PaymentModule registration
     StationModule, // <- 新增StationModule
     StatisticsModule, // <- 新增StatisticsModule
+    AmapModule, // <- 新增AmapModule
   ],
   controllers: [AppController],
   providers: [AppService],

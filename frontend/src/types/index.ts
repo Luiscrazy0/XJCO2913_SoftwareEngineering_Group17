@@ -42,6 +42,7 @@ export interface Scooter {
   stationId?: string
   station?: Station
   updatedAt: string
+  amapAddress?: string  // 高德地图解析的真实地址
 }
 
 export interface Booking {

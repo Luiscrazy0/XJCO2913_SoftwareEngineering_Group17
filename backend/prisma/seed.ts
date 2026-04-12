@@ -76,37 +76,37 @@ async function main() {
       },
     });
 
-    // 创建5个取车点（站点）- 使用UUIDs
+    // 创建5个取车点（站点）- 使用西南交通大学周边真实坐标
     const stations = [
       { 
-        name: '市中心广场站', 
-        address: '市中心广场A区停车场',
-        latitude: 31.2304, 
-        longitude: 121.4737 
+        name: '西南交通大学校区中心点', 
+        address: '西南交通大学（犀浦校区）校区中心点',
+        latitude: 30.763613, 
+        longitude: 103.989265 
       },
       { 
-        name: '火车站站', 
-        address: '火车站东出口停车场',
-        latitude: 31.2479, 
-        longitude: 121.4720 
+        name: '西南交通大学体育馆', 
+        address: '西南交通大学犀浦校区体育馆',
+        latitude: 30.764496, 
+        longitude: 103.983393 
       },
       { 
-        name: '购物中心站', 
-        address: '购物中心北门停车场',
-        latitude: 31.2330, 
-        longitude: 121.4780 
+        name: '犀浦站', 
+        address: '犀浦站（火车站/地铁站）',
+        latitude: 30.76, 
+        longitude: 103.97 
       },
       { 
-        name: '大学城站', 
-        address: '大学城图书馆前广场',
-        latitude: 31.2250, 
-        longitude: 121.4650 
+        name: '双铁广场', 
+        address: '双铁广场',
+        latitude: 30.76, 
+        longitude: 103.98 
       },
       { 
-        name: '科技园站', 
-        address: '科技园1号楼停车场',
-        latitude: 31.2400, 
-        longitude: 121.4850 
+        name: '犀浦商业区', 
+        address: '犀浦商业区',
+        latitude: 30.765, 
+        longitude: 103.985 
       },
     ];
 
@@ -119,48 +119,48 @@ async function main() {
       console.log(`Created station: ${station.name} with ID: ${station.id}`);
     }
 
-    // 创建滑板车数据，使用UUIDs
+    // 创建滑板车数据，使用西南交通大学周边真实坐标
     const scooters = [
       { 
-        location: '市中心广场 - A区', 
+        location: '西南交通大学校区中心点附近', 
         status: ScooterStatus.AVAILABLE,
-        latitude: 31.2305,
-        longitude: 121.4738,
+        latitude: 30.7637,
+        longitude: 103.9893,
         stationId: createdStations[0].id
       },
       { 
-        location: '火车站 - 东出口', 
+        location: '西南交通大学体育馆附近', 
         status: ScooterStatus.AVAILABLE,
-        latitude: 31.2480,
-        longitude: 121.4721,
+        latitude: 30.7645,
+        longitude: 103.9834,
         stationId: createdStations[1].id
       },
       { 
-        location: '购物中心 - 北门', 
+        location: '犀浦站附近', 
         status: ScooterStatus.AVAILABLE,
-        latitude: 31.2331,
-        longitude: 121.4781,
+        latitude: 30.7602,
+        longitude: 103.9701,
         stationId: createdStations[2].id
       },
       { 
-        location: '大学城 - 图书馆', 
+        location: '双铁广场附近', 
         status: ScooterStatus.AVAILABLE,
-        latitude: 31.2251,
-        longitude: 121.4651,
+        latitude: 30.7605,
+        longitude: 103.9802,
         stationId: createdStations[3].id
       },
       { 
-        location: '科技园 - 1号楼', 
+        location: '犀浦商业区附近', 
         status: ScooterStatus.AVAILABLE,
-        latitude: 31.2401,
-        longitude: 121.4851,
+        latitude: 30.7652,
+        longitude: 103.9851,
         stationId: createdStations[4].id
       },
       { 
-        location: '公园南门 - 停车场', 
+        location: '西南交通大学北门附近', 
         status: ScooterStatus.UNAVAILABLE,
-        latitude: 31.2350,
-        longitude: 121.4800,
+        latitude: 30.7660,
+        longitude: 103.9880,
         stationId: createdStations[0].id
       },
     ];
