@@ -3,7 +3,6 @@ import * as bcrypt from 'bcrypt';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient, BookingStatus, HireType, Role, ScooterStatus, UserType } from '@prisma/client';
 
-
 function requireEnv(name: string): string {
   const value = process.env[name];
   if (!value) {
@@ -18,7 +17,7 @@ async function main() {
   const prisma = new PrismaClient({ adapter });
 
   try {
-    console.log('🌱 Seeding database...');
+    console.log('🌱 Seeding database with UUIDs...');
 
     const adminPasswordHash = await bcrypt.hash('admin123', 10);
     const userPasswordHash = await bcrypt.hash('user123', 10);
@@ -77,38 +76,33 @@ async function main() {
       },
     });
 
-    // 创建5个取车点（站点）
+    // 创建5个取车点（站点）- 使用UUIDs
     const stations = [
       { 
-        id: 'ST001', 
         name: '市中心广场站', 
         address: '市中心广场A区停车场',
         latitude: 31.2304, 
         longitude: 121.4737 
       },
       { 
-        id: 'ST002', 
         name: '火车站站', 
         address: '火车站东出口停车场',
         latitude: 31.2479, 
         longitude: 121.4720 
       },
       { 
-        id: 'ST003', 
         name: '购物中心站', 
         address: '购物中心北门停车场',
         latitude: 31.2330, 
         longitude: 121.4780 
       },
       { 
-        id: 'ST004', 
         name: '大学城站', 
         address: '大学城图书馆前广场',
         latitude: 31.2250, 
         longitude: 121.4650 
       },
       { 
-        id: 'ST005', 
         name: '科技园站', 
         address: '科技园1号楼停车场',
         latitude: 31.2400, 
@@ -116,84 +110,79 @@ async function main() {
       },
     ];
 
+    const createdStations: any[] = [];
     for (const stationData of stations) {
-      await prisma.station.upsert({
-        where: { id: stationData.id },
-        update: stationData,
-        create: stationData,
+      const station = await prisma.station.create({
+        data: stationData,
       });
+      createdStations.push(station);
+      console.log(`Created station: ${station.name} with ID: ${station.id}`);
     }
 
-    // 更新滑板车数据，添加坐标和站点关联
+    // 创建滑板车数据，使用UUIDs
     const scooters = [
       { 
-        id: 'SC001', 
         location: '市中心广场 - A区', 
         status: ScooterStatus.AVAILABLE,
         latitude: 31.2305,
         longitude: 121.4738,
-        stationId: 'ST001'
+        stationId: createdStations[0].id
       },
       { 
-        id: 'SC002', 
         location: '火车站 - 东出口', 
         status: ScooterStatus.AVAILABLE,
         latitude: 31.2480,
         longitude: 121.4721,
-        stationId: 'ST002'
+        stationId: createdStations[1].id
       },
       { 
-        id: 'SC003', 
         location: '购物中心 - 北门', 
         status: ScooterStatus.AVAILABLE,
         latitude: 31.2331,
         longitude: 121.4781,
-        stationId: 'ST003'
+        stationId: createdStations[2].id
       },
       { 
-        id: 'SC004', 
         location: '大学城 - 图书馆', 
         status: ScooterStatus.AVAILABLE,
         latitude: 31.2251,
         longitude: 121.4651,
-        stationId: 'ST004'
+        stationId: createdStations[3].id
       },
       { 
-        id: 'SC005', 
         location: '科技园 - 1号楼', 
         status: ScooterStatus.AVAILABLE,
         latitude: 31.2401,
         longitude: 121.4851,
-        stationId: 'ST005'
+        stationId: createdStations[4].id
       },
       { 
-        id: 'SC006', 
         location: '公园南门 - 停车场', 
         status: ScooterStatus.UNAVAILABLE,
         latitude: 31.2350,
         longitude: 121.4800,
-        stationId: 'ST001'
+        stationId: createdStations[0].id
       },
     ];
 
+    const createdScooters: any[] = [];
     for (const scooterData of scooters) {
-      await prisma.scooter.upsert({
-        where: { id: scooterData.id },
-        update: scooterData,
-        create: scooterData,
+      const scooter = await prisma.scooter.create({
+        data: scooterData,
       });
+      createdScooters.push(scooter);
+      console.log(`Created scooter: ${scooter.location} with ID: ${scooter.id}`);
     }
 
     const now = new Date();
     const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    // 创建历史预订数据（过去7天）
+    // 创建历史预订数据（过去7天）- 使用实际的scooter UUIDs
     const historicalBookings = [
       // 第1天：各种租赁类型
       {
-        id: 'BOOKING_HIST_001',
         userId: user1.id,
-        scooterId: 'SC001',
+        scooterId: createdScooters[0].id,
         hireType: HireType.HOUR_1,
         startTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000),
         endTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
@@ -201,9 +190,8 @@ async function main() {
         totalCost: 5,
       },
       {
-        id: 'BOOKING_HIST_002',
         userId: user2.id,
-        scooterId: 'SC002',
+        scooterId: createdScooters[1].id,
         hireType: HireType.HOUR_4,
         startTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
         endTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000),
@@ -212,9 +200,8 @@ async function main() {
       },
       // 第2天：更多预订
       {
-        id: 'BOOKING_HIST_003',
         userId: user1.id,
-        scooterId: 'SC003',
+        scooterId: createdScooters[2].id,
         hireType: HireType.DAY_1,
         startTime: new Date(oneWeekAgo.getTime() + 2 * 24 * 60 * 60 * 1000),
         endTime: new Date(oneWeekAgo.getTime() + 3 * 24 * 60 * 60 * 1000),
@@ -222,9 +209,8 @@ async function main() {
         totalCost: 30,
       },
       {
-        id: 'BOOKING_HIST_004',
         userId: user2.id,
-        scooterId: 'SC004',
+        scooterId: createdScooters[3].id,
         hireType: HireType.HOUR_1,
         startTime: new Date(oneWeekAgo.getTime() + 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
         endTime: new Date(oneWeekAgo.getTime() + 2 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
@@ -233,9 +219,8 @@ async function main() {
       },
       // 第3天：周租赁
       {
-        id: 'BOOKING_HIST_005',
         userId: user1.id,
-        scooterId: 'SC005',
+        scooterId: createdScooters[4].id,
         hireType: HireType.WEEK_1,
         startTime: new Date(oneWeekAgo.getTime() + 3 * 24 * 60 * 60 * 1000),
         endTime: new Date(oneWeekAgo.getTime() + 10 * 24 * 60 * 60 * 1000),
@@ -244,9 +229,8 @@ async function main() {
       },
       // 第4天：混合类型
       {
-        id: 'BOOKING_HIST_006',
         userId: user2.id,
-        scooterId: 'SC001',
+        scooterId: createdScooters[0].id,
         hireType: HireType.HOUR_4,
         startTime: new Date(oneWeekAgo.getTime() + 4 * 24 * 60 * 60 * 1000),
         endTime: new Date(oneWeekAgo.getTime() + 4 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
@@ -254,9 +238,8 @@ async function main() {
         totalCost: 15,
       },
       {
-        id: 'BOOKING_HIST_007',
         userId: user1.id,
-        scooterId: 'SC002',
+        scooterId: createdScooters[1].id,
         hireType: HireType.DAY_1,
         startTime: new Date(oneWeekAgo.getTime() + 4 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000),
         endTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000),
@@ -265,9 +248,8 @@ async function main() {
       },
       // 第5天：更多1小时租赁
       {
-        id: 'BOOKING_HIST_008',
         userId: user2.id,
-        scooterId: 'SC003',
+        scooterId: createdScooters[2].id,
         hireType: HireType.HOUR_1,
         startTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000),
         endTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
@@ -275,9 +257,8 @@ async function main() {
         totalCost: 5,
       },
       {
-        id: 'BOOKING_HIST_009',
         userId: user1.id,
-        scooterId: 'SC004',
+        scooterId: createdScooters[3].id,
         hireType: HireType.HOUR_1,
         startTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
         endTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
@@ -286,9 +267,8 @@ async function main() {
       },
       // 第6天：4小时租赁
       {
-        id: 'BOOKING_HIST_010',
         userId: user2.id,
-        scooterId: 'SC005',
+        scooterId: createdScooters[4].id,
         hireType: HireType.HOUR_4,
         startTime: new Date(oneWeekAgo.getTime() + 6 * 24 * 60 * 60 * 1000),
         endTime: new Date(oneWeekAgo.getTime() + 6 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
@@ -297,9 +277,8 @@ async function main() {
       },
       // 第7天（今天）：已确认的预订
       {
-        id: 'BOOKING_HIST_011',
         userId: user1.id,
-        scooterId: 'SC001',
+        scooterId: createdScooters[0].id,
         hireType: HireType.DAY_1,
         startTime: new Date(now.getTime() - 2 * 60 * 60 * 1000),
         endTime: new Date(now.getTime() + 22 * 60 * 60 * 1000),
@@ -310,18 +289,14 @@ async function main() {
 
     // 创建历史预订
     for (const bookingData of historicalBookings) {
-      const booking = await prisma.booking.upsert({
-        where: { id: bookingData.id },
-        update: bookingData,
-        create: bookingData,
+      const booking = await prisma.booking.create({
+        data: bookingData,
       });
 
       // 为已完成的预订创建支付记录
       if (bookingData.status === BookingStatus.COMPLETED || bookingData.status === BookingStatus.CONFIRMED) {
-        await prisma.payment.upsert({
-          where: { bookingId: booking.id },
-          update: { amount: bookingData.totalCost, status: 'SUCCESS' },
-          create: {
+        await prisma.payment.create({
+          data: {
             bookingId: booking.id,
             amount: bookingData.totalCost,
             status: 'SUCCESS',
@@ -330,14 +305,11 @@ async function main() {
       }
     }
 
-    // 原有的测试预订
-    const pendingBooking = await prisma.booking.upsert({
-      where: { id: 'BOOKING_PENDING_001' },
-      update: {},
-      create: {
-        id: 'BOOKING_PENDING_001',
+    // 创建测试预订
+    const pendingBooking = await prisma.booking.create({
+      data: {
         userId: user1.id,
-        scooterId: 'SC001',
+        scooterId: createdScooters[0].id,
         hireType: HireType.HOUR_1,
         startTime: now,
         endTime: new Date(now.getTime() + 60 * 60 * 1000),
@@ -346,13 +318,10 @@ async function main() {
       },
     });
 
-    const confirmedBooking = await prisma.booking.upsert({
-      where: { id: 'BOOKING_CONFIRMED_001' },
-      update: { status: BookingStatus.CONFIRMED },
-      create: {
-        id: 'BOOKING_CONFIRMED_001',
+    const confirmedBooking = await prisma.booking.create({
+      data: {
         userId: user2.id,
-        scooterId: 'SC002',
+        scooterId: createdScooters[1].id,
         hireType: HireType.HOUR_4,
         startTime: new Date(now.getTime() - 2 * 60 * 60 * 1000),
         endTime: new Date(now.getTime() + 2 * 60 * 60 * 1000),
@@ -361,17 +330,15 @@ async function main() {
       },
     });
 
-    await prisma.payment.upsert({
-      where: { bookingId: confirmedBooking.id },
-      update: { amount: 15, status: 'SUCCESS' },
-      create: {
+    await prisma.payment.create({
+      data: {
         bookingId: confirmedBooking.id,
         amount: 15,
         status: 'SUCCESS',
       },
     });
 
-    console.log('✅ Seed complete.');
+    console.log('✅ Seed with UUIDs complete.');
     console.log('');
     console.log('Test accounts:');
     console.log('  - admin@scooter.com / admin123 (MANAGER)');
@@ -386,11 +353,14 @@ async function main() {
     console.log(`  - ${historicalBookings.length} historical bookings for statistics`);
     console.log('');
     console.log('Stations created:');
-    console.log('  - 市中心广场站 (ST001)');
-    console.log('  - 火车站站 (ST002)');
-    console.log('  - 购物中心站 (ST003)');
-    console.log('  - 大学城站 (ST004)');
-    console.log('  - 科技园站 (ST005)');
+    createdStations.forEach((station, index) => {
+      console.log(`  - ${station.name} (${station.id})`);
+    });
+    console.log('');
+    console.log('Scooters created:');
+    createdScooters.forEach((scooter, index) => {
+      console.log(`  - ${scooter.location} (${scooter.id})`);
+    });
   } finally {
     await prisma.$disconnect();
   }
