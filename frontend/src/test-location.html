@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户位置测试 - 滑板车租赁系统</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 6px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>用户位置测试页面</h1>
+        
+        <div class="section info">
+            <h2>测试说明</h2>
+            <p>此页面用于测试浏览器位置权限和高德地图API集成问题。</p>
+            <p>如果地图上没有显示用户位置，可能是以下原因：</p>
+            <ol>
+                <li>浏览器位置权限被拒绝</li>
+                <li>高德地图API密钥配置错误</li>
+                <li>网络连接问题</li>
+                <li>代码逻辑错误</li>
+            </ol>
+        </div>
+
+        <div class="grid">
+            <div class="section">
+                <h2>1. 环境变量检查</h2>
+                <div id="env-status" class="status">检查中...</div>
+                <button onclick="checkEnv()">检查环境变量</button>
+            </div>
+
+            <div class="section">
+                <h2>2. 位置权限测试</h2>
+                <div id="location-status" class="status">等待测试...</div>
+                <button onclick="testGeolocation()">测试位置获取</button>
+                <button onclick="watchLocation()">持续监听位置</button>
+            </div>
+
+            <div class="section">
+                <h2>3. 高德地图API测试</h2>
+                <div id="amap-status" class="status">等待测试...</div>
+                <button onclick="testAmapAPI()">测试高德地图API</button>
+                <button onclick="loadAmapMap()">加载地图</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>4. 详细日志</h2>
+            <pre id="log">日志将显示在这里...</pre>
+        </div>
+
+        <div class="section">
+            <h2>5. 解决方案</h2>
+            <div id="solutions">
+                <p>根据测试结果，将显示相应的解决方案。</p>
+            </div>
+        </div>
+    </div>
+
+    <div id="map-container" style="width: 100%; height: 400px; margin-top: 20px; display: none;"></div>
+
+    <script>
+        let logElement = document.getElementById('log');
+        let envStatus = document.getElementById('env-status');
+        let locationStatus = document.getElementById('location-status');
+        let amapStatus = document.getElementById('amap-status');
+        let solutionsElement = document.getElementById('solutions');
+        let watchId = null;
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}\n`;
+            logElement.textContent = logEntry + logElement.textContent;
+            
+            if (type === 'error') {
+                console.error(message);
+            } else if (type === 'warning') {
+                console.warn(message);
+            } else {
+                console.log(message);
+            }
+        }
+
+        // 1. 检查环境变量
+        function checkEnv() {
+            log('开始检查环境变量...');
+            envStatus.className = 'status info';
+            envStatus.textContent = '检查中...';
+
+            // 检查VITE_AMAP_JS_KEY
+            const apiKey = 'VITE_AMAP_JS_KEY' in import.meta.env ? import.meta.env.VITE_AMAP_JS_KEY : '未找到';
+            
+            if (apiKey && apiKey !== 'your_js_api_key_here' && apiKey.length > 10) {
+                envStatus.className = 'status success';
+                envStatus.textContent = `✅ 环境变量正常 (API Key: ${apiKey.substring(0, 10)}...)`;
+                log(`环境变量检查通过: VITE_AMAP_JS_KEY 已配置`);
+            } else if (apiKey === 'your_js_api_key_here') {
+                envStatus.className = 'status error';
+                envStatus.textContent = '❌ 环境变量未配置 (使用默认值)';
+                log('错误: 环境变量未配置，请检查 .env 文件', 'error');
+                showSolution('env-not-configured');
+            } else {
+                envStatus.className = 'status warning';
+                envStatus.textContent = '⚠️ 环境变量可能有问题';
+                log(`警告: API Key 可能无效: ${apiKey}`, 'warning');
+                showSolution('env-invalid');
+            }
+        }
+
+        // 2. 测试位置获取
+        function testGeolocation() {
+            log('开始测试位置获取...');
+            locationStatus.className = 'status info';
+            locationStatus.textContent = '请求位置权限中...';
+
+            if (!navigator.geolocation) {
+                locationStatus.className = 'status error';
+                locationStatus.textContent = '❌ 浏览器不支持地理位置API';
+                log('错误: 浏览器不支持地理位置API', 'error');
+                showSolution('geolocation-not-supported');
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    
+                    locationStatus.className = 'status success';
+                    locationStatus.textContent = `✅ 位置获取成功 (${lat.toFixed(6)}, ${lng.toFixed(6)})`;
+                    log(`位置获取成功: 纬度=${lat}, 经度=${lng}, 精度=${accuracy}米`);
+                    
+                    // 显示解决方案
+                    showSolution('geolocation-success');
+                },
+                (error) => {
+                    let errorMessage = '未知错误';
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = '用户拒绝了位置权限';
+                            showSolution('permission-denied');
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = '位置信息不可用';
+                            showSolution('position-unavailable');
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = '获取位置超时';
+                            showSolution('timeout');
+                            break;
+                    }
+                    
+                    locationStatus.className = 'status error';
+                    locationStatus.textContent = `❌ 位置获取失败: ${errorMessage}`;
+                    log(`位置获取失败: ${errorMessage} (代码: ${error.code})`, 'error');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        function watchLocation() {
+            if (watchId) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+                log('已停止位置监听');
+                return;
+            }
+
+            log('开始持续监听位置...');
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    log(`位置更新: 纬度=${lat.toFixed(6)}, 经度=${lng.toFixed(6)}`);
+                },
+                (error) => {
+                    log(`位置监听错误: ${error.message}`, 'error');
+                },
+                {
+                    enableHighAccuracy: true,
+                    maximumAge: 30000
+                }
+            );
+            log('位置监听已启动');
+        }
+
+        // 3. 测试高德地图API
+        function testAmapAPI() {
+            log('开始测试高德地图API...');
+            amapStatus.className = 'status info';
+            amapStatus.textContent = '加载API中...';
+
+            // 检查是否已加载
+            if (window.AMap) {
+                amapStatus.className = 'status success';
+                amapStatus.textContent = '✅ 高德地图API已加载';
+                log('高德地图API已加载');
+                return;
+            }
+
+            const apiKey = import.meta.env.VITE_AMAP_JS_KEY || 'your_js_api_key_here';
+            if (apiKey === 'your_js_api_key_here') {
+                amapStatus.className = 'status error';
+                amapStatus.textContent = '❌ API Key未配置';
+                log('错误: API Key未配置', 'error');
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = `https://webapi.amap.com/maps?v=2.0&key=${apiKey}`;
+            script.async = true;
+            
+            script.onload = () => {
+                amapStatus.className = 'status success';
+                amapStatus.textContent = '✅ 高德地图API加载成功';
+                log('高德地图API加载成功');
+                showSolution('amap-success');
+            };
+            
+            script.onerror = (err) => {
+                amapStatus.className = 'status error';
+                amapStatus.textContent = '❌ 高德地图API加载失败';
+                log('高德地图API加载失败', 'error');
+                showSolution('amap-failed');
+            };
+
+            document.head.appendChild(script);
+        }
+
+        function loadAmapMap() {
+            if (!window.AMap) {
+                log('请先加载高德地图API', 'warning');
+                return;
+            }
+
+            const container = document.getElementById('map-container');
+            container.style.display = 'block';
+            
+            try {
+                const map = new AMap.Map('map-container', {
+                    zoom: 13,
+                    center: [116.397428, 39.90923], // 北京
+                    viewMode: '2D'
+                });
+                
+                log('地图创建成功');
+                
+                // 尝试添加用户位置标记
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        (position) => {
+                            const lat = position.coords.latitude;
+                            const lng = position.coords.longitude;
+                            
+                            const marker = new AMap.Marker({
+                                position: [lng, lat],
+                                title: '您的位置',
+                                content: '<div style="background-color: #3b82f6; width: 24px; height: 24px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-size: 12px;">👤</div>',
+                                offset: new AMap.Pixel(-12, -12)
+                            });
+                            
+                            marker.setMap(map);
+                            map.setCenter([lng, lat]);
+                            log(`用户位置标记已添加到地图: ${lat}, ${lng}`);
+                        },
+                        (error) => {
+                            log(`无法获取用户位置: ${error.message}`, 'warning');
+                        }
+                    );
+                }
+            } catch (err) {
+                log(`地图创建失败: ${err.message}`, 'error');
+            }
+        }
+
+        // 显示解决方案
+        function showSolution(type) {
+            let solution = '';
+            
+            switch(type) {
+                case 'env-not-configured':
+                    solution = `
+                        <h3>解决方案：环境变量未配置</h3>
+                        <ol>
+                            <li>检查项目根目录下的 <code>.env</code> 文件是否存在</li>
+                            <li>确保文件中包含：<code>VITE_AMAP_JS_KEY=your_actual_api_key</code></li>
+                            <li>重启开发服务器：<code>npm run dev</code></li>
+                        </ol>
+                    `;
+                    break;
+                    
+                case 'env-invalid':
+                    solution = `
+                        <h3>解决方案：API Key可能无效</h3>
+                        <ol>
+                            <li>检查高德地图API Key是否正确</li>
+                            <li>确保Key已添加到域名白名单（包括 localhost）</li>
+                            <li>检查Key是否过期或被禁用</li>
+                        </ol>
+                    `;
+                    break;
+                    
+                case 'permission-denied':
+                    solution = `
+                        <h3>解决方案：位置权限被拒绝</h3>
+                        <ol>
+                            <li>在浏览器设置中允许网站访问位置信息</li>
+                            <li>清除浏览器缓存后重试</li>
+                            <li>尝试使用HTTPS（某些浏览器要求HTTPS才能获取位置）</li>
+                        </ol>
+                    `;
+                    break;
+                    
+                case 'geolocation-success':
+                    solution = `
+                        <h3>位置获取成功！</h3>
+                        <p>位置API工作正常。如果地图上仍不显示用户位置，请检查：</p>
+                        <ol>
+                            <li>地图组件是否正确接收了位置数据</li>
+                            <li>用户位置标记的创建逻辑是否正确</li>
+                            <li>控制台是否有JavaScript错误</li>
+                        </ol>
+                    `;
+                    break;
+                    
+                case 'amap-success':
+                    solution = `
+                        <h3>高德地图API加载成功！</h3>
+                        <p>地图API工作正常。如果地图上仍不显示用户位置，请检查：</p>
+                        <ol>
+                            <li>用户位置数据是否正确传递给地图组件</li>
+                            <li>地图组件中用户位置标记的创建逻辑</li>
+                            <li>查看浏览器控制台是否有错误信息</li>
+                        </ol>
+                    `;
+                    break;
+                    
+                case 'amap-failed':
+                    solution = `
+                        <h3>解决方案：高德地图API加载失败</h3>
+                        <ol>
+                            <li>检查网络连接</li>
+                            <li>检查API Key是否正确</li>
+                            <li>检查域名是否在白名单中</li>
+                            <li>尝试清除浏览器缓存</li>
+                        </ol>
+                    `;
+                    break;
+            }
+            
+            solutionsElement.innerHTML = solution;
+        }
+
+        // 页面加载时自动检查
+        window.addEventListener('load', () => {
+            log('测试页面已加载');
+            checkEnv();
+        });
+    </script>
+</body>
+</html>

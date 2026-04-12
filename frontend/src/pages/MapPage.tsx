@@ -12,23 +12,53 @@ const MapPage: React.FC = () => {
   const { showToast } = useToast()
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null)
   const [selectedStation, setSelectedStation] = useState<Station | null>(null)
+  const [locationError, setLocationError] = useState<string | null>(null)
 
   // 获取用户位置
   useEffect(() => {
-    if (navigator.geolocation) {
+    const getUserLocation = () => {
+      if (!navigator.geolocation) {
+        setLocationError('您的浏览器不支持地理位置功能')
+        showToast('您的浏览器不支持地理位置功能', 'warning')
+        return
+      }
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          setUserLocation({
+          const newLocation = {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
-          })
+          }
+          setUserLocation(newLocation)
+          setLocationError(null)
+          console.log('用户位置获取成功:', newLocation)
         },
         (error) => {
-          console.error('Error getting location:', error)
-          showToast('无法获取您的位置，请确保已开启位置权限', 'warning')
+          let errorMessage = '无法获取您的位置'
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage = '位置权限被拒绝，请在浏览器设置中允许位置访问'
+              break
+            case error.POSITION_UNAVAILABLE:
+              errorMessage = '位置信息不可用，请检查GPS或网络连接'
+              break
+            case error.TIMEOUT:
+              errorMessage = '获取位置超时，请重试'
+              break
+          }
+          console.error('获取位置失败:', error)
+          setLocationError(errorMessage)
+          showToast(errorMessage, 'warning')
+        },
+        {
+          enableHighAccuracy: true, // 使用高精度定位
+          timeout: 10000, // 10秒超时
+          maximumAge: 0 // 不使用缓存位置
         }
       )
     }
+
+    getUserLocation()
   }, [showToast])
 
   // 获取站点数据

@@ -145,12 +145,13 @@ const AmapMap: React.FC<AmapMapProps> = ({
     });
     markersRef.current = [];
 
-    // 添加用户位置标记
-    if (userLocation && userMarkerRef.current) {
+    // 清除现有用户位置标记
+    if (userMarkerRef.current) {
       mapInstanceRef.current.remove(userMarkerRef.current);
       userMarkerRef.current = null;
     }
 
+    // 添加用户位置标记
     if (userLocation) {
       try {
         const userPosition: [number, number] = [userLocation.longitude, userLocation.latitude];
@@ -163,6 +164,14 @@ const AmapMap: React.FC<AmapMapProps> = ({
         });
         
         userMarkerRef.current.setMap(mapInstanceRef.current);
+        
+        // 如果这是第一次添加用户位置，将地图中心移动到用户位置
+        if (!mapInstanceRef.current.getCenter() || 
+            (mapInstanceRef.current.getCenter().lng === finalConfig.center[0] && 
+             mapInstanceRef.current.getCenter().lat === finalConfig.center[1])) {
+          mapInstanceRef.current.setCenter(userPosition);
+          mapInstanceRef.current.setZoom(14);
+        }
       } catch (err) {
         console.error('添加用户位置标记失败:', err);
       }
