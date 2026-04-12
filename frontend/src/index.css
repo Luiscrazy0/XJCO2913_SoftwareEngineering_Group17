@@ -207,27 +207,109 @@ textarea:focus-visible {
 /* 7.2 高对比度模式支持 */
 @media (prefers-contrast: high) {
   :root {
-    --text-main: #FFFFFF;
-    --text-secondary: #E0E0E0;
-    --border-line: #606060;
-    --mclaren-orange: #FF8A00; /* 更亮的橙色用于高对比度 */
+    --bg-main: #000000;         /* 纯黑色背景确保最大对比度 */
+    --bg-card: #0A0A0A;         /* 稍亮的黑色用于卡片 */
+    --bg-input: #000000;        /* 输入框纯黑 */
+    --text-main: #FFFFFF;       /* 纯白色文字 */
+    --text-secondary: #CCCCCC;  /* 浅灰色辅助文字 */
+    --border-line: #707070;     /* 中灰色边框 */
+    --mclaren-orange: #FF8A00;  /* 更亮的橙色用于高对比度 */
+    --mclaren-orange-hover: #FFA500; /* 更亮的悬停色 */
     --mclaren-orange-depth: #E56A00;
+  }
+  
+  /* 确保所有背景颜色使用高对比度变量 */
+  body {
+    background-color: var(--bg-main) !important;
+  }
+  
+  #root {
+    background-color: var(--bg-main);
   }
   
   .mclaren-btn-3d {
     border-width: 2px;
     border-color: #FFFFFF;
+    background: linear-gradient(180deg, var(--mclaren-orange-hover) 0%, var(--mclaren-orange) 100%);
+    color: #000000; /* 黑色文字在橙色按钮上提供更高对比度 */
+    font-weight: 900; /* 更粗的字体 */
   }
   
   /* 提高所有文本对比度 */
   h1, h2, h3, h4, h5, h6 {
     color: #FFFFFF;
+    font-weight: 900; /* 更粗的字体提高可读性 */
   }
   
   /* 提高链接对比度 */
   a {
     color: #FF8A00;
     text-decoration: underline;
+    text-decoration-thickness: 2px;
+  }
+  
+  a:hover,
+  a:focus {
+    color: #FFA500;
+    text-decoration-thickness: 3px;
+  }
+  
+  /* 输入框高对比度 */
+  input,
+  select,
+  textarea {
+    background-color: #000000 !important;
+    border-color: #707070 !important;
+    color: #FFFFFF !important;
+    border-width: 2px !important;
+  }
+  
+  input:focus,
+  select:focus,
+  textarea:focus {
+    border-color: #FF8A00 !important;
+    outline: 3px solid #FF8A00 !important;
+    outline-offset: 1px !important;
+  }
+  
+  /* 卡片高对比度 */
+  .auth-card,
+  .surface-card {
+    background-color: #0A0A0A !important;
+    border-color: #707070 !important;
+    border-width: 2px !important;
+  }
+  
+  /* 错误状态高对比度 */
+  input:invalid,
+  select:invalid,
+  textarea:invalid {
+    border-color: #FF4444 !important;
+    border-width: 3px !important;
+  }
+  
+  .error-message {
+    color: #FF4444;
+    font-weight: bold;
+  }
+  
+  /* 焦点状态增强 */
+  :focus-visible {
+    outline: 4px solid #FF8A00 !important;
+    outline-offset: 2px !important;
+  }
+  
+  /* 跳过链接高对比度 */
+  .skip-to-content {
+    background: #FF8A00;
+    color: #000000;
+    font-weight: bold;
+    border: 2px solid #FFFFFF;
+  }
+  
+  .skip-to-content:focus {
+    outline: 3px solid #FFFFFF;
+    outline-offset: 2px;
   }
 }
 
