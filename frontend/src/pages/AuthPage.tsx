@@ -209,16 +209,16 @@ export default function AuthPage() {
   }
 
   return (
-    <div style={styles.container}>
-      <div style={styles.card}>
+    <div style={styles.container} role="main" id="main-content">
+      <div style={styles.card} className="auth-card">
         {/* Logo/Header */}
         <div style={styles.header}>
-          <h1 style={styles.title}>电动滑板车租赁系统</h1>
+          <h1 style={styles.title} id="auth-page-title">电动滑板车租赁系统</h1>
           <p style={styles.subtitle}>欢迎使用我们的租赁服务</p>
         </div>
 
-        {/* Tabs */}
-        <div style={styles.tabs}>
+        {/* Tabs - 改进可访问性 */}
+        <div style={styles.tabs} role="tablist" aria-labelledby="auth-page-title">
           <button
             style={{
               ...styles.tab,
@@ -226,6 +226,10 @@ export default function AuthPage() {
             }}
             onClick={() => handleTabChange('login')}
             className={activeTab === 'login' ? 'active-tab' : 'inactive-tab'}
+            role="tab"
+            aria-selected={activeTab === 'login'}
+            aria-controls="login-form"
+            id="login-tab"
           >
             登录
           </button>
@@ -236,17 +240,29 @@ export default function AuthPage() {
             }}
             onClick={() => handleTabChange('register')}
             className={activeTab === 'register' ? 'active-tab' : 'inactive-tab'}
+            role="tab"
+            aria-selected={activeTab === 'register'}
+            aria-controls="register-form"
+            id="register-tab"
           >
             注册
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} style={styles.form}>
+        <form 
+          onSubmit={handleSubmit} 
+          style={styles.form}
+          role="tabpanel"
+          id={activeTab === 'login' ? 'login-form' : 'register-form'}
+          aria-labelledby={activeTab === 'login' ? 'login-tab' : 'register-tab'}
+          tabIndex={0}
+        >
           {/* Email Input */}
           <div style={styles.inputGroup}>
             <label htmlFor="email" style={styles.label}>
               邮箱地址
+              <span className="sr-only">（必填）</span>
             </label>
             <input
               id="email"
@@ -259,9 +275,15 @@ export default function AuthPage() {
               style={getInputStyle('email', !!formErrors.email)}
               disabled={isLoading}
               required
+              aria-required="true"
+              aria-invalid={!!formErrors.email}
+              aria-describedby={formErrors.email ? "email-error" : undefined}
+              className="touch-target"
             />
             {formErrors.email && (
-              <div style={styles.fieldError}>{formErrors.email}</div>
+              <div id="email-error" style={styles.fieldError} role="alert">
+                {formErrors.email}
+              </div>
             )}
           </div>
 
@@ -269,6 +291,7 @@ export default function AuthPage() {
           <div style={styles.inputGroup}>
             <label htmlFor="password" style={styles.label}>
               密码
+              <span className="sr-only">（必填）</span>
             </label>
             <input
               id="password"
@@ -281,9 +304,15 @@ export default function AuthPage() {
               style={getInputStyle('password', !!formErrors.password)}
               disabled={isLoading}
               required
+              aria-required="true"
+              aria-invalid={!!formErrors.password}
+              aria-describedby={formErrors.password ? "password-error" : undefined}
+              className="touch-target"
             />
             {formErrors.password && (
-              <div style={styles.fieldError}>{formErrors.password}</div>
+              <div id="password-error" style={styles.fieldError} role="alert">
+                {formErrors.password}
+              </div>
             )}
           </div>
 
@@ -292,6 +321,7 @@ export default function AuthPage() {
             <div style={styles.inputGroup}>
               <label htmlFor="confirmPassword" style={styles.label}>
                 确认密码
+                <span className="sr-only">（必填）</span>
               </label>
               <input
                 id="confirmPassword"
@@ -304,16 +334,22 @@ export default function AuthPage() {
                 style={getInputStyle('confirmPassword', !!formErrors.confirmPassword)}
                 disabled={isLoading}
                 required
+                aria-required="true"
+                aria-invalid={!!formErrors.confirmPassword}
+                aria-describedby={formErrors.confirmPassword ? "confirm-password-error" : undefined}
+                className="touch-target"
               />
               {formErrors.confirmPassword && (
-                <div style={styles.fieldError}>{formErrors.confirmPassword}</div>
+                <div id="confirm-password-error" style={styles.fieldError} role="alert">
+                  {formErrors.confirmPassword}
+                </div>
               )}
             </div>
           )}
 
           {/* Error Message */}
           {error && (
-            <div style={styles.error}>
+            <div style={styles.error} role="alert" aria-live="assertive">
               {error}
             </div>
           )}
@@ -322,10 +358,16 @@ export default function AuthPage() {
           <button
             type="submit"
             style={getButtonStyle()}
-            className="auth-button"
+            className="auth-button mclaren-btn-3d touch-target"
             disabled={isLoading}
+            aria-busy={isLoading}
           >
-            {isLoading ? '处理中...' : activeTab === 'login' ? '登录' : '注册'}
+            {isLoading ? (
+              <>
+                <span className="sr-only">处理中</span>
+                处理中...
+              </>
+            ) : activeTab === 'login' ? '登录' : '注册'}
           </button>
 
           {/* Help Text */}
@@ -338,6 +380,7 @@ export default function AuthPage() {
                   style={styles.link}
                   className="auth-link"
                   onClick={() => handleTabChange('register')}
+                  aria-label="切换到注册标签页"
                 >
                   立即注册
                 </button>
@@ -350,6 +393,7 @@ export default function AuthPage() {
                   style={styles.link}
                   className="auth-link"
                   onClick={() => handleTabChange('login')}
+                  aria-label="切换到登录标签页"
                 >
                   立即登录
                 </button>

@@ -184,11 +184,23 @@ input:focus {
   box-shadow: 0 0 0 2px rgba(255, 106, 0, 0.2);
 }
 
-/* 7. 无障碍设计改进 */
-/* 7.1 焦点可见性增强 */
+/* 7. 无障碍设计改进 (WCAG 2.1 AA 标准) */
+/* 7.1 焦点可见性增强 - 确保所有交互元素都有清晰焦点指示 */
 :focus-visible {
   outline: 3px solid var(--mclaren-orange);
-  outline-offset: 2px;
+  outline-offset: 3px;
+  border-radius: 4px;
+  outline-color: #FF8A00; /* 更亮的橙色，提高对比度 */
+}
+
+/* 确保所有可聚焦元素都有焦点样式 */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid #FF8A00;
+  outline-offset: 3px;
   border-radius: 4px;
 }
 
@@ -198,10 +210,24 @@ input:focus {
     --text-main: #FFFFFF;
     --text-secondary: #E0E0E0;
     --border-line: #606060;
+    --mclaren-orange: #FF8A00; /* 更亮的橙色用于高对比度 */
+    --mclaren-orange-depth: #E56A00;
   }
   
   .mclaren-btn-3d {
     border-width: 2px;
+    border-color: #FFFFFF;
+  }
+  
+  /* 提高所有文本对比度 */
+  h1, h2, h3, h4, h5, h6 {
+    color: #FFFFFF;
+  }
+  
+  /* 提高链接对比度 */
+  a {
+    color: #FF8A00;
+    text-decoration: underline;
   }
 }
 
@@ -213,10 +239,12 @@ input:focus {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
   
   .mclaren-btn-3d,
-  .surface-lift {
+  .surface-lift,
+  .surface-card {
     transition: none !important;
     transform: none !important;
   }
@@ -235,6 +263,16 @@ input:focus {
   border: 0;
 }
 
+.sr-only:focus,
+.sr-only:active {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}
+
 /* 7.5 键盘导航改进 */
 .skip-to-content {
   position: absolute;
@@ -242,46 +280,77 @@ input:focus {
   left: 0;
   background: var(--mclaren-orange);
   color: white;
-  padding: 8px 16px;
+  padding: 12px 20px;
   text-decoration: none;
-  z-index: 1000;
+  z-index: 9999;
+  font-weight: bold;
+  border-radius: 0 0 4px 0;
 }
 
 .skip-to-content:focus {
   top: 0;
+  outline: 3px solid white;
+  outline-offset: 2px;
 }
 
 /* 7.6 表单可访问性 */
-input:invalid {
+input:invalid,
+select:invalid,
+textarea:invalid {
   border-color: #ef4444 !important;
+  border-width: 2px !important;
 }
 
 .error-message {
   color: #ef4444;
   font-size: 0.875rem;
-  margin-top: 0.25rem;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+/* 表单标签关联 */
+label {
+  cursor: pointer;
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
 }
 
 /* 7.7 链接可访问性 */
 a:not([class]) {
   color: var(--mclaren-orange);
   text-decoration: underline;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 2px;
 }
 
-a:not([class]):hover {
-  text-decoration-thickness: 2px;
+a:not([class]):hover,
+a:not([class]):focus {
+  text-decoration-thickness: 3px;
+  color: var(--mclaren-orange-hover);
 }
 
 /* 7.8 按钮可访问性 */
 button:disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: 0.5;
+}
+
+/* 确保按钮有足够的最小触摸目标大小 */
+button,
+[role="button"] {
+  min-height: 44px;
+  min-width: 44px;
 }
 
 /* 7.9 图片替代文本样式 */
 img:not([alt]) {
-  outline: 2px dashed #ef4444;
+  outline: 3px dashed #ef4444;
+  outline-offset: 2px;
+}
+
+img[alt=""] {
+  outline: 3px dashed #f59e0b;
 }
 
 /* 7.10 字体大小调整支持 */
@@ -289,4 +358,68 @@ img:not([alt]) {
   * {
     font-family: system-ui, -apple-system, sans-serif !important;
   }
+  
+  /* 禁用非必要图片 */
+  img:not([data-essential]) {
+    display: none;
+  }
+}
+
+/* 7.11 移动端触屏优化 */
+@media (hover: none) and (pointer: coarse) {
+  /* 增大触摸目标 */
+  button,
+  a,
+  [role="button"],
+  input[type="checkbox"],
+  input[type="radio"] {
+    min-height: 48px;
+    min-width: 48px;
+  }
+  
+  /* 增加点击区域 */
+  .touch-target {
+    padding: 12px;
+  }
+  
+  /* 减少悬停效果的影响 */
+  .hover-effect {
+    opacity: 1;
+  }
+}
+
+/* 7.12 颜色对比度增强 */
+.contrast-enhanced {
+  --text-main: #FFFFFF;
+  --text-secondary: #E5E7EB;
+  --mclaren-orange: #FF8A00;
+}
+
+/* 7.13 语义化标题层次 */
+h1 { font-size: 2.5rem; }
+h2 { font-size: 2rem; }
+h3 { font-size: 1.75rem; }
+h4 { font-size: 1.5rem; }
+h5 { font-size: 1.25rem; }
+h6 { font-size: 1rem; }
+
+/* 7.14 阅读模式支持 */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg-main: #FFFFFF;
+    --bg-card: #F9FAFB;
+    --bg-input: #FFFFFF;
+    --text-main: #111827;
+    --text-secondary: #6B7280;
+    --border-line: #D1D5DB;
+  }
+}
+
+/* 7.15 方向支持 (RTL/LTR) */
+[dir="rtl"] {
+  text-align: right;
+}
+
+[dir="ltr"] {
+  text-align: left;
 }
