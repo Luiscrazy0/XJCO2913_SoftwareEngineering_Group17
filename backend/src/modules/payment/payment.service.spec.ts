@@ -4,8 +4,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../booking/email.service';
 import { BookingStatus } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
-// 🌟 终极修复：完美对齐真实代码里的路径！
-import { EmailService } from '../booking/email.service'; 
 
 describe('PaymentService', () => {
   let paymentService: PaymentService;

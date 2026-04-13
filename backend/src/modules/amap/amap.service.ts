@@ -124,9 +124,11 @@ export class AmapService {
 
       this.logger.debug(`地理编码请求: ${address}, 结果: ${response.data.status}`);
       return response.data;
-    } catch (error) {
-      this.logger.error(`地理编码失败: ${error.message}`, error.stack);
-      throw new Error(`地理编码失败: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`地理编码失败: ${errorMessage}`, errorStack);
+      throw new Error(`地理编码失败: ${errorMessage}`);
     }
   }
 
@@ -155,9 +157,11 @@ export class AmapService {
 
       this.logger.debug(`逆地理编码请求: ${location}, 结果: ${response.data.status}`);
       return response.data;
-    } catch (error) {
-      this.logger.error(`逆地理编码失败: ${error.message}`, error.stack);
-      throw new Error(`逆地理编码失败: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`逆地理编码失败: ${errorMessage}`, errorStack);
+      throw new Error(`逆地理编码失败: ${errorMessage}`);
     }
   }
 
@@ -191,9 +195,11 @@ export class AmapService {
 
       this.logger.debug(`距离计算请求: ${origin} -> ${destination}, 结果: ${response.data.status}`);
       return response.data;
-    } catch (error) {
-      this.logger.error(`距离计算失败: ${error.message}`, error.stack);
-      throw new Error(`距离计算失败: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`距离计算失败: ${errorMessage}`, errorStack);
+      throw new Error(`距离计算失败: ${errorMessage}`);
     }
   }
 
@@ -228,9 +234,11 @@ export class AmapService {
 
       this.logger.debug(`批量距离计算: ${origins.length}个起点 -> ${destination}`);
       return response.data;
-    } catch (error) {
-      this.logger.error(`批量距离计算失败: ${error.message}`, error.stack);
-      throw new Error(`批量距离计算失败: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`批量距离计算失败: ${errorMessage}`, errorStack);
+      throw new Error(`批量距离计算失败: ${errorMessage}`);
     }
   }
 
@@ -261,9 +269,11 @@ export class AmapService {
 
       this.logger.debug(`输入提示请求: ${keywords}`);
       return response.data;
-    } catch (error) {
-      this.logger.error(`输入提示失败: ${error.message}`, error.stack);
-      throw new Error(`输入提示失败: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorStack = error instanceof Error ? error.stack : undefined;
+      this.logger.error(`输入提示失败: ${errorMessage}`, errorStack);
+      throw new Error(`输入提示失败: ${errorMessage}`);
     }
   }
 
@@ -288,8 +298,9 @@ export class AmapService {
       );
 
       return response.data.status === '1';
-    } catch (error) {
-      this.logger.warn(`API Key验证失败: ${error.message}`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      this.logger.warn(`API Key验证失败: ${errorMessage}`);
       return false;
     }
   }

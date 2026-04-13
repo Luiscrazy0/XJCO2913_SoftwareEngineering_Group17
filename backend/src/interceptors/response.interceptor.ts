@@ -24,7 +24,7 @@ export class ResponseInterceptor<T> implements NestInterceptor<
     context: ExecutionContext,
     next: CallHandler,
   ): Observable<ApiResponse<T>> {
-    const request = context.switchToHttp().getRequest();
+    // 移除未使用的request变量
     const response = context
       .switchToHttp()
       .getResponse<{ statusCode: number }>();
