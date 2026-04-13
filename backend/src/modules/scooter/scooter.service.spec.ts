@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ScooterService } from './scooter.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AmapService } from '../amap/amap.service';
 import { ScooterStatus } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
 
@@ -21,6 +22,11 @@ describe('ScooterService', () => {
     },
   };
 
+  // 创建假的 AmapService
+  const mockAmapService = {
+    regeocode: jest.fn(),
+  };
+
   beforeEach(async () => {
     // 2. 搭建测试模块环境
     const module: TestingModule = await Test.createTestingModule({
@@ -29,6 +35,10 @@ describe('ScooterService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: AmapService,
+          useValue: mockAmapService,
         },
       ],
     }).compile();
@@ -53,6 +63,11 @@ describe('ScooterService', () => {
         { id: '2', location: 'Library', status: ScooterStatus.RENTED },
       ];
       mockPrismaService.scooter.findMany.mockResolvedValue(mockScooters);
+      // Mock the amapService to return null address since scooters don't have coordinates
+      mockAmapService.regeocode.mockResolvedValue({
+        status: '1',
+        regeocode: { formatted_address: 'Test Address' }
+      });
 
       const result = await scooterService.findAll();
 
@@ -60,7 +75,11 @@ describe('ScooterService', () => {
       expect(mockPrismaService.scooter.findMany).toHaveBeenCalledWith({
         include: { station: true },
       });
-      expect(result).toEqual(mockScooters);
+      // The service adds amapAddress field to each scooter
+      expect(result).toEqual([
+        { ...mockScooters[0], amapAddress: null },
+        { ...mockScooters[1], amapAddress: null },
+      ]);
     });
   });
 
@@ -84,7 +103,8 @@ describe('ScooterService', () => {
         where: { id: testId },
         include: { station: true },
       });
-      expect(result).toEqual(mockScooter);
+      // The service adds amapAddress field to the scooter
+      expect(result).toEqual({ ...mockScooter, amapAddress: null });
     });
 
     it('【异常路径】如果 ID 不存在，应该返回 null', async () => {
