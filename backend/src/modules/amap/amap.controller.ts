@@ -2,6 +2,37 @@ import { Controller, Get, Query, Post, Body, UseInterceptors } from '@nestjs/com
 import { AmapService, GeocodeResponse, RegeocodeResponse, DistanceResponse } from './amap.service';
 import { ResponseInterceptor } from '../../interceptors/response.interceptor';
 
+export interface InputTipsResponse {
+  status: string;
+  info: string;
+  infocode: string;
+  count: string;
+  tips: Array<{
+    id: string;
+    name: string;
+    district: string;
+    adcode: string;
+    location: string;
+    address: string;
+    typecode: string;
+  }>;
+}
+
+export interface BatchGeocodeResult {
+  address: string;
+  city?: string;
+  success: boolean;
+  data?: GeocodeResponse;
+  error?: string;
+}
+
+export interface BatchGeocodeResponse {
+  total: number;
+  success: number;
+  failed: number;
+  results: BatchGeocodeResult[];
+}
+
 @Controller('amap')
 @UseInterceptors(ResponseInterceptor)
 export class AmapController {
@@ -103,7 +134,7 @@ export class AmapController {
   async inputTips(
     @Query('keywords') keywords: string,
     @Query('city') city?: string,
-  ) {
+  ): Promise<InputTipsResponse> {
     if (!keywords) {
       throw new Error('关键词参数不能为空');
     }
@@ -126,7 +157,7 @@ export class AmapController {
    * 批量地理编码
    */
   @Post('batch-geocode')
-  async batchGeocode(@Body() body: { addresses: Array<{ address: string; city?: string }> }) {
+  async batchGeocode(@Body() body: { addresses: Array<{ address: string; city?: string }> }): Promise<BatchGeocodeResponse> {
     const { addresses } = body;
 
     if (!addresses || !addresses.length) {
@@ -148,12 +179,13 @@ export class AmapController {
             success: true,
             data: result,
           };
-        } catch (error) {
+        } catch (error: unknown) {
+          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           return {
             address: item.address,
             city: item.city,
             success: false,
-            error: error.message,
+            error: errorMessage,
           };
         }
       }),
@@ -175,7 +207,7 @@ export class AmapController {
     @Query('userLocation') userLocation: string,
     @Query('stations') stations: string,
     @Query('type') type: string = '1',
-  ) {
+  ): Promise<DistanceResponse> {
     if (!userLocation || !stations) {
       throw new Error('用户位置和站点参数不能为空');
     }
@@ -192,8 +224,9 @@ export class AmapController {
       if (!Array.isArray(stationCoords)) {
         throw new Error('站点参数必须是坐标数组');
       }
-    } catch (error) {
-      throw new Error('站点参数格式错误，必须是有效的JSON数组');
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Invalid JSON format';
+      throw new Error(`站点参数格式错误: ${errorMessage}`);
     }
 
     // 限制处理数量
