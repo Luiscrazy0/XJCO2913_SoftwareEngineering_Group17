@@ -10,7 +10,13 @@ import {
   Query,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { FeedbackService } from './feedback.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { UpdateFeedbackDto } from './dto/update-feedback.dto';
@@ -18,7 +24,12 @@ import { FeedbackResponseDto } from './dto/feedback-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { Role, FeedbackStatus, FeedbackPriority, FeedbackCategory } from '@prisma/client';
+import {
+  Role,
+  FeedbackStatus,
+  FeedbackPriority,
+  FeedbackCategory,
+} from '@prisma/client';
 
 @ApiTags('feedbacks')
 @Controller('feedbacks')
@@ -29,7 +40,11 @@ export class FeedbackController {
 
   @Post()
   @ApiOperation({ summary: 'Create a new feedback' })
-  @ApiResponse({ status: 201, description: 'Feedback created successfully', type: FeedbackResponseDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Feedback created successfully',
+    type: FeedbackResponseDto,
+  })
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(@Request() req, @Body() createFeedbackDto: CreateFeedbackDto) {
@@ -38,7 +53,11 @@ export class FeedbackController {
 
   @Get('my')
   @ApiOperation({ summary: 'Get my feedbacks' })
-  @ApiResponse({ status: 200, description: 'List of user feedbacks', type: [FeedbackResponseDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'List of user feedbacks',
+    type: [FeedbackResponseDto],
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async getMyFeedbacks(@Request() req) {
     return this.feedbackService.getMyFeedbacks(req.user.id);
@@ -46,11 +65,18 @@ export class FeedbackController {
 
   @Get(':id')
   @ApiOperation({ summary: 'Get feedback by ID' })
-  @ApiResponse({ status: 200, description: 'Feedback details', type: FeedbackResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Feedback details',
+    type: FeedbackResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Feedback not found' })
-  async getFeedbackById(@Request() req, @Param('id', ParseUUIDPipe) id: string) {
+  async getFeedbackById(
+    @Request() req,
+    @Param('id', ParseUUIDPipe) id: string,
+  ) {
     return this.feedbackService.getFeedbackById(id, req.user.id, req.user.role);
   }
 
@@ -58,16 +84,28 @@ export class FeedbackController {
   @UseGuards(RolesGuard)
   @Roles(Role.MANAGER)
   @ApiOperation({ summary: 'Update feedback (Manager only)' })
-  @ApiResponse({ status: 200, description: 'Feedback updated successfully', type: FeedbackResponseDto })
+  @ApiResponse({
+    status: 200,
+    description: 'Feedback updated successfully',
+    type: FeedbackResponseDto,
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Manager role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Manager role required',
+  })
   @ApiResponse({ status: 404, description: 'Feedback not found' })
   async updateFeedback(
     @Request() req,
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateFeedbackDto: UpdateFeedbackDto,
   ) {
-    return this.feedbackService.updateFeedback(id, updateFeedbackDto, req.user.id, req.user.role);
+    return this.feedbackService.updateFeedback(
+      id,
+      updateFeedbackDto,
+      req.user.id,
+      req.user.role,
+    );
   }
 
   @Get()
@@ -77,9 +115,16 @@ export class FeedbackController {
   @ApiQuery({ name: 'status', enum: FeedbackStatus, required: false })
   @ApiQuery({ name: 'priority', enum: FeedbackPriority, required: false })
   @ApiQuery({ name: 'category', enum: FeedbackCategory, required: false })
-  @ApiResponse({ status: 200, description: 'List of all feedbacks', type: [FeedbackResponseDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'List of all feedbacks',
+    type: [FeedbackResponseDto],
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Manager role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Manager role required',
+  })
   async getAllFeedbacks(
     @Request() req,
     @Query('status') status?: FeedbackStatus,
@@ -98,9 +143,16 @@ export class FeedbackController {
   @UseGuards(RolesGuard)
   @Roles(Role.MANAGER)
   @ApiOperation({ summary: 'Get high priority feedbacks (Manager only)' })
-  @ApiResponse({ status: 200, description: 'List of high priority feedbacks', type: [FeedbackResponseDto] })
+  @ApiResponse({
+    status: 200,
+    description: 'List of high priority feedbacks',
+    type: [FeedbackResponseDto],
+  })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Manager role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Manager role required',
+  })
   async getHighPriorityFeedbacks(@Request() req) {
     return this.feedbackService.getHighPriorityFeedbacks(req.user.role);
   }
@@ -111,7 +163,10 @@ export class FeedbackController {
   @ApiOperation({ summary: 'Get count of pending feedbacks (Manager only)' })
   @ApiResponse({ status: 200, description: 'Count of pending feedbacks' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  @ApiResponse({ status: 403, description: 'Forbidden - Manager role required' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Manager role required',
+  })
   async getPendingCount(@Request() req) {
     const count = await this.feedbackService.getPendingCount(req.user.role);
     return { count };

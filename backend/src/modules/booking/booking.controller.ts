@@ -409,6 +409,107 @@ export class BookingController {
     return this.bookingService.cancelBooking(id);
   }
 
+  @Patch(':id/complete')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '完成预约',
+    description: '标记预约为已完成并归还滑板车（需要登录）',
+  })
+  @ApiParam({ name: 'id', description: '预约ID', example: 'clx1234567890' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        isScooterIntact: {
+          type: 'boolean',
+          description: '滑板车是否完好无损',
+          example: true,
+        },
+      },
+      required: ['isScooterIntact'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: '还车成功',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: 'clx1234567890',
+          userId: 'clx0987654321',
+          scooterId: 'clx1234567890',
+          hireType: 'HOUR_1',
+          startTime: '2024-01-01T10:00:00.000Z',
+          endTime: '2024-01-01T11:00:00.000Z',
+          status: 'COMPLETED',
+          totalCost: 10.0,
+          scooter: {
+            id: 'clx1234567890',
+            location: 'Main Street, Building 5',
+            status: 'AVAILABLE',
+          },
+          user: {
+            id: 'clx0987654321',
+            email: 'user@example.com',
+            role: 'CUSTOMER',
+          },
+        },
+        message: 'Booking completed successfully',
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: '预约无法完成',
+    schema: {
+      example: {
+        success: false,
+        error: 'Bad Request',
+        message: 'Cannot complete a cancelled booking',
+        statusCode: 400,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        path: '/bookings/clx1234567890/complete',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: '未授权访问',
+    schema: {
+      example: {
+        success: false,
+        error: 'Unauthorized',
+        message: 'Unauthorized',
+        statusCode: 401,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        path: '/bookings/clx1234567890/complete',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '预约不存在',
+    schema: {
+      example: {
+        success: false,
+        error: 'Not Found',
+        message: 'Booking not found',
+        statusCode: 404,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        path: '/bookings/clx1234567890/complete',
+      },
+    },
+  })
+  complete(
+    @Param('id') id: string,
+    @Body() body: { isScooterIntact: boolean },
+  ) {
+    return this.bookingService.completeBooking(id, body.isScooterIntact);
+  }
+
   // 银行卡管理API
   @Post('payment-card')
   @UseGuards(JwtAuthGuard)

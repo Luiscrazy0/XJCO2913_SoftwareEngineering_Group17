@@ -1,5 +1,17 @@
-import { Controller, Get, Query, Post, Body, UseInterceptors } from '@nestjs/common';
-import { AmapService, GeocodeResponse, RegeocodeResponse, DistanceResponse } from './amap.service';
+import {
+  Controller,
+  Get,
+  Query,
+  Post,
+  Body,
+  UseInterceptors,
+} from '@nestjs/common';
+import {
+  AmapService,
+  GeocodeResponse,
+  RegeocodeResponse,
+  DistanceResponse,
+} from './amap.service';
 import { ResponseInterceptor } from '../../interceptors/response.interceptor';
 
 export interface InputTipsResponse {
@@ -104,11 +116,7 @@ export class AmapController {
    */
   @Post('distances')
   async calculateDistances(
-    @Body() body: {
-      origins: string[];
-      destination: string;
-      type?: number;
-    },
+    @Body() body: { origins: string[]; destination: string; type?: number },
   ): Promise<DistanceResponse> {
     const { origins, destination, type = 1 } = body;
 
@@ -157,7 +165,9 @@ export class AmapController {
    * 批量地理编码
    */
   @Post('batch-geocode')
-  async batchGeocode(@Body() body: { addresses: Array<{ address: string; city?: string }> }): Promise<BatchGeocodeResponse> {
+  async batchGeocode(
+    @Body() body: { addresses: Array<{ address: string; city?: string }> },
+  ): Promise<BatchGeocodeResponse> {
     const { addresses } = body;
 
     if (!addresses || !addresses.length) {
@@ -172,7 +182,10 @@ export class AmapController {
     const results = await Promise.all(
       addresses.map(async (item) => {
         try {
-          const result = await this.amapService.geocode(item.address, item.city);
+          const result = await this.amapService.geocode(
+            item.address,
+            item.city,
+          );
           return {
             address: item.address,
             city: item.city,
@@ -180,7 +193,8 @@ export class AmapController {
             data: result,
           };
         } catch (error: unknown) {
-          const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+          const errorMessage =
+            error instanceof Error ? error.message : 'Unknown error';
           return {
             address: item.address,
             city: item.city,
@@ -193,8 +207,8 @@ export class AmapController {
 
     return {
       total: addresses.length,
-      success: results.filter(r => r.success).length,
-      failed: results.filter(r => !r.success).length,
+      success: results.filter((r) => r.success).length,
+      failed: results.filter((r) => !r.success).length,
       results,
     };
   }
@@ -225,7 +239,8 @@ export class AmapController {
         throw new Error('站点参数必须是坐标数组');
       }
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Invalid JSON format';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Invalid JSON format';
       throw new Error(`站点参数格式错误: ${errorMessage}`);
     }
 

@@ -20,6 +20,8 @@ export interface User {
   id: string
   email: string
   role: UserRole
+  insuranceAcknowledged?: boolean
+  emergencyContact?: string
 }
 
 export interface Station {
@@ -76,6 +78,8 @@ export interface LoginRequest {
 export interface RegisterRequest {
   email: string
   password: string
+  insuranceAcknowledged?: boolean
+  emergencyContact?: string
 }
 
 // API Response wrappers

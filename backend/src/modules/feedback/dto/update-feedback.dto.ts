@@ -3,12 +3,20 @@ import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
 import { FeedbackPriority, FeedbackStatus, DamageType } from '@prisma/client';
 
 export class UpdateFeedbackDto {
-  @ApiProperty({ enum: FeedbackPriority, description: 'Priority of the feedback', required: false })
+  @ApiProperty({
+    enum: FeedbackPriority,
+    description: 'Priority of the feedback',
+    required: false,
+  })
   @IsOptional()
   @IsEnum(FeedbackPriority)
   priority?: FeedbackPriority;
 
-  @ApiProperty({ enum: FeedbackStatus, description: 'Status of the feedback', required: false })
+  @ApiProperty({
+    enum: FeedbackStatus,
+    description: 'Status of the feedback',
+    required: false,
+  })
   @IsOptional()
   @IsEnum(FeedbackStatus)
   status?: FeedbackStatus;
@@ -24,7 +32,11 @@ export class UpdateFeedbackDto {
   @Min(0)
   resolutionCost?: number;
 
-  @ApiProperty({ enum: DamageType, description: 'Type of damage (optional)', required: false })
+  @ApiProperty({
+    enum: DamageType,
+    description: 'Type of damage (optional)',
+    required: false,
+  })
   @IsOptional()
   @IsEnum(DamageType)
   damageType?: DamageType;

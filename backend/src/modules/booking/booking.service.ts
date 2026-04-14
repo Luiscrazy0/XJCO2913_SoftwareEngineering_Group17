@@ -4,7 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
+import {
+  BookingStatus,
+  HireType,
+  ScooterStatus,
+  FeedbackCategory,
+  FeedbackPriority,
+  FeedbackStatus,
+} from '@prisma/client';
 import { DiscountService } from './discount.service';
 import { EmailService } from './email.service';
 import * as bcrypt from 'bcrypt';
@@ -45,17 +52,14 @@ export class BookingService {
     endTime: Date,
   ) {
     const scooter = await this.prisma.scooter.findUnique({
-
       where: { id: scooterId },
     });
 
     if (!scooter) {
-
       throw new BadRequestException('Scooter not found');
     }
 
     if (scooter.status !== ScooterStatus.AVAILABLE) {
-
       throw new BadRequestException('Scooter not available');
     }
 
@@ -159,7 +163,6 @@ export class BookingService {
 
   async cancelBooking(id: string) {
     return this.prisma.booking.update({
-
       where: { id },
       data: { status: BookingStatus.CANCELLED },
       include: {
@@ -167,6 +170,69 @@ export class BookingService {
         scooter: true,
       },
     });
+  }
+
+  async completeBooking(id: string, isScooterIntact: boolean = true) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+      include: { scooter: true, user: true },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    if (booking.status === BookingStatus.CANCELLED) {
+      throw new BadRequestException('Cannot complete a cancelled booking');
+    }
+
+    if (booking.status === BookingStatus.COMPLETED) {
+      throw new BadRequestException('Booking is already completed');
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Update booking status to COMPLETED
+      const updatedBooking = await tx.booking.update({
+        where: { id },
+        data: { status: BookingStatus.COMPLETED },
+        include: {
+          user: true,
+          scooter: true,
+        },
+      });
+
+      // Update scooter status back to AVAILABLE
+      await tx.scooter.update({
+        where: { id: booking.scooterId },
+        data: { status: ScooterStatus.AVAILABLE },
+      });
+
+      // If scooter is not intact, create a damage feedback
+      if (!isScooterIntact) {
+        await tx.feedback.create({
+          data: {
+            title: 'Damage Report - Scooter Return',
+            description: `Damage reported during return of scooter ${booking.scooterId} for booking ${booking.id}. User reported scooter was not intact.`,
+            category: FeedbackCategory.DAMAGE,
+            priority: FeedbackPriority.HIGH,
+            status: FeedbackStatus.PENDING,
+            scooterId: booking.scooterId,
+            bookingId: booking.id,
+            createdById: booking.userId,
+          },
+        });
+      }
+
+      return updatedBooking;
+    });
+
+    try {
+      await this.emailService.sendReturnConfirmation(result, isScooterIntact);
+    } catch (error) {
+      console.error('发送还车确认邮件失败:', error);
+    }
+
+    return result;
   }
 
   async createBookingForCustomer(
@@ -283,7 +349,6 @@ export class BookingService {
 
   private calculateCost(hireType: HireType): number {
     switch (hireType) {
-
       case HireType.HOUR_1:
         return 5;
       case HireType.HOUR_4:
