@@ -9,6 +9,8 @@ import AdminFleetPage from "../pages/AdminFleetPage"
 import TestScooterPage from "../pages/TestScooterPage"
 import MapPage from "../pages/MapPage"
 import RevenueStatisticsPage from "../pages/RevenueStatisticsPage"
+import CreateFeedbackPage from "../pages/CreateFeedbackPage"
+import MyFeedbacksPage from "../pages/MyFeedbacksPage"
 import ProtectedRoute from "../components/ProtectedRoute"
 import ForbiddenPage from "../pages/ForbiddenPage"
 
@@ -51,6 +53,18 @@ export default function AppRouter() {
         <Route path="/statistics" element={
           <ProtectedRoute requiredRole="MANAGER">
             <RevenueStatisticsPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/feedback/new" element={
+          <ProtectedRoute>
+            <CreateFeedbackPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/my-feedbacks" element={
+          <ProtectedRoute>
+            <MyFeedbacksPage />
           </ProtectedRoute>
         } />
       </Routes>
