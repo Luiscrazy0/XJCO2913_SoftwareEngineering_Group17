@@ -12,6 +12,7 @@ import { PaymentModule } from './modules/payment/payment.module'; // <- PaymentM
 import { StationModule } from './modules/station/station.module'; // <- 新增StationModule
 import { StatisticsModule } from './modules/statistics/statistics.module'; // <- 新增StatisticsModule
 import { AmapModule } from './modules/amap/amap.module'; // <- 新增AmapModule
+import { FeedbackModule } from './modules/feedback/feedback.module'; // <- 新增FeedbackModule
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { AmapModule } from './modules/amap/amap.module'; // <- 新增AmapModule
     StationModule, // <- 新增StationModule
     StatisticsModule, // <- 新增StatisticsModule
     AmapModule, // <- 新增AmapModule
+    FeedbackModule, // <- 新增FeedbackModule
   ],
   controllers: [AppController],
   providers: [AppService],
