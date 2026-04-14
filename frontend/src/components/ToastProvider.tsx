@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useMemo, useState, ReactNode } from 'react'
 
-type ToastType = 'success' | 'error' | 'info'
+type ToastType = 'success' | 'error' | 'info' | 'warning'
 
 export interface ToastItem {
   id: string
@@ -37,6 +37,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         return `${baseStyle} text-emerald-200`
       case 'error':
         return `${baseStyle} text-rose-200`
+      case 'warning':
+        return `${baseStyle} text-amber-200`
       default:
         return `${baseStyle} text-sky-200`
     }

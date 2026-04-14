@@ -1,12 +1,25 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingService } from './booking.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { DiscountService } from './discount.service';
 import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, NotFoundException } from '@nestjs/common';
+import { EmailService } from './email.service';
 
 describe('BookingService', () => {
   let bookingService: BookingService;
   let prismaService: PrismaService;
+
+  const mockEmailService = {
+    sendBookingConfirmation: jest.fn(),
+    sendExtensionConfirmation: jest.fn(),
+  };
+
+  const mockDiscountService = {
+    calculateDiscountedPrice: jest.fn(),
+    updateUserType: jest.fn(),
+    getUserDiscountInfo: jest.fn(),
+  };
 
   const mockPrismaService = {
     booking: {
@@ -17,12 +30,22 @@ describe('BookingService', () => {
     },
     scooter: {
       findUnique: jest.fn(),
+      update: jest.fn(),
     },
+    $transaction: jest.fn(),
   };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        {
+          provide: EmailService,
+          useValue: mockEmailService,
+        },
+        {
+          provide: DiscountService,
+          useValue: mockDiscountService,
+        },
         BookingService,
         {
           provide: PrismaService,
@@ -35,6 +58,18 @@ describe('BookingService', () => {
     prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
+    mockPrismaService.$transaction.mockImplementation(
+      async (fn: (tx: typeof mockPrismaService) => unknown) => {
+        return fn(mockPrismaService);
+      },
+    );
+    
+    // 设置默认的折扣服务返回值
+    mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
+      discountedPrice: 5,
+      discountAmount: 0,
+      discountReason: '无折扣',
+    });
   });
 
   it('模块应该被成功定义', () => {
@@ -43,7 +78,13 @@ describe('BookingService', () => {
 
   describe('findAll', () => {
     it('应该成功返回所有预订记录，并关联用户和滑板车信息', async () => {
-      const mockBookings = [{ id: 'booking-1', userId: 'user-1', scooterId: 'scooter-1' }];
+      const mockBookings = [
+        { 
+          id: 'adb16cdf-0782-4249-8d81-a27adf58bbb2', 
+          userId: '0199f4f6-8f16-490c-a176-605411b019d4', 
+          scooterId: '3c08fcf4-5607-480c-b8a7-85cc674f51a7' 
+        },
+      ];
       mockPrismaService.booking.findMany.mockResolvedValue(mockBookings);
 
       const result = await bookingService.findAll();
@@ -72,8 +113,8 @@ describe('BookingService', () => {
   });
 
   describe('createBooking', () => {
-    const userId = 'user-1';
-    const scooterId = 'scooter-1';
+    const userId = '0199f4f6-8f16-490c-a176-605411b019d4';
+    const scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
     const startTime = new Date('2026-04-01T10:00:00Z');
     const endTime = new Date('2026-04-01T11:00:00Z');
 
@@ -81,18 +122,30 @@ describe('BookingService', () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue(null);
 
       await expect(
-        bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime)
+        bookingService.createBooking(
+          userId,
+          scooterId,
+          HireType.HOUR_1,
+          startTime,
+          endTime,
+        ),
       ).rejects.toThrow(new BadRequestException('Scooter not found'));
     });
 
     it('【异常路径】如果滑板车状态不是 AVAILABLE，应该抛出 Scooter not available 错误', async () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
-        status: ScooterStatus.IN_USE,
+        status: ScooterStatus.RENTED,
       });
 
       await expect(
-        bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime)
+        bookingService.createBooking(
+          userId,
+          scooterId,
+          HireType.HOUR_1,
+          startTime,
+          endTime,
+        ),
       ).rejects.toThrow(new BadRequestException('Scooter not available'));
     });
 
@@ -105,9 +158,14 @@ describe('BookingService', () => {
       const mockCreatedBooking = { id: 'new-booking', totalCost: 5 };
       mockPrismaService.booking.create.mockResolvedValue(mockCreatedBooking);
 
-      const result = await bookingService.createBooking(userId, scooterId, HireType.HOUR_1, startTime, endTime);
+      const result = await bookingService.createBooking(
+        userId,
+        scooterId,
+        HireType.HOUR_1,
+        startTime,
+        endTime,
+      );
 
-      // 3. 验证是否以正确的参数写入数据库
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith({
         data: {
           userId,
@@ -117,48 +175,216 @@ describe('BookingService', () => {
           endTime,
           totalCost: 5,
           status: BookingStatus.PENDING_PAYMENT,
+          originalEndTime: endTime,
         },
         include: {
           scooter: true,
           user: true,
         },
       });
+      expect(mockPrismaService.scooter.update).toHaveBeenCalledWith({
+        where: { id: scooterId },
+        data: { status: ScooterStatus.RENTED },
+      });
       expect(result).toEqual(mockCreatedBooking);
     });
 
-    it('【正常路径】应该成功创建预订，并正确计算 1 天的费用 (40)', async () => {
+    it('【正常路径】应该正确计算 4 小时的费用 (15)', async () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue({
         id: scooterId,
         status: ScooterStatus.AVAILABLE,
       });
-      mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking', totalCost: 40 });
-
-      await bookingService.createBooking(userId, scooterId, HireType.DAY_1, startTime, endTime);
-
+      mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking' });
+      
+      // 为4小时租赁设置正确的折扣服务返回值
+      mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
+        discountedPrice: 15,
+        discountAmount: 0,
+        discountReason: '无折扣',
+      });
+      
+      await bookingService.createBooking(
+        userId,
+        scooterId,
+        HireType.HOUR_4,
+        startTime,
+        endTime,
+      );
       expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.objectContaining({ totalCost: 40 }),
-        })
+          data: expect.objectContaining({ totalCost: 15 }),
+        }),
       );
+    });
+
+    it('【正常路径】应该正确计算 1 天的费用 (30)', async () => {
+      mockPrismaService.scooter.findUnique.mockResolvedValue({
+        id: scooterId,
+        status: ScooterStatus.AVAILABLE,
+      });
+      mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking' });
+
+      mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
+        discountedPrice: 30,
+        discountApplied: 0,
+        discountType: null,
+      });
+      mockPrismaService.booking.create.mockResolvedValue({
+        id: 'new-booking',
+        totalCost: 30,
+      });
+
+      await bookingService.createBooking(
+        userId,
+        scooterId,
+        HireType.DAY_1,
+        startTime,
+        endTime,
+      );
+      expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ totalCost: 30 }),
+        }),
+      );
+    });
+
+    it('【正常路径】应该正确计算 1 周的费用 (90)', async () => {
+      mockPrismaService.scooter.findUnique.mockResolvedValue({
+        id: scooterId,
+        status: ScooterStatus.AVAILABLE,
+      });
+      mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking' });
+      
+      // 为1周租赁设置正确的折扣服务返回值
+      mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
+        discountedPrice: 90,
+        discountAmount: 0,
+        discountReason: '无折扣',
+      });
+      
+      await bookingService.createBooking(
+        userId,
+        scooterId,
+        HireType.WEEK_1,
+        startTime,
+        endTime,
+      );
+      expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ totalCost: 90 }),
+        }),
+      );
+    });
+
+    it('【异常边界】未知的租赁类型应该返回费用 0', async () => {
+      mockPrismaService.scooter.findUnique.mockResolvedValue({
+        id: scooterId,
+        status: ScooterStatus.AVAILABLE,
+      });
+      mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking' });
+      
+      // 为未知租赁类型设置正确的折扣服务返回值
+      mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
+        discountedPrice: 0,
+        discountAmount: 0,
+        discountReason: '无折扣',
+      });
+      
+      await bookingService.createBooking(
+        userId,
+        scooterId,
+        'UNKNOWN_TYPE' as HireType,
+        startTime,
+        endTime,
+      );
+      expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ totalCost: 0 }),
+        }),
+      );
+    });
+  });
+
+  describe('extendBooking', () => {
+    const bookingId = 'booking-123';
+    const additionalHours = 2; 
+
+    it('【异常路径】如果找不到预订记录，应该抛出 NotFoundException', async () => {
+      mockPrismaService.booking.findUnique.mockResolvedValue(null);
+      await expect(
+        bookingService.extendBooking(bookingId, additionalHours),
+      ).rejects.toThrow(new NotFoundException('Booking not found'));
+    });
+
+    it('【异常路径】如果预订状态不是确认或已续租状态，应该抛出 BadRequestException', async () => {
+      mockPrismaService.booking.findUnique.mockResolvedValue({
+        id: bookingId,
+        status: BookingStatus.CANCELLED,
+      });
+      await expect(
+        bookingService.extendBooking(bookingId, additionalHours),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Only confirmed or extended bookings can be extended',
+        ),
+      );
+    });
+
+    it('【正常路径】应该成功续租，并正确计算新时间和费用', async () => {
+      const initialEndTime = new Date('2026-04-01T14:00:00Z');
+      const mockExistingBooking = {
+        id: bookingId,
+        status: BookingStatus.CONFIRMED,
+        endTime: initialEndTime,
+        totalCost: 10,
+        extensionCount: 0,
+      };
+
+      mockPrismaService.booking.findUnique.mockResolvedValue(
+        mockExistingBooking,
+      );
+      mockPrismaService.booking.update.mockResolvedValue({
+        id: bookingId,
+        status: BookingStatus.EXTENDED,
+      });
+
+      await bookingService.extendBooking(bookingId, additionalHours);
+
+      const expectedNewEndTime = new Date(
+        initialEndTime.getTime() + additionalHours * 60 * 60 * 1000,
+      );
+      const expectedNewCost = 10 + 2 * 5; 
+
+      expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
+        where: { id: bookingId },
+        data: {
+          endTime: expectedNewEndTime,
+          totalCost: expectedNewCost,
+          status: BookingStatus.EXTENDED,
+          extensionCount: 1, 
+        },
+        include: {
+          user: true,
+          scooter: true,
+        },
+      });
     });
   });
 
   describe('cancelBooking', () => {
     it('应该成功将预订状态更新为 CANCELLED，并返回包含 user 和 scooter 的信息', async () => {
       const targetId = 'booking-123';
-      
-      // 模拟返回的数据
-      const mockCancelledBooking = { 
-        id: targetId, 
+
+      const mockCancelledBooking = {
+        id: targetId,
         status: BookingStatus.CANCELLED,
         user: { id: 'user-1' },
-        scooter: { id: 'scooter-1' }
+        scooter: { id: 'scooter-1' },
       };
       mockPrismaService.booking.update.mockResolvedValue(mockCancelledBooking);
 
       const result = await bookingService.cancelBooking(targetId);
 
-      // 🌟 修复关键：补齐了 include 参数，让 Jest 严格对账通过
       expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
         where: { id: targetId },
         data: { status: BookingStatus.CANCELLED },
@@ -167,7 +393,7 @@ describe('BookingService', () => {
           user: true,
         },
       });
-      
+
       expect(result).toEqual(mockCancelledBooking);
     });
   });

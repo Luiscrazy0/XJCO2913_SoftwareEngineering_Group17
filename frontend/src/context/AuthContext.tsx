@@ -33,10 +33,19 @@ interface AuthProviderProps {
 }
 
 // Helper function to decode JWT token
-const decodeJWT = (token: string): any => {
+const decodeJWT = (token?: string | null): any => {
+  if (!token) {
+    console.error('Failed to decode JWT token: token is missing')
+    return null
+  }
+
   try {
     // JWT uses Base64Url encoding, not standard Base64
     const base64Url = token.split('.')[1]
+    if (!base64Url) {
+      throw new Error('Invalid JWT format')
+    }
+
     // Replace Base64Url characters
     const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
     // Decode
@@ -82,10 +91,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string) => {
     try {
       // 1. 调用登录API
-      const { access_token } = await authApi.login({ email, password })
-      
+      const response = await authApi.login({ email, password })
+      const accessToken = response.access_token
+      if (!accessToken) {
+        console.error('Login response missing token:', response)
+        throw new Error('Failed to decode JWT token: token missing from response')
+      }
+
       // 2. 解析JWT token获取用户信息
-      const payload = decodeJWT(access_token)
+      const payload = decodeJWT(accessToken)
       if (!payload) {
         throw new Error('Failed to decode JWT token')
       }
@@ -97,9 +111,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       // 3. 保存状态
-      setToken(access_token)
+      setToken(accessToken)
       setUser(user)
-      localStorage.setItem('auth_token', access_token)
+      localStorage.setItem('auth_token', accessToken)
       localStorage.setItem('user', JSON.stringify(user))
 
       // 4. 路由跳转

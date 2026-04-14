@@ -1,11 +1,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ScooterService } from './scooter.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AmapService } from '../amap/amap.service';
 import { ScooterStatus } from '@prisma/client';
+import { BadRequestException } from '@nestjs/common';
 
 describe('ScooterService', () => {
   let scooterService: ScooterService;
-  let prismaService: PrismaService;
 
   // 1. 创建假的 PrismaService（代替真实数据库）
   const mockPrismaService = {
@@ -14,7 +15,16 @@ describe('ScooterService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
     },
+    booking: {
+      count: jest.fn(),
+    },
+  };
+
+  // 创建假的 AmapService
+  const mockAmapService = {
+    regeocode: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -26,11 +36,14 @@ describe('ScooterService', () => {
           provide: PrismaService,
           useValue: mockPrismaService,
         },
+        {
+          provide: AmapService,
+          useValue: mockAmapService,
+        },
       ],
     }).compile();
 
     scooterService = module.get<ScooterService>(ScooterService);
-    prismaService = module.get<PrismaService>(PrismaService);
 
     // 每次测试前清空调用记录，防止互相干扰
     jest.clearAllMocks();
@@ -45,17 +58,28 @@ describe('ScooterService', () => {
   // ==========================================
   describe('findAll', () => {
     it('应该成功返回所有滑板车的列表', async () => {
-      // 准备假数据
       const mockScooters = [
         { id: '1', location: 'South Campus', status: ScooterStatus.AVAILABLE },
-        { id: '2', location: 'Library', status: ScooterStatus.IN_USE },
+        { id: '2', location: 'Library', status: ScooterStatus.RENTED },
       ];
       mockPrismaService.scooter.findMany.mockResolvedValue(mockScooters);
+      // Mock the amapService to return null address since scooters don't have coordinates
+      mockAmapService.regeocode.mockResolvedValue({
+        status: '1',
+        regeocode: { formatted_address: 'Test Address' }
+      });
 
       const result = await scooterService.findAll();
 
-      expect(mockPrismaService.scooter.findMany).toHaveBeenCalled();
-      expect(result).toEqual(mockScooters);
+      // 🌟 修复：对齐真实代码里的 include
+      expect(mockPrismaService.scooter.findMany).toHaveBeenCalledWith({
+        include: { station: true },
+      });
+      // The service adds amapAddress field to each scooter
+      expect(result).toEqual([
+        { ...mockScooters[0], amapAddress: null },
+        { ...mockScooters[1], amapAddress: null },
+      ]);
     });
   });
 
@@ -66,15 +90,21 @@ describe('ScooterService', () => {
     const testId = 'test-scooter-id';
 
     it('【正常路径】如果 ID 存在，应该返回对应的滑板车对象', async () => {
-      const mockScooter = { id: testId, location: 'North Campus', status: ScooterStatus.AVAILABLE };
+      const mockScooter = {
+        id: testId,
+        location: 'North Campus',
+        status: ScooterStatus.AVAILABLE,
+      };
       mockPrismaService.scooter.findUnique.mockResolvedValue(mockScooter);
 
       const result = await scooterService.findById(testId);
 
       expect(mockPrismaService.scooter.findUnique).toHaveBeenCalledWith({
         where: { id: testId },
+        include: { station: true },
       });
-      expect(result).toEqual(mockScooter);
+      // The service adds amapAddress field to the scooter
+      expect(result).toEqual({ ...mockScooter, amapAddress: null });
     });
 
     it('【异常路径】如果 ID 不存在，应该返回 null', async () => {
@@ -92,11 +122,10 @@ describe('ScooterService', () => {
   describe('createScooter', () => {
     it('应该成功在指定位置创建一辆新滑板车', async () => {
       const newLocation = 'Engineering Building';
-      const mockCreatedScooter = { 
-        id: '3', 
-        location: newLocation, 
-        // 假设 Prisma schema 里设置了默认状态是 AVAILABLE
-        status: ScooterStatus.AVAILABLE 
+      const mockCreatedScooter = {
+        id: '3',
+        location: newLocation,
+        status: ScooterStatus.AVAILABLE,
       };
 
       mockPrismaService.scooter.create.mockResolvedValue(mockCreatedScooter);
@@ -116,8 +145,13 @@ describe('ScooterService', () => {
   describe('updateStatus', () => {
     it('应该成功更新指定滑板车的状态', async () => {
       const targetId = '1';
-      const newStatus = ScooterStatus.MAINTENANCE; // 比如把状态改成维修中
-      const mockUpdatedScooter = { id: targetId, location: 'South Campus', status: newStatus };
+      const newStatus = ScooterStatus.UNAVAILABLE;
+
+      const mockUpdatedScooter = {
+        id: targetId,
+        location: 'South Campus',
+        status: newStatus,
+      };
 
       mockPrismaService.scooter.update.mockResolvedValue(mockUpdatedScooter);
 
@@ -128,6 +162,40 @@ describe('ScooterService', () => {
         data: { status: newStatus },
       });
       expect(result).toEqual(mockUpdatedScooter);
+    });
+  });
+
+  // ==========================================
+  // 测试组 5: deleteScooter (关键分支测试)
+  // ==========================================
+  describe('deleteScooter', () => {
+    const scooterId = 'scooter-123';
+
+    it('【异常路径】如果该滑板车还有关联的订单，应该抛出 BadRequestException 错误', async () => {
+      mockPrismaService.booking.count.mockResolvedValue(1);
+
+      await expect(scooterService.deleteScooter(scooterId)).rejects.toThrow(
+        new BadRequestException('Scooter has existing bookings'),
+      );
+
+      expect(mockPrismaService.scooter.delete).not.toHaveBeenCalled();
+    });
+
+    it('【正常路径】如果该滑板车没有关联订单，应该成功删除', async () => {
+      mockPrismaService.booking.count.mockResolvedValue(0);
+
+      const mockDeletedScooter = { id: scooterId, location: 'Campus A' };
+      mockPrismaService.scooter.delete.mockResolvedValue(mockDeletedScooter);
+
+      const result = await scooterService.deleteScooter(scooterId);
+
+      expect(mockPrismaService.booking.count).toHaveBeenCalledWith({
+        where: { scooterId },
+      });
+      expect(mockPrismaService.scooter.delete).toHaveBeenCalledWith({
+        where: { id: scooterId },
+      });
+      expect(result).toEqual(mockDeletedScooter);
     });
   });
 });

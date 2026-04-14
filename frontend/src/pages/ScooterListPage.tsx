@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { scootersApi } from '../api/scooters'
 import ScooterCard from '../components/ScooterCard'
@@ -6,10 +6,13 @@ import BookingModal from '../components/BookingModal'
 import Navbar from '../components/Navbar'
 import Button from '../components/ui/Button'
 import { Scooter } from '../types'
+import { useSearchParams } from 'react-router-dom'
 
 export default function ScooterListPage() {
   const [selectedScooter, setSelectedScooter] = useState<Scooter | null>(null)
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false)
+  const [searchParams] = useSearchParams()
+  const autoOpenedRef = useRef(false)
 
   // 使用TanStack Query获取车辆数据
   const {
@@ -54,6 +57,23 @@ export default function ScooterListPage() {
 
   // 过滤出可用的车辆
   const availableScooters = scooters.filter(scooter => scooter.status === 'AVAILABLE')
+
+  // 从地图页跳转时自动打开预订弹窗
+  useEffect(() => {
+    if (autoOpenedRef.current) return
+    if (!scooters.length) return
+
+    const highlightId = searchParams.get('highlight')
+    const shouldAutoBook = searchParams.get('book') === '1'
+    if (!highlightId || !shouldAutoBook) return
+
+    const target = scooters.find(scooter => scooter.id === highlightId)
+    if (target && target.status === 'AVAILABLE') {
+      setSelectedScooter(target)
+      setIsBookingModalOpen(true)
+      autoOpenedRef.current = true
+    }
+  }, [scooters, searchParams])
 
   // 处理加载状态
   if (isLoading) {
