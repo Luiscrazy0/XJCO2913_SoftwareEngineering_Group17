@@ -1,9 +1,18 @@
-import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { UpdateFeedbackDto } from './dto/update-feedback.dto';
 import { FeedbackResponseDto } from './dto/feedback-response.dto';
-import { FeedbackCategory, FeedbackPriority, FeedbackStatus, Role } from '@prisma/client';
+import {
+  FeedbackCategory,
+  FeedbackPriority,
+  FeedbackStatus,
+  Role,
+} from '@prisma/client';
 
 @Injectable()
 export class FeedbackService {
@@ -35,9 +44,11 @@ export class FeedbackService {
         scooter: {
           select: { location: true },
         },
-        booking: createFeedbackDto.bookingId ? {
-          select: { startTime: true },
-        } : undefined,
+        booking: createFeedbackDto.bookingId
+          ? {
+              select: { startTime: true },
+            }
+          : undefined,
       },
     });
 
@@ -61,7 +72,9 @@ export class FeedbackService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return feedbacks.map(feedback => new FeedbackResponseDto(feedback as any));
+    return feedbacks.map(
+      (feedback) => new FeedbackResponseDto(feedback as any),
+    );
   }
 
   async getFeedbackById(id: string, userId: string, userRole: Role) {
@@ -86,13 +99,20 @@ export class FeedbackService {
 
     // Only allow access if user is the creator or a manager
     if (feedback.createdById !== userId && userRole !== Role.MANAGER) {
-      throw new ForbiddenException('You do not have permission to view this feedback');
+      throw new ForbiddenException(
+        'You do not have permission to view this feedback',
+      );
     }
 
     return new FeedbackResponseDto(feedback as any);
   }
 
-  async updateFeedback(id: string, updateFeedbackDto: UpdateFeedbackDto, userId: string, userRole: Role) {
+  async updateFeedback(
+    id: string,
+    updateFeedbackDto: UpdateFeedbackDto,
+    userId: string,
+    userRole: Role,
+  ) {
     // Check if feedback exists
     const existingFeedback = await this.prisma.feedback.findUnique({
       where: { id },
@@ -116,7 +136,10 @@ export class FeedbackService {
     }
 
     // If damageType is set to INTENTIONAL and status is not CHARGEABLE, set it to CHARGEABLE
-    if (updateFeedbackDto.damageType === 'INTENTIONAL' && updateFeedbackDto.status !== 'CHARGEABLE') {
+    if (
+      updateFeedbackDto.damageType === 'INTENTIONAL' &&
+      updateFeedbackDto.status !== 'CHARGEABLE'
+    ) {
       updateData.status = FeedbackStatus.CHARGEABLE;
     }
 
@@ -139,11 +162,14 @@ export class FeedbackService {
     return new FeedbackResponseDto(feedback as any);
   }
 
-  async getAllFeedbacks(userRole: Role, filters?: {
-    status?: FeedbackStatus;
-    priority?: FeedbackPriority;
-    category?: FeedbackCategory;
-  }) {
+  async getAllFeedbacks(
+    userRole: Role,
+    filters?: {
+      status?: FeedbackStatus;
+      priority?: FeedbackPriority;
+      category?: FeedbackCategory;
+    },
+  ) {
     // Only managers can view all feedbacks
     if (userRole !== Role.MANAGER) {
       throw new ForbiddenException('Only managers can view all feedbacks');
@@ -170,13 +196,17 @@ export class FeedbackService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return feedbacks.map(feedback => new FeedbackResponseDto(feedback as any));
+    return feedbacks.map(
+      (feedback) => new FeedbackResponseDto(feedback as any),
+    );
   }
 
   async getHighPriorityFeedbacks(userRole: Role) {
     // Only managers can view high priority feedbacks
     if (userRole !== Role.MANAGER) {
-      throw new ForbiddenException('Only managers can view high priority feedbacks');
+      throw new ForbiddenException(
+        'Only managers can view high priority feedbacks',
+      );
     }
 
     const feedbacks = await this.prisma.feedback.findMany({
@@ -207,7 +237,9 @@ export class FeedbackService {
       ],
     });
 
-    return feedbacks.map(feedback => new FeedbackResponseDto(feedback as any));
+    return feedbacks.map(
+      (feedback) => new FeedbackResponseDto(feedback as any),
+    );
   }
 
   async getPendingCount(userRole: Role) {

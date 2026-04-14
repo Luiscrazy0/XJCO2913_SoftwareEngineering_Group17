@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsUUID,
+} from 'class-validator';
 import { FeedbackCategory } from '@prisma/client';
 
 export class CreateFeedbackDto {
@@ -13,7 +19,10 @@ export class CreateFeedbackDto {
   @IsString()
   description: string;
 
-  @ApiProperty({ enum: FeedbackCategory, description: 'Category of the feedback' })
+  @ApiProperty({
+    enum: FeedbackCategory,
+    description: 'Category of the feedback',
+  })
   @IsNotEmpty()
   @IsEnum(FeedbackCategory)
   category: FeedbackCategory;
@@ -23,7 +32,10 @@ export class CreateFeedbackDto {
   @IsUUID()
   scooterId: string;
 
-  @ApiProperty({ description: 'ID of the booking related to the feedback (optional)', required: false })
+  @ApiProperty({
+    description: 'ID of the booking related to the feedback (optional)',
+    required: false,
+  })
   @IsOptional()
   @IsUUID()
   bookingId?: string;

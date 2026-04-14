@@ -64,6 +64,19 @@ export class EmailService {
   }
 
   /**
+   * 发送还车确认邮件
+   */
+  async sendReturnConfirmation(
+    booking: Booking & { user: User; scooter: any },
+    isScooterIntact: boolean,
+  ) {
+    const subject = '滑板车还车确认';
+    const html = this.generateReturnConfirmationHtml(booking, isScooterIntact);
+
+    await this.sendEmail(booking.user.email, subject, html);
+  }
+
+  /**
    * 通用邮件发送方法
    */
   private async sendEmail(to: string, subject: string, html: string) {
@@ -250,6 +263,78 @@ export class EmailService {
             </div>
 
             <p>您可以继续使用滑板车至新的结束时间。如有任何问题，请联系我们的客服。</p>
+          </div>
+
+          <div class="footer">
+            <p>此邮件由系统自动发送，请勿回复。</p>
+            <p>© 2024 滑板车租赁系统</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+  }
+
+  /**
+   * 生成还车确认邮件HTML
+   */
+  private generateReturnConfirmationHtml(
+    booking: Booking & { user: User; scooter: any },
+    isScooterIntact: boolean,
+  ): string {
+    const statusMessage = isScooterIntact
+      ? '滑板车完好无损，感谢您的细心使用！'
+      : '我们已收到您的损坏报告，我们的团队将尽快处理。如有任何问题，我们会与您联系。';
+
+    const statusColor = isScooterIntact ? '#28a745' : '#dc3545';
+    const statusIcon = isScooterIntact ? '✓' : '⚠';
+
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <title>还车确认</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background-color: ${statusColor}; color: white; padding: 20px; text-align: center; border-radius: 5px; }
+          .content { padding: 20px 0; }
+          .return-details { background-color: #f8f9fa; padding: 15px; border-radius: 5px; margin: 20px 0; }
+          .footer { text-align: center; color: #666; font-size: 12px; margin-top: 30px; }
+          .status { color: ${statusColor}; font-weight: bold; font-size: 18px; }
+          .status-icon { font-size: 24px; margin-right: 10px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>还车确认</h1>
+            <p>您的滑板车已成功归还</p>
+          </div>
+
+          <div class="content">
+            <p>尊敬的${booking.user.email}，</p>
+
+            <p>您的滑板车已成功归还。以下是还车详情：</p>
+
+            <div class="return-details">
+              <h3>还车详情</h3>
+              <p><strong>预订编号：</strong> ${booking.id}</p>
+              <p><strong>滑板车编号：</strong> ${booking.scooterId}</p>
+              <p><strong>滑板车位置：</strong> ${booking.scooter.location}</p>
+              <p><strong>还车时间：</strong> ${new Date().toLocaleString('zh-CN')}</p>
+              <p><strong>车辆状态：</strong> 
+                <span class="status">
+                  <span class="status-icon">${statusIcon}</span>
+                  ${isScooterIntact ? '完好无损' : '损坏报告已提交'}
+                </span>
+              </p>
+            </div>
+
+            <p>${statusMessage}</p>
+
+            <p>感谢您使用我们的滑板车租赁服务！期待再次为您服务。</p>
           </div>
 
           <div class="footer">

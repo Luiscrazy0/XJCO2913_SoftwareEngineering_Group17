@@ -9,6 +9,8 @@ export default function AuthPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
+  const [insuranceAcknowledged, setInsuranceAcknowledged] = useState(false)
+  const [emergencyContact, setEmergencyContact] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
@@ -16,6 +18,7 @@ export default function AuthPage() {
     email?: string
     password?: string
     confirmPassword?: string
+    emergencyContact?: string
   }>({})
 
   // 验证邮箱格式
@@ -69,11 +72,17 @@ export default function AuthPage() {
       return
     }
     
+    // 注册时需要确认保险条款
+    if (activeTab === 'register' && !insuranceAcknowledged) {
+      setError('请阅读并同意保险条款后才能注册')
+      return
+    }
+    
     setIsLoading(true)
 
     try {
       if (activeTab === 'register') {
-        await register(email, password)
+        await register(email, password, insuranceAcknowledged, emergencyContact)
       } else {
         await login(email, password)
       }
@@ -344,6 +353,68 @@ export default function AuthPage() {
                   {formErrors.confirmPassword}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Insurance Acknowledgment Checkbox (Register only) */}
+          {activeTab === 'register' && (
+            <div style={styles.inputGroup}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                <input
+                  id="insuranceAcknowledged"
+                  type="checkbox"
+                  checked={insuranceAcknowledged}
+                  onChange={(e) => setInsuranceAcknowledged(e.target.checked)}
+                  disabled={isLoading}
+                  required
+                  aria-required="true"
+                  style={{
+                    marginTop: '4px',
+                    width: '16px',
+                    height: '16px',
+                    cursor: 'pointer',
+                  }}
+                  className="touch-target"
+                />
+                <label htmlFor="insuranceAcknowledged" style={{ ...styles.label, marginBottom: 0, cursor: 'pointer' }}>
+                  我已阅读并同意保险条款
+                  <span className="sr-only">（必填）</span>
+                </label>
+              </div>
+              <p style={{ fontSize: '12px', color: 'var(--auth-text-secondary, #64748B)', margin: '4px 0 0 24px' }}>
+                在使用我们的租赁服务前，您需要确认了解并同意我们的保险条款和免责声明。
+              </p>
+            </div>
+          )}
+
+          {/* Emergency Contact Input (Register only) */}
+          {activeTab === 'register' && (
+            <div style={styles.inputGroup}>
+              <label htmlFor="emergencyContact" style={styles.label}>
+                紧急联系人（可选）
+              </label>
+              <input
+                id="emergencyContact"
+                type="text"
+                value={emergencyContact}
+                onChange={(e) => setEmergencyContact(e.target.value)}
+                onFocus={() => handleInputFocus('emergencyContact')}
+                onBlur={() => handleInputBlur('emergencyContact')}
+                placeholder="姓名 - 电话号码"
+                style={getInputStyle('emergencyContact', !!formErrors.emergencyContact)}
+                disabled={isLoading}
+                aria-invalid={!!formErrors.emergencyContact}
+                aria-describedby={formErrors.emergencyContact ? "emergency-contact-error" : undefined}
+                className="touch-target"
+              />
+              {formErrors.emergencyContact && (
+                <div id="emergency-contact-error" style={styles.fieldError} role="alert">
+                  {formErrors.emergencyContact}
+                </div>
+              )}
+              <p style={{ fontSize: '12px', color: 'var(--auth-text-secondary, #64748B)', marginTop: '4px' }}>
+                请提供紧急联系人的姓名和电话号码，格式如：张三 - 13812345678
+              </p>
             </div>
           )}
 

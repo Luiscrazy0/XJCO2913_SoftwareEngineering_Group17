@@ -63,7 +63,7 @@ describe('BookingService', () => {
         return fn(mockPrismaService);
       },
     );
-    
+
     // 设置默认的折扣服务返回值
     mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
       discountedPrice: 5,
@@ -79,10 +79,10 @@ describe('BookingService', () => {
   describe('findAll', () => {
     it('应该成功返回所有预订记录，并关联用户和滑板车信息', async () => {
       const mockBookings = [
-        { 
-          id: 'adb16cdf-0782-4249-8d81-a27adf58bbb2', 
-          userId: '0199f4f6-8f16-490c-a176-605411b019d4', 
-          scooterId: '3c08fcf4-5607-480c-b8a7-85cc674f51a7' 
+        {
+          id: 'adb16cdf-0782-4249-8d81-a27adf58bbb2',
+          userId: '0199f4f6-8f16-490c-a176-605411b019d4',
+          scooterId: '3c08fcf4-5607-480c-b8a7-85cc674f51a7',
         },
       ];
       mockPrismaService.booking.findMany.mockResolvedValue(mockBookings);
@@ -195,14 +195,14 @@ describe('BookingService', () => {
         status: ScooterStatus.AVAILABLE,
       });
       mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking' });
-      
+
       // 为4小时租赁设置正确的折扣服务返回值
       mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
         discountedPrice: 15,
         discountAmount: 0,
         discountReason: '无折扣',
       });
-      
+
       await bookingService.createBooking(
         userId,
         scooterId,
@@ -254,14 +254,14 @@ describe('BookingService', () => {
         status: ScooterStatus.AVAILABLE,
       });
       mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking' });
-      
+
       // 为1周租赁设置正确的折扣服务返回值
       mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
         discountedPrice: 90,
         discountAmount: 0,
         discountReason: '无折扣',
       });
-      
+
       await bookingService.createBooking(
         userId,
         scooterId,
@@ -282,14 +282,14 @@ describe('BookingService', () => {
         status: ScooterStatus.AVAILABLE,
       });
       mockPrismaService.booking.create.mockResolvedValue({ id: 'new-booking' });
-      
+
       // 为未知租赁类型设置正确的折扣服务返回值
       mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
         discountedPrice: 0,
         discountAmount: 0,
         discountReason: '无折扣',
       });
-      
+
       await bookingService.createBooking(
         userId,
         scooterId,
@@ -307,7 +307,7 @@ describe('BookingService', () => {
 
   describe('extendBooking', () => {
     const bookingId = 'booking-123';
-    const additionalHours = 2; 
+    const additionalHours = 2;
 
     it('【异常路径】如果找不到预订记录，应该抛出 NotFoundException', async () => {
       mockPrismaService.booking.findUnique.mockResolvedValue(null);
@@ -353,7 +353,7 @@ describe('BookingService', () => {
       const expectedNewEndTime = new Date(
         initialEndTime.getTime() + additionalHours * 60 * 60 * 1000,
       );
-      const expectedNewCost = 10 + 2 * 5; 
+      const expectedNewCost = 10 + 2 * 5;
 
       expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
         where: { id: bookingId },
@@ -361,7 +361,7 @@ describe('BookingService', () => {
           endTime: expectedNewEndTime,
           totalCost: expectedNewCost,
           status: BookingStatus.EXTENDED,
-          extensionCount: 1, 
+          extensionCount: 1,
         },
         include: {
           user: true,

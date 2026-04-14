@@ -55,7 +55,12 @@ export class AuthController {
     },
   })
   async register(@Body() body: RegisterDto) {
-    return this.authService.register(body.email, body.password);
+    return this.authService.register(
+      body.email,
+      body.password,
+      body.insuranceAcknowledged,
+      body.emergencyContact,
+    );
   }
 
   /**

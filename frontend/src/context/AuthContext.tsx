@@ -8,7 +8,7 @@ interface AuthContextType {
   token: string | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string, insuranceAcknowledged: boolean, emergencyContact?: string) => Promise<void>
   logout: (options?: LogoutOptions) => void
   isAuthenticated: boolean
 }
@@ -136,10 +136,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
-  const register = async (email: string, password: string) => {
+  const register = async (email: string, password: string, insuranceAcknowledged: boolean, emergencyContact?: string) => {
     try {
       // 1. 调用注册API
-      await authApi.register({ email, password })
+      await authApi.register({ email, password, insuranceAcknowledged, emergencyContact })
       
       // 2. 注册成功后自动登录
       await login(email, password)

@@ -47,7 +47,8 @@ export class DiscountService {
         discountRate = 0.3; // 老年人7折
         discountReason = '老年人折扣 (7折)';
         break;
-      case UserType.FREQUENT: { // 🌟 修改点 2：加上了左大括号，限制 const 变量的作用域，消除红灯 Error！
+      case UserType.FREQUENT: {
+        // 🌟 修改点 2：加上了左大括号，限制 const 变量的作用域，消除红灯 Error！
         // 高频用户：检查过去30天内的租赁小时数
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

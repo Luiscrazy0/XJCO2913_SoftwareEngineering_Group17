@@ -66,7 +66,7 @@ describe('ScooterService', () => {
       // Mock the amapService to return null address since scooters don't have coordinates
       mockAmapService.regeocode.mockResolvedValue({
         status: '1',
-        regeocode: { formatted_address: 'Test Address' }
+        regeocode: { formatted_address: 'Test Address' },
       });
 
       const result = await scooterService.findAll();

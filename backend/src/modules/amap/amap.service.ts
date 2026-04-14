@@ -89,7 +89,7 @@ export class AmapService {
     private readonly configService: ConfigService,
   ) {
     this.apiKey = this.configService.get<string>('AMAP_WEB_KEY') || '';
-    
+
     if (!this.apiKey) {
       this.logger.warn('高德地图Web API Key未配置，相关功能将不可用');
     } else {
@@ -119,13 +119,18 @@ export class AmapService {
       }
 
       const response = await firstValueFrom(
-        this.httpService.get<GeocodeResponse>(`${this.baseUrl}/geocode/geo`, { params }),
+        this.httpService.get<GeocodeResponse>(`${this.baseUrl}/geocode/geo`, {
+          params,
+        }),
       );
 
-      this.logger.debug(`地理编码请求: ${address}, 结果: ${response.data.status}`);
+      this.logger.debug(
+        `地理编码请求: ${address}, 结果: ${response.data.status}`,
+      );
       return response.data;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(`地理编码失败: ${errorMessage}`, errorStack);
       throw new Error(`地理编码失败: ${errorMessage}`);
@@ -137,7 +142,10 @@ export class AmapService {
    * @param longitude 经度
    * @param latitude 纬度
    */
-  async regeocode(longitude: number, latitude: number): Promise<RegeocodeResponse> {
+  async regeocode(
+    longitude: number,
+    latitude: number,
+  ): Promise<RegeocodeResponse> {
     if (!this.apiKey) {
       throw new Error('高德地图API Key未配置');
     }
@@ -152,13 +160,19 @@ export class AmapService {
       };
 
       const response = await firstValueFrom(
-        this.httpService.get<RegeocodeResponse>(`${this.baseUrl}/geocode/regeo`, { params }),
+        this.httpService.get<RegeocodeResponse>(
+          `${this.baseUrl}/geocode/regeo`,
+          { params },
+        ),
       );
 
-      this.logger.debug(`逆地理编码请求: ${location}, 结果: ${response.data.status}`);
+      this.logger.debug(
+        `逆地理编码请求: ${location}, 结果: ${response.data.status}`,
+      );
       return response.data;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(`逆地理编码失败: ${errorMessage}`, errorStack);
       throw new Error(`逆地理编码失败: ${errorMessage}`);
@@ -190,13 +204,18 @@ export class AmapService {
       };
 
       const response = await firstValueFrom(
-        this.httpService.get<DistanceResponse>(`${this.baseUrl}/distance`, { params }),
+        this.httpService.get<DistanceResponse>(`${this.baseUrl}/distance`, {
+          params,
+        }),
       );
 
-      this.logger.debug(`距离计算请求: ${origin} -> ${destination}, 结果: ${response.data.status}`);
+      this.logger.debug(
+        `距离计算请求: ${origin} -> ${destination}, 结果: ${response.data.status}`,
+      );
       return response.data;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(`距离计算失败: ${errorMessage}`, errorStack);
       throw new Error(`距离计算失败: ${errorMessage}`);
@@ -229,13 +248,18 @@ export class AmapService {
       };
 
       const response = await firstValueFrom(
-        this.httpService.get<DistanceResponse>(`${this.baseUrl}/distance`, { params }),
+        this.httpService.get<DistanceResponse>(`${this.baseUrl}/distance`, {
+          params,
+        }),
       );
 
-      this.logger.debug(`批量距离计算: ${origins.length}个起点 -> ${destination}`);
+      this.logger.debug(
+        `批量距离计算: ${origins.length}个起点 -> ${destination}`,
+      );
       return response.data;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(`批量距离计算失败: ${errorMessage}`, errorStack);
       throw new Error(`批量距离计算失败: ${errorMessage}`);
@@ -270,7 +294,8 @@ export class AmapService {
       this.logger.debug(`输入提示请求: ${keywords}`);
       return response.data;
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       const errorStack = error instanceof Error ? error.stack : undefined;
       this.logger.error(`输入提示失败: ${errorMessage}`, errorStack);
       throw new Error(`输入提示失败: ${errorMessage}`);
@@ -299,7 +324,8 @@ export class AmapService {
 
       return response.data.status === '1';
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Unknown error';
       this.logger.warn(`API Key验证失败: ${errorMessage}`);
       return false;
     }

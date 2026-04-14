@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Feedback, FeedbackCategory, FeedbackPriority, FeedbackStatus, DamageType } from '@prisma/client';
+import {
+  Feedback,
+  FeedbackCategory,
+  FeedbackPriority,
+  FeedbackStatus,
+  DamageType,
+} from '@prisma/client';
 
 export class FeedbackResponseDto {
   @ApiProperty({ description: 'Feedback ID' })
@@ -11,10 +17,16 @@ export class FeedbackResponseDto {
   @ApiProperty({ description: 'Detailed description of the feedback' })
   description: string;
 
-  @ApiProperty({ enum: FeedbackCategory, description: 'Category of the feedback' })
+  @ApiProperty({
+    enum: FeedbackCategory,
+    description: 'Category of the feedback',
+  })
   category: FeedbackCategory;
 
-  @ApiProperty({ enum: FeedbackPriority, description: 'Priority of the feedback' })
+  @ApiProperty({
+    enum: FeedbackPriority,
+    description: 'Priority of the feedback',
+  })
   priority: FeedbackPriority;
 
   @ApiProperty({ enum: FeedbackStatus, description: 'Status of the feedback' })
@@ -23,7 +35,10 @@ export class FeedbackResponseDto {
   @ApiProperty({ description: 'ID of the scooter related to the feedback' })
   scooterId: string;
 
-  @ApiProperty({ description: 'ID of the booking related to the feedback (optional)', required: false })
+  @ApiProperty({
+    description: 'ID of the booking related to the feedback (optional)',
+    required: false,
+  })
   bookingId?: string;
 
   @ApiProperty({ description: 'URL of an image (optional)', required: false })
@@ -35,7 +50,11 @@ export class FeedbackResponseDto {
   @ApiProperty({ description: 'Resolution cost (optional)', required: false })
   resolutionCost?: number;
 
-  @ApiProperty({ enum: DamageType, description: 'Type of damage (optional)', required: false })
+  @ApiProperty({
+    enum: DamageType,
+    description: 'Type of damage (optional)',
+    required: false,
+  })
   damageType?: DamageType;
 
   @ApiProperty({ description: 'ID of the user who created the feedback' })
@@ -53,10 +72,19 @@ export class FeedbackResponseDto {
   @ApiProperty({ description: 'Scooter location' })
   scooterLocation: string;
 
-  @ApiProperty({ description: 'Booking start time if available', required: false })
+  @ApiProperty({
+    description: 'Booking start time if available',
+    required: false,
+  })
   bookingStartTime?: Date;
 
-  constructor(feedback: Feedback & { createdBy: { email: string }; scooter: { location: string }; booking?: { startTime: Date } }) {
+  constructor(
+    feedback: Feedback & {
+      createdBy: { email: string };
+      scooter: { location: string };
+      booking?: { startTime: Date };
+    },
+  ) {
     this.id = feedback.id;
     this.title = feedback.title;
     this.description = feedback.description;
