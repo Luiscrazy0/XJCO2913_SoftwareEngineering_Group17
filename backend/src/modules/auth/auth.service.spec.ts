@@ -72,6 +72,9 @@ describe('AuthService', () => {
       expect(mockUserService.createUser).toHaveBeenCalledWith(
         testEmail,
         'fake_hashed_password',
+        'CUSTOMER',
+        false,
+        undefined,
       );
       expect(result).toEqual({ id: 1, email: testEmail });
     });
