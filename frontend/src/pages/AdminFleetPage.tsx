@@ -65,6 +65,10 @@ export default function AdminFleetPage() {
   })
 
   const handleToggleStatus = (scooter: Scooter) => {
+    if (scooter.status === 'RENTED') {
+      showToast('车辆处于租用中，无法手动切换状态。', 'warning')
+      return
+    }
     const nextStatus = scooter.status === 'AVAILABLE' ? 'UNAVAILABLE' : 'AVAILABLE'
     updateMutation.mutate({ id: scooter.id, status: nextStatus })
   }

@@ -10,35 +10,33 @@ const testUser: User = {
 
 const testScooter: Scooter = {
   id: '1',
-  name: 'Scooter 1',
-  model: 'Model X',
-  batteryLevel: 85,
-  location: {
-    latitude: 51.5074,
-    longitude: -0.1278,
-    address: 'London, UK'
-  },
+  location: 'London, UK - River Side',
   status: 'AVAILABLE',
-  pricePerMinute: 0.25,
-  createdAt: '2024-01-01T00:00:00Z',
-  updatedAt: '2024-01-01T00:00:00Z'
+  latitude: 51.5074,
+  longitude: -0.1278,
+  stationId: 'ST001',
+  updatedAt: '2024-01-01T00:00:00Z',
 }
 
 const testBooking: Booking = {
   id: '1',
   scooterId: '1',
   userId: '1',
+  hireType: 'HOUR_1',
   startTime: '2024-01-01T10:00:00Z',
   endTime: '2024-01-01T11:00:00Z',
   totalCost: 15.0,
   status: 'COMPLETED',
+  extensionCount: 0,
+  scooter: testScooter,
+  user: testUser,
   createdAt: '2024-01-01T09:00:00Z',
   updatedAt: '2024-01-01T11:00:00Z'
 }
 
 console.log('Type definitions are working correctly:')
 console.log('- User:', testUser.email, testUser.role)
-console.log('- Scooter:', testScooter.name, testScooter.status)
+console.log('- Scooter:', testScooter.location, testScooter.status)
 console.log('- Booking:', testBooking.status, testBooking.totalCost)
 
 // Test API structure

@@ -5,7 +5,7 @@ import { Role } from '@prisma/client';
 
 describe('UserService', () => {
   let userService: UserService;
-  let prismaService: PrismaService;
+  // 🌟 删除了无用的 let prismaService: PrismaService;
 
   // 1. 创建一个假的 PrismaService（代替真实数据库）
   const mockPrismaService = {
@@ -21,15 +21,15 @@ describe('UserService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UserService,
-        { 
-          provide: PrismaService, 
-          useValue: mockPrismaService 
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
         },
       ],
     }).compile();
 
     userService = module.get<UserService>(UserService);
-    prismaService = module.get<PrismaService>(PrismaService);
+    // 🌟 删除了无用的 prismaService = module.get<PrismaService>(PrismaService);
 
     // 每次测试前清空调用记录
     jest.clearAllMocks();
@@ -47,7 +47,7 @@ describe('UserService', () => {
       // 准备假数据
       const mockUsers = [
         { id: 1, email: 'user1@liverpool.ac.uk', role: Role.CUSTOMER },
-        { id: 2, email: 'admin@liverpool.ac.uk', role: Role.ADMIN },
+        { id: 2, email: 'admin@liverpool.ac.uk', role: Role.MANAGER },
       ];
       // 告诉假数据库：当调用 findMany 时，返回 mockUsers
       mockPrismaService.user.findMany.mockResolvedValue(mockUsers);
@@ -78,7 +78,11 @@ describe('UserService', () => {
       const result = await userService.createUser(testEmail, testPasswordHash);
 
       expect(mockPrismaService.user.create).toHaveBeenCalledWith({
-        data: { email: testEmail, passwordHash: testPasswordHash, role: Role.CUSTOMER },
+        data: {
+          email: testEmail,
+          passwordHash: testPasswordHash,
+          role: Role.CUSTOMER,
+        },
       });
       expect(result).toEqual(mockCreatedUser);
     });

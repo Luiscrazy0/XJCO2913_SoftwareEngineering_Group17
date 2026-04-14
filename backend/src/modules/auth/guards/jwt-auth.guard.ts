@@ -17,15 +17,22 @@ export class JwtAuthGuard implements CanActivate {
       request.headers.authorization ||
       (request.headers.Authorization as string | undefined);
 
-    if (!authHeader || Array.isArray(authHeader) || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+    if (
+      !authHeader ||
+      Array.isArray(authHeader) ||
+      !authHeader.startsWith('Bearer ')
+    ) {
+      throw new UnauthorizedException(
+        'Missing or invalid Authorization header',
+      );
     }
 
     const token = authHeader.slice(7);
 
     try {
       const payload = this.jwtService.verify(token);
-      (request as any).user = payload;
+      // 使用类型断言来添加user属性
+      (request as Request & { user: unknown }).user = payload;
       return true;
     } catch {
       throw new UnauthorizedException('Invalid or expired token');

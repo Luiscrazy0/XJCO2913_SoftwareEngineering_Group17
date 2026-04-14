@@ -1,12 +1,31 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { BookingController } from './booking.controller';
 import { BookingService } from './booking.service';
+import { EmployeeBookingController } from './employee-booking.controller';
+import { EmployeeBookingService } from './employee-booking.service';
+import { DiscountService } from './discount.service';
+import { EmailService } from './email.service';
+import { PaymentCardService } from './payment-card.service';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { AuthModule } from '../auth/auth.module';
+import { EmailModule } from '../email/email.module';
 
 @Module({
-  imports: [PrismaModule],
-  controllers: [BookingController],
-  providers: [BookingService],
-  exports: [BookingService],
+  imports: [PrismaModule, forwardRef(() => AuthModule), EmailModule],
+  controllers: [BookingController, EmployeeBookingController],
+  providers: [
+    BookingService,
+    EmployeeBookingService,
+    DiscountService,
+    EmailService,
+    PaymentCardService,
+  ],
+  exports: [
+    BookingService,
+    EmployeeBookingService,
+    DiscountService,
+    EmailService,
+    PaymentCardService,
+  ],
 })
 export class BookingModule {}

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高德地图API测试</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #ff6a00;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+        }
+        .test-result {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .warning {
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        button {
+            background-color: #ff6a00;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover {
+            background-color: #e55a00;
+        }
+        #map {
+            width: 100%;
+            height: 500px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .coordinates {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+        }
+        .coord-input {
+            flex: 1;
+        }
+        .coord-input label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        .coord-input input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>高德地图API集成测试</h1>
+        
+        <div class="test-section">
+            <h2>环境变量测试</h2>
+            <button onclick="testEnvVars()">测试环境变量</button>
+            <div id="env-test-result" class="test-result"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>高德地图JS API测试</h2>
+            <div class="coordinates">
+                <div class="coord-input">
+                    <label>经度 (Longitude):</label>
+                    <input type="number" id="lng" value="121.4737" step="0.0001">
+                </div>
+                <div class="coord-input">
+                    <label>纬度 (Latitude):</label>
+                    <input type="number" id="lat" value="31.2304" step="0.0001">
+                </div>
+            </div>
+            <button onclick="testAmapAPI()">加载高德地图</button>
+            <button onclick="addTestMarkers()">添加测试标记</button>
+            <div id="amap-test-result" class="test-result"></div>
+            <div id="map"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>站点数据测试</h2>
+            <button onclick="testStationData()">测试站点数据</button>
+            <div id="station-test-result" class="test-result"></div>
+        </div>
+    </div>
+
+    <script>
+        let map = null;
+        let markers = [];
+
+        function testEnvVars() {
+            const resultDiv = document.getElementById('env-test-result');
+            resultDiv.className = 'test-result';
+            
+            try {
+                // 检查环境变量（在真实应用中通过import.meta.env访问）
+                const envInfo = {
+                    location: window.location.href,
+                    userAgent: navigator.userAgent,
+                    hasWindowAMap: typeof window.AMap !== 'undefined'
+                };
+                
+                resultDiv.innerHTML = `
+                    <h3>环境信息:</h3>
+                    <pre>${JSON.stringify(envInfo, null, 2)}</pre>
+                    <p><strong>注意：</strong>在开发环境中，环境变量通过Vite的import.meta.env访问。</p>
+                    <p>请确保在.env文件中配置了正确的API Key：</p>
+                    <pre>VITE_AMAP_JS_KEY=your_js_api_key_here</pre>
+                `;
+                resultDiv.classList.add('warning');
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>错误:</strong> ${error.message}`;
+                resultDiv.classList.add('error');
+            }
+        }
+
+        function testAmapAPI() {
+            const resultDiv = document.getElementById('amap-test-result');
+            resultDiv.className = 'test-result';
+            
+            try {
+                // 检查是否已加载高德地图API
+                if (typeof window.AMap === 'undefined') {
+                    // 动态加载高德地图API
+                    const apiKey = 'your_js_api_key_here'; // 这里应该使用环境变量
+                    const script = document.createElement('script');
+                    script.src = `https://webapi.amap.com/maps?v=2.0&key=${apiKey}`;
+                    script.async = true;
+                    
+                    script.onload = () => {
+                        resultDiv.innerHTML = '<strong>成功:</strong> 高德地图JS API加载完成';
+                        resultDiv.classList.add('success');
+                        initializeMap();
+                    };
+                    
+                    script.onerror = () => {
+                        resultDiv.innerHTML = '<strong>错误:</strong> 高德地图JS API加载失败，请检查网络连接和API Key';
+                        resultDiv.classList.add('error');
+                    };
+                    
+                    document.head.appendChild(script);
+                } else {
+                    resultDiv.innerHTML = '<strong>成功:</strong> 高德地图JS API已加载';
+                    resultDiv.classList.add('success');
+                    initializeMap();
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<strong>错误:</strong> ${error.message}`;
+                resultDiv.classList.add('error');
+            }
+        }
+
+        function initializeMap() {
+            const lng = parseFloat(document.getElementById('lng').value);
+            const lat = parseFloat(document.getElementById('lat').value);
+            
+            if (isNaN(lng) || isNaN(lat)) {
+                alert('请输入有效的经纬度坐标');
+                return;
+            }
+
+            try {
+                // 初始化地图
+                map = new AMap.Map('map', {
+                    zoom: 13,
+                    center: [lng, lat],
+                    viewMode: '2D'
+                });
+
+                // 添加中心点标记
+                const centerMarker = new AMap.Marker({
+                    position: [lng, lat],
+                    title: '中心点',
+                    content: '<div style="background-color: #ff6a00; width: 30px; height: 30px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">C</div>',
+                    offset: new AMap.Pixel(-15, -15)
+                });
+                centerMarker.setMap(map);
+                markers.push(centerMarker);
+
+                // 添加地图事件
+                map.on('click', (event) => {
+                    console.log('地图点击坐标:', event.lnglat);
+                    alert(`点击位置: ${event.lnglat.lng.toFixed(6)}, ${event.lnglat.lat.toFixed(6)}`);
+                });
+
+                document.getElementById('amap-test-result').innerHTML += 
+                    '<br><strong>地图初始化成功!</strong> 点击地图任意位置查看坐标';
+            } catch (error) {
+                document.getElementById('amap-test-result').innerHTML += 
+                    `<br><strong>地图初始化错误:</strong> ${error.message}`;
+                document.getElementById('amap-test-result').classList.add('error');
+            }
+        }
+
+        function addTestMarkers() {
+            if (!map) {
+                alert('请先加载地图');
+                return;
+            }
+
+            // 清除现有标记
+            markers.forEach(marker => map.remove(marker));
+            markers = [];
+
+            // 添加测试站点标记（使用种子数据中的坐标）
+            const testStations = [
+                { name: '市中心广场站', lng: 121.4737, lat: 31.2304, available: 3 },
+                { name: '火车站站', lng: 121.4720, lat: 31.2479, available: 2 },
+                { name: '购物中心站', lng: 121.4780, lat: 31.2330, available: 0 },
+                { name: '大学城站', lng: 121.4650, lat: 31.2250, available: 4 },
+                { name: '科技园站', lng: 121.4850, lat: 31.2400, available: 1 }
+            ];
+
+            testStations.forEach((station, index) => {
+                const color = station.available > 0 ? '#10b981' : '#ef4444';
+                const marker = new AMap.Marker({
+                    position: [station.lng, station.lat],
+                    title: station.name,
+                    content: `
+                        <div style="
+                            background-color: ${color};
+                            width: 30px;
+                            height: 30px;
+                            border-radius: 50%;
+                            border: 2px solid white;
+                            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 14px;
+                            cursor: pointer;
+                        ">
+                            ${index + 1}
+                        </div>
+                    `,
+                    offset: new AMap.Pixel(-15, -15)
+                });
+
+                // 添加点击事件
+                marker.on('click', () => {
+                    const infoWindow = new AMap.InfoWindow({
+                        content: `
+                            <div style="padding: 10px; max-width: 200px;">
+                                <h4 style="margin: 0 0 5px 0;">${station.name}</h4>
+                                <p style="margin: 0 0 5px 0; color: #666;">坐标: ${station.lng.toFixed(4)}, ${station.lat.toFixed(4)}</p>
+                                <p style="margin: 0; color: ${station.available > 0 ? 'green' : 'red'};">
+                                    ${station.available} 辆可用
+                                </p>
+                            </div>
+                        `,
+                        offset: new AMap.Pixel(0, -30)
+                    });
+                    infoWindow.open(map, marker.getPosition());
+                });
+
+                marker.setMap(map);
+                markers.push(marker);
+            });
+
+            document.getElementById('amap-test-result').innerHTML += 
+                '<br><strong>测试标记添加成功!</strong> 点击标记查看站点信息';
+        }
+
+        function testStationData() {
+            const resultDiv = document.getElementById('station-test-result');
+            resultDiv.className = 'test-result';
+            
+            // 模拟从后端API获取数据
+            const mockStations = [
+                { id: 1, name: '市中心广场站', address: '市中心广场A区停车场', latitude: 31.2304, longitude: 121.4737 },
+                { id: 2, name: '火车站站', address: '火车站东出口停车场', latitude: 31.2479, longitude: 121.4720 },
+                { id: 3, name: '购物中心站', address: '购物中心北门停车场', latitude: 31.2330, longitude: 121.4780 }
+            ];
+
+            resultDiv.innerHTML = `
+                <h3>模拟站点数据:</h3>
+                <pre>${JSON.stringify(mockStations, null, 2)}</pre>
+                <p><strong>数据格式验证:</strong></p>
+                <ul>
+                    <li>✓ 包含经纬度坐标</li>
+                    <li>✓ 包含站点名称和地址</li>
+                    <li>✓ 数据结构符合要求</li>
+                </ul>
+                <p><strong>注意：</strong>实际数据从后端API获取，这里显示的是模拟数据。</p>
+            `;
+            resultDiv.classList.add('success');
+        }
+
+        // 页面加载时自动测试环境变量
+        window.onload = testEnvVars;
+    </script>
+</body>
+</html>

@@ -4,35 +4,44 @@
 // 提供获取滑板车列表、创建滑板车、更新滑板车状态和删除滑板车等功能的接口
 
 import axiosClient from '../utils/axiosClient'
-import { Scooter } from '../types'
+import { ApiResponse, Scooter } from '../types'
 
 export const scootersApi = {
   // Get all scooters
   getAll: async (): Promise<Scooter[]> => {
-    const response = await axiosClient.get<Scooter[]>('/scooters')
-    return response.data
+    const response = await axiosClient.get<ApiResponse<Scooter[]>>('/scooters')
+    return response.data.data ?? []
   },
 
   // Get scooter by ID
   getById: async (id: string): Promise<Scooter> => {
-    const response = await axiosClient.get<Scooter>(`/scooters/${id}`)
-    return response.data
+    const response = await axiosClient.get<ApiResponse<Scooter>>(`/scooters/${id}`)
+    if (!response.data.data) {
+      throw new Error('Failed to load scooter')
+    }
+    return response.data.data
   },
 
   // Create new scooter (admin only) - 只需要location字段
   create: async (location: string): Promise<Scooter> => {
-    const response = await axiosClient.post<Scooter>('/scooters', { location })
-    return response.data
+    const response = await axiosClient.post<ApiResponse<Scooter>>('/scooters', { location })
+    if (!response.data.data) {
+      throw new Error('Failed to create scooter')
+    }
+    return response.data.data
   },
 
   // Update scooter status (admin only)
-  updateStatus: async (id: string, status: 'AVAILABLE' | 'UNAVAILABLE'): Promise<Scooter> => {
-    const response = await axiosClient.patch<Scooter>(`/scooters/${id}/status`, { status })
-    return response.data
+  updateStatus: async (id: string, status: Scooter['status']): Promise<Scooter> => {
+    const response = await axiosClient.patch<ApiResponse<Scooter>>(`/scooters/${id}/status`, { status })
+    if (!response.data.data) {
+      throw new Error('Failed to update scooter status')
+    }
+    return response.data.data
   },
 
   // Delete scooter (admin only)
   delete: async (id: string): Promise<void> => {
-    await axiosClient.delete(`/scooters/${id}`)
+    await axiosClient.delete<ApiResponse<null>>(`/scooters/${id}`)
   },
 }

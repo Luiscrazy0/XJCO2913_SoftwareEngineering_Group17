@@ -7,6 +7,8 @@ import ScooterListPage from "../pages/ScooterListPage"
 import MyBookingsPage from "../pages/MyBookingsPage"
 import AdminFleetPage from "../pages/AdminFleetPage"
 import TestScooterPage from "../pages/TestScooterPage"
+import MapPage from "../pages/MapPage"
+import RevenueStatisticsPage from "../pages/RevenueStatisticsPage"
 import ProtectedRoute from "../components/ProtectedRoute"
 import ForbiddenPage from "../pages/ForbiddenPage"
 
@@ -34,9 +36,21 @@ export default function AppRouter() {
           </ProtectedRoute>
         } />
         
+        <Route path="/map" element={
+          <ProtectedRoute>
+            <MapPage />
+          </ProtectedRoute>
+        } />
+        
         <Route path="/admin" element={
           <ProtectedRoute requiredRole="MANAGER">
             <AdminFleetPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/statistics" element={
+          <ProtectedRoute requiredRole="MANAGER">
+            <RevenueStatisticsPage />
           </ProtectedRoute>
         } />
       </Routes>

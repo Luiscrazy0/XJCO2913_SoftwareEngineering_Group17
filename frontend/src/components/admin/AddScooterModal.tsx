@@ -3,7 +3,7 @@ import { FormEvent, useState } from 'react'
 interface AddScooterModalProps {
   isOpen: boolean
   onClose: () => void
-  onSubmit: (location: string) => Promise<void>
+  onSubmit: (location: string) => Promise<unknown>
   isSubmitting?: boolean
 }
 
