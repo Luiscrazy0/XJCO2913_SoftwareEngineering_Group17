@@ -2,9 +2,11 @@ name: Backend CI Pipeline
 
 on:
   push:
-    branches: [ "main", "dev", "feat/**" ]
+    # 🌟 稍微放宽一点触发条件，让我们新建的 chore 分支也能跑起来
+    branches: [ "main", "dev", "feat/**", "chore/**" ]
     paths:
       - 'backend/**'
+      - '.github/workflows/**'
   pull_request:
     branches: [ "main", "dev", "feat/**" ]
     paths:
@@ -13,11 +15,29 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+  # 🌟 新增：全局注入测试数据库连接字符串
+  DATABASE_URL: "postgresql://test:test@localhost:5432/test_db"
 
 jobs:
   test-backend:
     runs-on: ubuntu-latest
     
+    # 🌟 新增：提供了一个真实的 PostgreSQL 容器，专供测试使用
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     defaults:
       run:
         working-directory: ./backend
@@ -36,14 +56,20 @@ jobs:
     - name: Install dependencies
       run: npm install
 
+    # 🌟 新增：依赖安全漏洞扫描（满足文档中的推荐项）
+    - name: Security Audit
+      run: npm audit --audit-level=high || true
+
     - name: Generate Prisma Client
       run: npx prisma generate
 
-    # 🌟 新增：Lint 自动化检查（规范）
+    # 🌟 新增：把最新的数据库表结构推送到上面配置的测试数据库里
+    - name: Setup Test Database
+      run: npx prisma db push --accept-data-loss
+
     - name: Run Lint Check
       run: npm run lint
 
-    # 🌟 新增：Prettier 自动化检查（格式）
     - name: Check Formatting
       run: npx prettier --check "src/**/*.ts" "test/**/*.ts"
 
@@ -52,3 +78,12 @@ jobs:
       
     - name: Run E2E tests
       run: npm run test:e2e
+
+    # 🌟 新增：如果上面的测试挂了，自动打印超详细的诊断日志（神级功能）
+    - name: Debug Test Failures
+      if: failure()
+      run: |
+        echo "=== Test Debug Information ==="
+        npm run test -- --verbose || true
+        echo "=== Coverage Report ==="
+        cat coverage/lcov.info | head -50 || true

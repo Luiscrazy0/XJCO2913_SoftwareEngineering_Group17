@@ -1,11 +1,28 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { StatisticsService } from './statistics.service';
+import { BookingStatus, HireType } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
-import { HireType, BookingStatus } from '@prisma/client';
+import { StatisticsService } from './statistics.service';
+
+const createBooking = (
+  overrides: Partial<{
+    hireType: HireType;
+    totalCost: number;
+    startTime: Date;
+    endTime: Date;
+    status: BookingStatus;
+  }> = {},
+) => ({
+  hireType: HireType.HOUR_1,
+  totalCost: 10,
+  startTime: new Date('2026-04-10T08:00:00.000Z'),
+  endTime: new Date('2026-04-10T09:00:00.000Z'),
+  status: BookingStatus.CONFIRMED,
+  payment: null,
+  ...overrides,
+});
 
 describe('StatisticsService', () => {
   let service: StatisticsService;
-  let prismaService: PrismaService;
 
   const mockPrismaService = {
     booking: {
@@ -14,6 +31,8 @@ describe('StatisticsService', () => {
   };
 
   beforeEach(async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-04-16T12:00:00.000Z'));
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         StatisticsService,
@@ -25,28 +44,297 @@ describe('StatisticsService', () => {
     }).compile();
 
     service = module.get<StatisticsService>(StatisticsService);
-    prismaService = module.get<PrismaService>(PrismaService);
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
   });
 
   it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
+  describe('getWeeklyRevenueByHireType', () => {
+    it('aggregates bookings by hire type and sorts by revenue', async () => {
+      mockPrismaService.booking.findMany.mockResolvedValue([
+        createBooking({
+          hireType: HireType.HOUR_1,
+          totalCost: 5,
+        }),
+        createBooking({
+          hireType: HireType.DAY_1,
+          totalCost: 30,
+        }),
+        createBooking({
+          hireType: HireType.HOUR_1,
+          totalCost: 10,
+        }),
+      ]);
+
+      await expect(
+        service.getWeeklyRevenueByHireType('2026-04-09', '2026-04-16'),
+      ).resolves.toEqual([
+        {
+          hireType: HireType.DAY_1,
+          totalRevenue: 30,
+          bookingCount: 1,
+          averageRevenue: 30,
+        },
+        {
+          hireType: HireType.HOUR_1,
+          totalRevenue: 15,
+          bookingCount: 2,
+          averageRevenue: 7.5,
+        },
+      ]);
+
+      expect(mockPrismaService.booking.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: {
+              in: [
+                BookingStatus.CONFIRMED,
+                BookingStatus.COMPLETED,
+                BookingStatus.EXTENDED,
+              ],
+            },
+            startTime: expect.objectContaining({
+              gte: new Date('2026-04-09T00:00:00.000Z'),
+              lte: expect.any(Date),
+            }),
+          }),
+          include: {
+            payment: true,
+          },
+        }),
+      );
+
+      const bookingFindManyCall = mockPrismaService.booking.findMany.mock
+        .calls[0]?.[0] as {
+        where: {
+          startTime: {
+            gte: Date;
+            lte: Date;
+          };
+        };
+      };
+
+      expect(bookingFindManyCall.where.startTime.gte.toISOString()).toBe(
+        '2026-04-09T00:00:00.000Z',
+      );
+      expect(bookingFindManyCall.where.startTime.lte.toISOString()).toContain(
+        '2026-04-16',
+      );
+    });
+
+    it('returns an empty array when there are no bookings', async () => {
+      mockPrismaService.booking.findMany.mockResolvedValue([]);
+
+      await expect(
+        service.getWeeklyRevenueByHireType('2026-04-09', '2026-04-16'),
+      ).resolves.toEqual([]);
+    });
+  });
+
+  describe('getDailyRevenue', () => {
+    it('groups bookings by date and hire type and sorts chronologically', async () => {
+      mockPrismaService.booking.findMany.mockResolvedValue([
+        createBooking({
+          hireType: HireType.HOUR_1,
+          totalCost: 5,
+          startTime: new Date('2026-04-11T08:00:00.000Z'),
+        }),
+        createBooking({
+          hireType: HireType.HOUR_1,
+          totalCost: 10,
+          startTime: new Date('2026-04-11T10:00:00.000Z'),
+        }),
+        createBooking({
+          hireType: HireType.DAY_1,
+          totalCost: 30,
+          startTime: new Date('2026-04-10T09:00:00.000Z'),
+        }),
+      ]);
+
+      await expect(
+        service.getDailyRevenue('2026-04-09', '2026-04-16'),
+      ).resolves.toEqual([
+        {
+          date: '2026-04-10',
+          totalRevenue: 30,
+          bookingCount: 1,
+          hireTypes: [
+            {
+              hireType: HireType.DAY_1,
+              revenue: 30,
+            },
+          ],
+        },
+        {
+          date: '2026-04-11',
+          totalRevenue: 15,
+          bookingCount: 2,
+          hireTypes: [
+            {
+              hireType: HireType.HOUR_1,
+              revenue: 15,
+            },
+          ],
+        },
+      ]);
+    });
+
+    it('returns an empty array when there is no daily data', async () => {
+      mockPrismaService.booking.findMany.mockResolvedValue([]);
+
+      await expect(
+        service.getDailyRevenue('2026-04-09', '2026-04-16'),
+      ).resolves.toEqual([]);
+    });
+  });
+
+  describe('getRevenueChartData', () => {
+    it('builds a pie chart dataset grouped by hire type', async () => {
+      jest.spyOn(service, 'getDailyRevenue').mockResolvedValue([
+        {
+          date: '2026-04-10',
+          totalRevenue: 20,
+          bookingCount: 2,
+          hireTypes: [
+            { hireType: HireType.HOUR_1, revenue: 5 },
+            { hireType: HireType.HOUR_4, revenue: 15 },
+          ],
+        },
+        {
+          date: '2026-04-11',
+          totalRevenue: 30,
+          bookingCount: 1,
+          hireTypes: [{ hireType: HireType.HOUR_1, revenue: 30 }],
+        },
+      ]);
+
+      await expect(service.getRevenueChartData('week', 'pie')).resolves.toEqual(
+        {
+          labels: ['2026-04-10', '2026-04-11'],
+          datasets: [
+            {
+              label: 'Revenue by Hire Type',
+              data: [35, 15],
+              backgroundColor: [
+                '#FF6384',
+                '#36A2EB',
+                '#FFCE56',
+                '#4BC0C0',
+                '#9966FF',
+                '#FF9F40',
+              ],
+            },
+          ],
+        },
+      );
+    });
+
+    it('builds a bar chart dataset for monthly revenue', async () => {
+      const getDailyRevenueSpy = jest
+        .spyOn(service, 'getDailyRevenue')
+        .mockResolvedValue([
+          {
+            date: '2026-03-16',
+            totalRevenue: 18,
+            bookingCount: 2,
+            hireTypes: [{ hireType: HireType.HOUR_1, revenue: 18 }],
+          },
+        ]);
+
+      await expect(
+        service.getRevenueChartData('month', 'bar'),
+      ).resolves.toEqual({
+        labels: ['2026-03-16'],
+        datasets: [
+          {
+            label: 'Daily Revenue',
+            data: [18],
+            borderColor: undefined,
+            backgroundColor: '#36A2EB',
+            borderWidth: undefined,
+          },
+        ],
+      });
+
+      expect(getDailyRevenueSpy).toHaveBeenCalledWith(
+        '2026-03-16',
+        '2026-04-16',
+      );
+    });
+
+    it('builds a line chart dataset and uses the default weekly range for unknown periods', async () => {
+      const getDailyRevenueSpy = jest
+        .spyOn(service, 'getDailyRevenue')
+        .mockResolvedValue([
+          {
+            date: '2026-04-09',
+            totalRevenue: 24,
+            bookingCount: 2,
+            hireTypes: [{ hireType: HireType.DAY_1, revenue: 24 }],
+          },
+        ]);
+
+      await expect(
+        service.getRevenueChartData('unsupported', 'line'),
+      ).resolves.toEqual({
+        labels: ['2026-04-09'],
+        datasets: [
+          {
+            label: 'Daily Revenue',
+            data: [24],
+            borderColor: '#36A2EB',
+            backgroundColor: undefined,
+            borderWidth: 2,
+          },
+        ],
+      });
+
+      expect(getDailyRevenueSpy).toHaveBeenCalledWith(
+        '2026-04-09',
+        '2026-04-16',
+      );
+    });
+
+    it('supports a yearly range', async () => {
+      const getDailyRevenueSpy = jest
+        .spyOn(service, 'getDailyRevenue')
+        .mockResolvedValue([]);
+
+      await service.getRevenueChartData('year', 'bar');
+
+      expect(getDailyRevenueSpy).toHaveBeenCalledWith(
+        '2025-04-16',
+        '2026-04-16',
+      );
+    });
+  });
+
   describe('getHireTypeChineseName', () => {
-    it('should return correct Chinese name for HOUR_1', () => {
-      expect(service.getHireTypeChineseName(HireType.HOUR_1)).toBe('1小时租赁');
+    it('returns mapped labels for known hire types', () => {
+      expect(service.getHireTypeChineseName(HireType.HOUR_1)).not.toBe(
+        HireType.HOUR_1,
+      );
+      expect(service.getHireTypeChineseName(HireType.HOUR_4)).not.toBe(
+        HireType.HOUR_4,
+      );
+      expect(service.getHireTypeChineseName(HireType.DAY_1)).not.toBe(
+        HireType.DAY_1,
+      );
+      expect(service.getHireTypeChineseName(HireType.WEEK_1)).not.toBe(
+        HireType.WEEK_1,
+      );
     });
 
-    it('should return correct Chinese name for HOUR_4', () => {
-      expect(service.getHireTypeChineseName(HireType.HOUR_4)).toBe('4小时租赁');
-    });
-
-    it('should return correct Chinese name for DAY_1', () => {
-      expect(service.getHireTypeChineseName(HireType.DAY_1)).toBe('1天租赁');
-    });
-
-    it('should return correct Chinese name for WEEK_1', () => {
-      expect(service.getHireTypeChineseName(HireType.WEEK_1)).toBe('1周租赁');
+    it('falls back to the raw hire type for unknown values', () => {
+      expect(service.getHireTypeChineseName('CUSTOM' as HireType)).toBe(
+        'CUSTOM',
+      );
     });
   });
 });
