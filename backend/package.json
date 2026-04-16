@@ -89,14 +89,19 @@
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],
+    "moduleNameMapper": {
+      "^nodemailer$": "<rootDir>/../test/mocks/nodemailer.ts",
+      "^@nestjs/axios$": "<rootDir>/../test/mocks/nestjs-axios.ts",
+      "^@nestjs/config$": "<rootDir>/../test/mocks/nestjs-config.ts"
+    },
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "coverageThreshold": {
       "global": {
-        "branches": 50,
-        "functions": 50,
-        "lines": 50,
-        "statements": 50
+        "branches": 80,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
       }
     }
   }

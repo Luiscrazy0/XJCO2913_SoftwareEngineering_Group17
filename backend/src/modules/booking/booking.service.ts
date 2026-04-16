@@ -4,17 +4,14 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  BookingStatus,
-  HireType,
-  ScooterStatus,
-  FeedbackCategory,
-  FeedbackPriority,
-  FeedbackStatus,
-} from '@prisma/client';
+import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
 import { DiscountService } from './discount.service';
 import { EmailService } from './email.service';
 import * as bcrypt from 'bcrypt';
+
+const DAMAGE_FEEDBACK_CATEGORY = 'DAMAGE';
+const HIGH_FEEDBACK_PRIORITY = 'HIGH';
+const PENDING_FEEDBACK_STATUS = 'PENDING';
 
 @Injectable()
 export class BookingService {
@@ -213,9 +210,9 @@ export class BookingService {
           data: {
             title: 'Damage Report - Scooter Return',
             description: `Damage reported during return of scooter ${booking.scooterId} for booking ${booking.id}. User reported scooter was not intact.`,
-            category: FeedbackCategory.DAMAGE,
-            priority: FeedbackPriority.HIGH,
-            status: FeedbackStatus.PENDING,
+            category: DAMAGE_FEEDBACK_CATEGORY,
+            priority: HIGH_FEEDBACK_PRIORITY,
+            status: PENDING_FEEDBACK_STATUS,
             scooterId: booking.scooterId,
             bookingId: booking.id,
             createdById: booking.userId,

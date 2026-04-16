@@ -24,12 +24,18 @@ import { FeedbackResponseDto } from './dto/feedback-response.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import {
-  Role,
-  FeedbackStatus,
-  FeedbackPriority,
+import type {
   FeedbackCategory,
+  FeedbackPriority,
+  FeedbackStatus,
+  Role,
 } from '@prisma/client';
+import {
+  FEEDBACK_CATEGORIES,
+  FEEDBACK_MANAGER_ROLE,
+  FEEDBACK_PRIORITIES,
+  FEEDBACK_STATUSES,
+} from './feedback.constants';
 
 @ApiTags('feedbacks')
 @Controller('feedbacks')
@@ -82,7 +88,7 @@ export class FeedbackController {
 
   @Patch(':id')
   @UseGuards(RolesGuard)
-  @Roles(Role.MANAGER)
+  @Roles(FEEDBACK_MANAGER_ROLE)
   @ApiOperation({ summary: 'Update feedback (Manager only)' })
   @ApiResponse({
     status: 200,
@@ -110,11 +116,11 @@ export class FeedbackController {
 
   @Get()
   @UseGuards(RolesGuard)
-  @Roles(Role.MANAGER)
+  @Roles(FEEDBACK_MANAGER_ROLE)
   @ApiOperation({ summary: 'Get all feedbacks (Manager only)' })
-  @ApiQuery({ name: 'status', enum: FeedbackStatus, required: false })
-  @ApiQuery({ name: 'priority', enum: FeedbackPriority, required: false })
-  @ApiQuery({ name: 'category', enum: FeedbackCategory, required: false })
+  @ApiQuery({ name: 'status', enum: FEEDBACK_STATUSES, required: false })
+  @ApiQuery({ name: 'priority', enum: FEEDBACK_PRIORITIES, required: false })
+  @ApiQuery({ name: 'category', enum: FEEDBACK_CATEGORIES, required: false })
   @ApiResponse({
     status: 200,
     description: 'List of all feedbacks',
@@ -141,7 +147,7 @@ export class FeedbackController {
 
   @Get('high-priority')
   @UseGuards(RolesGuard)
-  @Roles(Role.MANAGER)
+  @Roles(FEEDBACK_MANAGER_ROLE)
   @ApiOperation({ summary: 'Get high priority feedbacks (Manager only)' })
   @ApiResponse({
     status: 200,
@@ -159,7 +165,7 @@ export class FeedbackController {
 
   @Get('stats/pending-count')
   @UseGuards(RolesGuard)
-  @Roles(Role.MANAGER)
+  @Roles(FEEDBACK_MANAGER_ROLE)
   @ApiOperation({ summary: 'Get count of pending feedbacks (Manager only)' })
   @ApiResponse({ status: 200, description: 'Count of pending feedbacks' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })

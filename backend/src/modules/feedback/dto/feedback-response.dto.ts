@@ -1,11 +1,38 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  Feedback,
+import type {
   FeedbackCategory,
   FeedbackPriority,
   FeedbackStatus,
-  DamageType,
 } from '@prisma/client';
+import {
+  DAMAGE_TYPES,
+  FEEDBACK_CATEGORIES,
+  FEEDBACK_PRIORITIES,
+  FEEDBACK_STATUSES,
+} from '../feedback.constants';
+
+type DamageTypeValue = 'NATURAL' | 'INTENTIONAL';
+
+type FeedbackWithRelations = {
+  id: string;
+  title: string;
+  description: string;
+  category: FeedbackCategory;
+  priority: FeedbackPriority;
+  status: FeedbackStatus;
+  scooterId: string;
+  bookingId: string | null;
+  imageUrl: string | null;
+  managerNotes: string | null;
+  resolutionCost: number | null;
+  damageType: DamageTypeValue | null;
+  createdById: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: { email: string };
+  scooter: { location: string };
+  booking?: { startTime: Date } | null;
+};
 
 export class FeedbackResponseDto {
   @ApiProperty({ description: 'Feedback ID' })
@@ -18,18 +45,21 @@ export class FeedbackResponseDto {
   description: string;
 
   @ApiProperty({
-    enum: FeedbackCategory,
+    enum: FEEDBACK_CATEGORIES,
     description: 'Category of the feedback',
   })
   category: FeedbackCategory;
 
   @ApiProperty({
-    enum: FeedbackPriority,
+    enum: FEEDBACK_PRIORITIES,
     description: 'Priority of the feedback',
   })
   priority: FeedbackPriority;
 
-  @ApiProperty({ enum: FeedbackStatus, description: 'Status of the feedback' })
+  @ApiProperty({
+    enum: FEEDBACK_STATUSES,
+    description: 'Status of the feedback',
+  })
   status: FeedbackStatus;
 
   @ApiProperty({ description: 'ID of the scooter related to the feedback' })
@@ -51,11 +81,11 @@ export class FeedbackResponseDto {
   resolutionCost?: number;
 
   @ApiProperty({
-    enum: DamageType,
+    enum: DAMAGE_TYPES,
     description: 'Type of damage (optional)',
     required: false,
   })
-  damageType?: DamageType;
+  damageType?: DamageTypeValue;
 
   @ApiProperty({ description: 'ID of the user who created the feedback' })
   createdById: string;
@@ -78,13 +108,7 @@ export class FeedbackResponseDto {
   })
   bookingStartTime?: Date;
 
-  constructor(
-    feedback: Feedback & {
-      createdBy: { email: string };
-      scooter: { location: string };
-      booking?: { startTime: Date };
-    },
-  ) {
+  constructor(feedback: FeedbackWithRelations) {
     this.id = feedback.id;
     this.title = feedback.title;
     this.description = feedback.description;

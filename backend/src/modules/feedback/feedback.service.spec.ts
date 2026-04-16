@@ -1,323 +1,438 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
+import type { PrismaService } from '../../prisma/prisma.service';
 import { FeedbackService } from './feedback.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { NotFoundException, ForbiddenException } from '@nestjs/common';
-import {
-  FeedbackCategory,
-  FeedbackPriority,
-  FeedbackStatus,
-  Role,
-} from '@prisma/client';
+
+type FeedbackCategoryValue = 'FAULT' | 'DAMAGE' | 'SUGGESTION';
+type FeedbackPriorityValue = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT';
+type FeedbackStatusValue = 'PENDING' | 'RESOLVED' | 'ESCALATED' | 'CHARGEABLE';
+type DamageTypeValue = 'NATURAL' | 'INTENTIONAL';
+type RoleValue = 'CUSTOMER' | 'MANAGER';
+
+type FeedbackRecord = {
+  id: string;
+  title: string;
+  description: string;
+  category: FeedbackCategoryValue;
+  priority: FeedbackPriorityValue;
+  status: FeedbackStatusValue;
+  scooterId: string;
+  bookingId: string | null;
+  imageUrl: string | null;
+  managerNotes: string | null;
+  resolutionCost: number | null;
+  damageType: DamageTypeValue | null;
+  createdById: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: { email: string };
+  scooter: { location: string };
+  booking: { startTime: Date } | null;
+};
+
+type CreateFeedbackInput = Parameters<FeedbackService['createFeedback']>[1];
+type UpdateFeedbackInput = Parameters<FeedbackService['updateFeedback']>[1];
+
+const CUSTOMER_ROLE: RoleValue = 'CUSTOMER';
+const MANAGER_ROLE: RoleValue = 'MANAGER';
+const CATEGORY_DAMAGE: FeedbackCategoryValue = 'DAMAGE';
+const CATEGORY_SUGGESTION: FeedbackCategoryValue = 'SUGGESTION';
+const CATEGORY_FAULT: FeedbackCategoryValue = 'FAULT';
+const PRIORITY_LOW: FeedbackPriorityValue = 'LOW';
+const PRIORITY_HIGH: FeedbackPriorityValue = 'HIGH';
+const PRIORITY_URGENT: FeedbackPriorityValue = 'URGENT';
+const STATUS_PENDING: FeedbackStatusValue = 'PENDING';
+const STATUS_RESOLVED: FeedbackStatusValue = 'RESOLVED';
+const STATUS_CHARGEABLE: FeedbackStatusValue = 'CHARGEABLE';
+const DAMAGE_NATURAL: DamageTypeValue = 'NATURAL';
+const DAMAGE_INTENTIONAL: DamageTypeValue = 'INTENTIONAL';
+
+type FeedbackCreateArgs = Parameters<PrismaService['feedback']['create']>[0];
+type FeedbackFindManyArgs = Parameters<
+  PrismaService['feedback']['findMany']
+>[0];
+type FeedbackFindUniqueArgs = Parameters<
+  PrismaService['feedback']['findUnique']
+>[0];
+type FeedbackUpdateArgs = Parameters<PrismaService['feedback']['update']>[0];
+type FeedbackCountArgs = Parameters<PrismaService['feedback']['count']>[0];
+
+const createMock =
+  jest.fn<(args: FeedbackCreateArgs) => Promise<FeedbackRecord>>();
+const findManyMock =
+  jest.fn<(args?: FeedbackFindManyArgs) => Promise<FeedbackRecord[]>>();
+const findUniqueMock =
+  jest.fn<(args: FeedbackFindUniqueArgs) => Promise<FeedbackRecord | null>>();
+const updateMock =
+  jest.fn<(args: FeedbackUpdateArgs) => Promise<FeedbackRecord>>();
+const countMock = jest.fn<(args?: FeedbackCountArgs) => Promise<number>>();
+
+const mockPrismaService = {
+  feedback: {
+    create: createMock,
+    findMany: findManyMock,
+    findUnique: findUniqueMock,
+    update: updateMock,
+    count: countMock,
+  },
+} as unknown as PrismaService;
+
+const createFeedbackRecord = (
+  overrides: Partial<FeedbackRecord> = {},
+): FeedbackRecord => ({
+  id: 'fb-123',
+  title: 'Test Feedback',
+  description: 'Test Description',
+  category: CATEGORY_FAULT,
+  priority: PRIORITY_LOW,
+  status: STATUS_PENDING,
+  scooterId: 'scooter-1',
+  bookingId: null,
+  imageUrl: null,
+  managerNotes: null,
+  resolutionCost: null,
+  damageType: null,
+  createdById: 'user-1',
+  createdAt: new Date('2026-04-16T00:00:00.000Z'),
+  updatedAt: new Date('2026-04-16T00:00:00.000Z'),
+  createdBy: { email: 'test@test.com' },
+  scooter: { location: 'Test Location' },
+  booking: null,
+  ...overrides,
+});
 
 describe('FeedbackService', () => {
   let service: FeedbackService;
 
-  // 构建健壮的假 Prisma 数据库
-  const mockPrismaService = {
-    feedback: {
-      create: jest.fn(),
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-      count: jest.fn(),
-    },
-  };
-
-  // 一些通用的假数据，防止 DTO 转换时报错
-  const mockUser = { email: 'test@test.com' };
-  const mockScooter = { location: 'Test Location' };
-  const mockFeedbackBase = {
-    id: 'fb-123',
-    title: 'Test Feedback',
-    description: 'Test Description',
-    createdById: 'user-1',
-    createdBy: mockUser,
-    scooter: mockScooter,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
-  beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FeedbackService,
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
-        },
-      ],
-    }).compile();
-
-    service = module.get<FeedbackService>(FeedbackService);
+  beforeEach(() => {
+    service = new FeedbackService(mockPrismaService);
     jest.clearAllMocks();
   });
 
-  it('模块应该被成功定义', () => {
+  it('should be defined', () => {
     expect(service).toBeDefined();
   });
 
-  // ========================================================
-  // 1. createFeedback
-  // ========================================================
   describe('createFeedback', () => {
     const userId = 'user-1';
 
-    it('【业务逻辑】如果类别是 DAMAGE，应该自动将优先级设置为 HIGH', async () => {
-      const createDto: any = {
+    it('sets damage feedback priority to HIGH', async () => {
+      const createDto = {
         title: 'Brake broken',
         description: 'No brakes',
-        category: FeedbackCategory.DAMAGE,
+        category: CATEGORY_DAMAGE,
         scooterId: 'scooter-1',
-      };
+      } as CreateFeedbackInput;
 
-      mockPrismaService.feedback.create.mockResolvedValue({
-        ...mockFeedbackBase,
-        ...createDto,
-        priority: FeedbackPriority.HIGH,
-      });
+      createMock.mockResolvedValue(
+        createFeedbackRecord({
+          ...createDto,
+          priority: PRIORITY_HIGH,
+        }),
+      );
 
       await service.createFeedback(userId, createDto);
 
-      expect(mockPrismaService.feedback.create).toHaveBeenCalledWith(
+      expect(createMock).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            priority: FeedbackPriority.HIGH, // 核心断言：必须是 HIGH
+            priority: PRIORITY_HIGH,
+            status: STATUS_PENDING,
           }),
         }),
       );
     });
 
-    it('【正常路径】如果是其他类别（如 SUGGESTION），优先级应该默认是 LOW', async () => {
-      const createDto: any = {
+    it('keeps non-damage feedback at LOW priority', async () => {
+      const createDto = {
         title: 'Add a basket',
-        category: FeedbackCategory.SUGGESTION,
-      };
+        description: 'Would be useful for groceries',
+        category: CATEGORY_SUGGESTION,
+        scooterId: 'scooter-1',
+      } as CreateFeedbackInput;
 
-      mockPrismaService.feedback.create.mockResolvedValue({
-        ...mockFeedbackBase,
-        ...createDto,
-        priority: FeedbackPriority.LOW,
-      });
+      createMock.mockResolvedValue(
+        createFeedbackRecord({
+          ...createDto,
+          priority: PRIORITY_LOW,
+        }),
+      );
 
       await service.createFeedback(userId, createDto);
 
-      expect(mockPrismaService.feedback.create).toHaveBeenCalledWith(
+      expect(createMock).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            priority: FeedbackPriority.LOW, // 核心断言：默认 LOW
+            priority: PRIORITY_LOW,
           }),
         }),
       );
+    });
+
+    it('includes booking data when bookingId is present', async () => {
+      const bookingStartTime = new Date('2026-04-15T09:00:00.000Z');
+      const createDto = {
+        title: 'Broken bell',
+        description: 'Bell does not ring',
+        category: CATEGORY_DAMAGE,
+        scooterId: 'scooter-1',
+        bookingId: 'booking-1',
+      } as CreateFeedbackInput;
+
+      createMock.mockResolvedValue(
+        createFeedbackRecord({
+          ...createDto,
+          priority: PRIORITY_HIGH,
+          booking: { startTime: bookingStartTime },
+        }),
+      );
+
+      const result = await service.createFeedback(userId, createDto);
+
+      expect(createMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          include: expect.objectContaining({
+            booking: {
+              select: { startTime: true },
+            },
+          }),
+        }),
+      );
+      expect(result.bookingStartTime).toEqual(bookingStartTime);
     });
   });
 
-  // ========================================================
-  // 2. getMyFeedbacks
-  // ========================================================
   describe('getMyFeedbacks', () => {
-    it('应该成功返回当前用户创建的所有反馈', async () => {
-      const userId = 'user-1';
-      mockPrismaService.feedback.findMany.mockResolvedValue([mockFeedbackBase]);
+    it('returns feedbacks created by the current user', async () => {
+      findManyMock.mockResolvedValue([createFeedbackRecord()]);
 
-      const result = await service.getMyFeedbacks(userId);
+      const result = await service.getMyFeedbacks('user-1');
 
-      expect(mockPrismaService.feedback.findMany).toHaveBeenCalledWith({
-        where: { createdById: userId },
-        include: expect.any(Object),
+      expect(findManyMock).toHaveBeenCalledWith({
+        where: { createdById: 'user-1' },
+        include: {
+          createdBy: {
+            select: { email: true },
+          },
+          scooter: {
+            select: { location: true },
+          },
+          booking: {
+            select: { startTime: true },
+          },
+        },
         orderBy: { createdAt: 'desc' },
       });
-      expect(result.length).toBe(1);
+      expect(result).toHaveLength(1);
+      expect(result[0]?.createdByEmail).toBe('test@test.com');
     });
   });
 
-  // ========================================================
-  // 3. getFeedbackById
-  // ========================================================
   describe('getFeedbackById', () => {
-    it('【异常路径】如果找不到反馈，抛出 NotFoundException', async () => {
-      mockPrismaService.feedback.findUnique.mockResolvedValue(null);
+    it('throws when the feedback does not exist', async () => {
+      findUniqueMock.mockResolvedValue(null);
 
       await expect(
-        service.getFeedbackById('wrong-id', 'user-1', Role.CUSTOMER),
+        service.getFeedbackById('wrong-id', 'user-1', CUSTOMER_ROLE),
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('【异常路径】如果用户既不是创建者也不是管理员，抛出 ForbiddenException', async () => {
-      mockPrismaService.feedback.findUnique.mockResolvedValue({
-        ...mockFeedbackBase,
-        createdById: 'another-user', // 属于别人
-      });
+    it('throws when a non-owner customer tries to view the feedback', async () => {
+      findUniqueMock.mockResolvedValue(
+        createFeedbackRecord({ createdById: 'another-user' }),
+      );
 
       await expect(
-        service.getFeedbackById('fb-123', 'hacker', Role.CUSTOMER), // 作为普通用户访问
+        service.getFeedbackById('fb-123', 'hacker', CUSTOMER_ROLE),
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('【正常路径】如果用户是创建者本人，应该放行并返回反馈', async () => {
-      mockPrismaService.feedback.findUnique.mockResolvedValue({
-        ...mockFeedbackBase,
-        createdById: 'user-1',
-      });
+    it('returns the feedback for its creator', async () => {
+      findUniqueMock.mockResolvedValue(
+        createFeedbackRecord({ createdById: 'user-1' }),
+      );
 
-      const result = await service.getFeedbackById('fb-123', 'user-1', Role.CUSTOMER);
-      expect(result).toBeDefined();
+      const result = await service.getFeedbackById(
+        'fb-123',
+        'user-1',
+        CUSTOMER_ROLE,
+      );
+
+      expect(result.id).toBe('fb-123');
     });
 
-    it('【正常路径】如果用户是管理员（MANAGER），就算不是创建者也应该放行', async () => {
-      mockPrismaService.feedback.findUnique.mockResolvedValue({
-        ...mockFeedbackBase,
-        createdById: 'another-user',
-      });
+    it('returns the feedback for managers', async () => {
+      findUniqueMock.mockResolvedValue(
+        createFeedbackRecord({ createdById: 'another-user' }),
+      );
 
-      const result = await service.getFeedbackById('fb-123', 'admin', Role.MANAGER);
-      expect(result).toBeDefined();
+      const result = await service.getFeedbackById(
+        'fb-123',
+        'admin',
+        MANAGER_ROLE,
+      );
+
+      expect(result.id).toBe('fb-123');
     });
   });
 
-  // ========================================================
-  // 4. updateFeedback (核心业务逻辑重灾区)
-  // ========================================================
   describe('updateFeedback', () => {
     const feedbackId = 'fb-123';
 
-    it('【异常路径】如果找不到反馈，抛出 NotFoundException', async () => {
-      mockPrismaService.feedback.findUnique.mockResolvedValue(null);
+    it('throws when the feedback does not exist', async () => {
+      findUniqueMock.mockResolvedValue(null);
 
       await expect(
-        service.updateFeedback(feedbackId, {}, 'admin', Role.MANAGER),
+        service.updateFeedback(
+          feedbackId,
+          {} as UpdateFeedbackInput,
+          'admin',
+          MANAGER_ROLE,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('【异常路径】如果不是管理员尝试更新，抛出 ForbiddenException', async () => {
-      mockPrismaService.feedback.findUnique.mockResolvedValue(mockFeedbackBase);
+    it('throws when a non-manager tries to update feedback', async () => {
+      findUniqueMock.mockResolvedValue(createFeedbackRecord());
 
       await expect(
-        service.updateFeedback(feedbackId, {}, 'user', Role.CUSTOMER),
+        service.updateFeedback(
+          feedbackId,
+          {} as UpdateFeedbackInput,
+          'user',
+          CUSTOMER_ROLE,
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('【业务逻辑】如果标记为 NATURAL (自然损坏)，resolutionCost 应该强制设为 0', async () => {
-      mockPrismaService.feedback.findUnique.mockResolvedValue(mockFeedbackBase);
-      mockPrismaService.feedback.update.mockResolvedValue(mockFeedbackBase);
+    it('sets resolutionCost to 0 for natural damage', async () => {
+      findUniqueMock.mockResolvedValue(createFeedbackRecord());
+      updateMock.mockResolvedValue(
+        createFeedbackRecord({
+          damageType: DAMAGE_NATURAL,
+          resolutionCost: 0,
+        }),
+      );
 
       await service.updateFeedback(
         feedbackId,
-        { damageType: 'NATURAL' as any },
+        {
+          damageType: DAMAGE_NATURAL,
+        } as UpdateFeedbackInput,
         'admin',
-        Role.MANAGER,
+        MANAGER_ROLE,
       );
 
-      expect(mockPrismaService.feedback.update).toHaveBeenCalledWith(
+      expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            damageType: 'NATURAL',
-            resolutionCost: 0, // 断言：核心业务规则生效
+            damageType: DAMAGE_NATURAL,
+            resolutionCost: 0,
           }),
         }),
       );
     });
 
-    it('【业务逻辑】如果标记为 INTENTIONAL 且原来不是 CHARGEABLE，应该自动变更为 CHARGEABLE 状态', async () => {
-      mockPrismaService.feedback.findUnique.mockResolvedValue({
-        ...mockFeedbackBase,
-        status: FeedbackStatus.PENDING,
-      });
-      mockPrismaService.feedback.update.mockResolvedValue(mockFeedbackBase);
+    it('forces status to CHARGEABLE for intentional damage', async () => {
+      findUniqueMock.mockResolvedValue(
+        createFeedbackRecord({ status: STATUS_PENDING }),
+      );
+      updateMock.mockResolvedValue(
+        createFeedbackRecord({
+          damageType: DAMAGE_INTENTIONAL,
+          status: STATUS_CHARGEABLE,
+        }),
+      );
 
       await service.updateFeedback(
         feedbackId,
-        { damageType: 'INTENTIONAL' as any, status: FeedbackStatus.RESOLVED }, // 即使传入 RESOLVED 也会被覆盖
+        {
+          damageType: DAMAGE_INTENTIONAL,
+          status: STATUS_RESOLVED,
+        } as UpdateFeedbackInput,
         'admin',
-        Role.MANAGER,
+        MANAGER_ROLE,
       );
 
-      expect(mockPrismaService.feedback.update).toHaveBeenCalledWith(
+      expect(updateMock).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            damageType: 'INTENTIONAL',
-            status: FeedbackStatus.CHARGEABLE, // 断言：核心业务规则生效
+            damageType: DAMAGE_INTENTIONAL,
+            status: STATUS_CHARGEABLE,
           }),
         }),
       );
     });
   });
 
-  // ========================================================
-  // 5. getAllFeedbacks
-  // ========================================================
   describe('getAllFeedbacks', () => {
-    it('【异常路径】如果不是管理员，抛出 ForbiddenException', async () => {
-      await expect(
-        service.getAllFeedbacks(Role.CUSTOMER),
-      ).rejects.toThrow(ForbiddenException);
+    it('throws when a non-manager requests all feedback', async () => {
+      await expect(service.getAllFeedbacks(CUSTOMER_ROLE)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
-    it('【正常路径】管理员查询，能够正确应用过滤参数', async () => {
-      mockPrismaService.feedback.findMany.mockResolvedValue([mockFeedbackBase]);
+    it('passes status, priority, and category filters to Prisma', async () => {
+      findManyMock.mockResolvedValue([createFeedbackRecord()]);
 
-      await service.getAllFeedbacks(Role.MANAGER, {
-        status: FeedbackStatus.PENDING,
-        priority: FeedbackPriority.HIGH,
+      await service.getAllFeedbacks(MANAGER_ROLE, {
+        status: STATUS_PENDING,
+        priority: PRIORITY_HIGH,
+        category: CATEGORY_DAMAGE,
       });
 
-      expect(mockPrismaService.feedback.findMany).toHaveBeenCalledWith(
+      expect(findManyMock).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            status: FeedbackStatus.PENDING,
-            priority: FeedbackPriority.HIGH,
+            status: STATUS_PENDING,
+            priority: PRIORITY_HIGH,
+            category: CATEGORY_DAMAGE,
           },
         }),
       );
     });
   });
 
-  // ========================================================
-  // 6. getHighPriorityFeedbacks
-  // ========================================================
   describe('getHighPriorityFeedbacks', () => {
-    it('【异常路径】如果不是管理员，抛出 ForbiddenException', async () => {
+    it('throws when a non-manager requests high priority feedback', async () => {
       await expect(
-        service.getHighPriorityFeedbacks(Role.CUSTOMER),
+        service.getHighPriorityFeedbacks(CUSTOMER_ROLE),
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('【正常路径】管理员查询，应该查找 HIGH 和 URGENT 且未解决的反馈', async () => {
-      mockPrismaService.feedback.findMany.mockResolvedValue([mockFeedbackBase]);
+    it('queries HIGH and URGENT feedback that are not resolved', async () => {
+      findManyMock.mockResolvedValue([
+        createFeedbackRecord({ priority: PRIORITY_HIGH }),
+      ]);
 
-      await service.getHighPriorityFeedbacks(Role.MANAGER);
+      await service.getHighPriorityFeedbacks(MANAGER_ROLE);
 
-      expect(mockPrismaService.feedback.findMany).toHaveBeenCalledWith(
+      expect(findManyMock).toHaveBeenCalledWith(
         expect.objectContaining({
           where: {
-            OR: [
-              { priority: FeedbackPriority.HIGH },
-              { priority: FeedbackPriority.URGENT },
-            ],
-            status: { not: FeedbackStatus.RESOLVED },
+            OR: [{ priority: PRIORITY_HIGH }, { priority: PRIORITY_URGENT }],
+            status: { not: STATUS_RESOLVED },
           },
         }),
       );
     });
   });
 
-  // ========================================================
-  // 7. getPendingCount
-  // ========================================================
   describe('getPendingCount', () => {
-    it('如果不是管理员，直接返回 0，不去查库', async () => {
-      const result = await service.getPendingCount(Role.CUSTOMER);
+    it('returns 0 for non-managers without calling Prisma', async () => {
+      const result = await service.getPendingCount(CUSTOMER_ROLE);
+
       expect(result).toBe(0);
-      expect(mockPrismaService.feedback.count).not.toHaveBeenCalled();
+      expect(countMock).not.toHaveBeenCalled();
     });
 
-    it('如果是管理员，正确调用 count 方法查询 PENDING 状态的数据', async () => {
-      mockPrismaService.feedback.count.mockResolvedValue(5);
+    it('returns the Prisma count for managers', async () => {
+      countMock.mockResolvedValue(5);
 
-      const result = await service.getPendingCount(Role.MANAGER);
+      const result = await service.getPendingCount(MANAGER_ROLE);
 
       expect(result).toBe(5);
-      expect(mockPrismaService.feedback.count).toHaveBeenCalledWith({
-        where: { status: FeedbackStatus.PENDING },
+      expect(countMock).toHaveBeenCalledWith({
+        where: { status: STATUS_PENDING },
       });
     });
   });

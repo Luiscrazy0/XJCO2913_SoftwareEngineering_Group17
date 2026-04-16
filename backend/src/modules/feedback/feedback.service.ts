@@ -7,12 +7,18 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { UpdateFeedbackDto } from './dto/update-feedback.dto';
 import { FeedbackResponseDto } from './dto/feedback-response.dto';
-import {
+import type {
   FeedbackCategory,
   FeedbackPriority,
   FeedbackStatus,
   Role,
 } from '@prisma/client';
+import {
+  FEEDBACK_CATEGORIES,
+  FEEDBACK_MANAGER_ROLE,
+  FEEDBACK_PRIORITIES,
+  FEEDBACK_STATUSES,
+} from './feedback.constants';
 
 @Injectable()
 export class FeedbackService {
@@ -20,9 +26,9 @@ export class FeedbackService {
 
   async createFeedback(userId: string, createFeedbackDto: CreateFeedbackDto) {
     // Set priority based on category
-    let priority: FeedbackPriority = FeedbackPriority.LOW;
-    if (createFeedbackDto.category === FeedbackCategory.DAMAGE) {
-      priority = FeedbackPriority.HIGH;
+    let priority: FeedbackPriority = FEEDBACK_PRIORITIES.LOW;
+    if (createFeedbackDto.category === FEEDBACK_CATEGORIES.DAMAGE) {
+      priority = FEEDBACK_PRIORITIES.HIGH;
     }
 
     const feedback = await this.prisma.feedback.create({
@@ -31,7 +37,7 @@ export class FeedbackService {
         description: createFeedbackDto.description,
         category: createFeedbackDto.category,
         priority,
-        status: FeedbackStatus.PENDING,
+        status: FEEDBACK_STATUSES.PENDING,
         scooterId: createFeedbackDto.scooterId,
         bookingId: createFeedbackDto.bookingId,
         imageUrl: createFeedbackDto.imageUrl,
@@ -72,9 +78,7 @@ export class FeedbackService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return feedbacks.map(
-      (feedback) => new FeedbackResponseDto(feedback as any),
-    );
+    return feedbacks.map((feedback) => new FeedbackResponseDto(feedback));
   }
 
   async getFeedbackById(id: string, userId: string, userRole: Role) {
@@ -98,7 +102,7 @@ export class FeedbackService {
     }
 
     // Only allow access if user is the creator or a manager
-    if (feedback.createdById !== userId && userRole !== Role.MANAGER) {
+    if (feedback.createdById !== userId && userRole !== FEEDBACK_MANAGER_ROLE) {
       throw new ForbiddenException(
         'You do not have permission to view this feedback',
       );
@@ -123,7 +127,7 @@ export class FeedbackService {
     }
 
     // Only managers can update feedback
-    if (userRole !== Role.MANAGER) {
+    if (userRole !== FEEDBACK_MANAGER_ROLE) {
       throw new ForbiddenException('Only managers can update feedback');
     }
 
@@ -140,7 +144,7 @@ export class FeedbackService {
       updateFeedbackDto.damageType === 'INTENTIONAL' &&
       updateFeedbackDto.status !== 'CHARGEABLE'
     ) {
-      updateData.status = FeedbackStatus.CHARGEABLE;
+      updateData.status = FEEDBACK_STATUSES.CHARGEABLE;
     }
 
     const feedback = await this.prisma.feedback.update({
@@ -171,7 +175,7 @@ export class FeedbackService {
     },
   ) {
     // Only managers can view all feedbacks
-    if (userRole !== Role.MANAGER) {
+    if (userRole !== FEEDBACK_MANAGER_ROLE) {
       throw new ForbiddenException('Only managers can view all feedbacks');
     }
 
@@ -196,14 +200,12 @@ export class FeedbackService {
       orderBy: { createdAt: 'desc' },
     });
 
-    return feedbacks.map(
-      (feedback) => new FeedbackResponseDto(feedback as any),
-    );
+    return feedbacks.map((feedback) => new FeedbackResponseDto(feedback));
   }
 
   async getHighPriorityFeedbacks(userRole: Role) {
     // Only managers can view high priority feedbacks
-    if (userRole !== Role.MANAGER) {
+    if (userRole !== FEEDBACK_MANAGER_ROLE) {
       throw new ForbiddenException(
         'Only managers can view high priority feedbacks',
       );
@@ -212,11 +214,11 @@ export class FeedbackService {
     const feedbacks = await this.prisma.feedback.findMany({
       where: {
         OR: [
-          { priority: FeedbackPriority.HIGH },
-          { priority: FeedbackPriority.URGENT },
+          { priority: FEEDBACK_PRIORITIES.HIGH },
+          { priority: FEEDBACK_PRIORITIES.URGENT },
         ],
         status: {
-          not: FeedbackStatus.RESOLVED,
+          not: FEEDBACK_STATUSES.RESOLVED,
         },
       },
       include: {
@@ -237,18 +239,16 @@ export class FeedbackService {
       ],
     });
 
-    return feedbacks.map(
-      (feedback) => new FeedbackResponseDto(feedback as any),
-    );
+    return feedbacks.map((feedback) => new FeedbackResponseDto(feedback));
   }
 
   async getPendingCount(userRole: Role) {
-    if (userRole !== Role.MANAGER) {
+    if (userRole !== FEEDBACK_MANAGER_ROLE) {
       return 0;
     }
 
     return this.prisma.feedback.count({
-      where: { status: FeedbackStatus.PENDING },
+      where: { status: FEEDBACK_STATUSES.PENDING },
     });
   }
 }
