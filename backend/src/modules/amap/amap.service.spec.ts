@@ -40,7 +40,7 @@ describe('AmapService', () => {
     service = module.get<AmapService>(AmapService);
     httpService = module.get<HttpService>(HttpService);
     configService = module.get<ConfigService>(ConfigService);
-    
+
     jest.clearAllMocks();
   });
 
@@ -73,9 +73,13 @@ describe('AmapService', () => {
     });
 
     it('【异常路径】如果网络请求失败，应抛出包装后的 Error', async () => {
-      mockHttpService.get.mockReturnValue(throwError(() => new Error('网络超时')));
+      mockHttpService.get.mockReturnValue(
+        throwError(() => new Error('网络超时')),
+      );
 
-      await expect(service.geocode('北京市')).rejects.toThrow('地理编码失败: 网络超时');
+      await expect(service.geocode('北京市')).rejects.toThrow(
+        '地理编码失败: 网络超时',
+      );
     });
   });
 
@@ -104,9 +108,13 @@ describe('AmapService', () => {
     });
 
     it('【异常路径】如果请求失败，应抛出带有错误信息的 Error', async () => {
-      mockHttpService.get.mockReturnValue(throwError(() => new Error('无效的坐标')));
+      mockHttpService.get.mockReturnValue(
+        throwError(() => new Error('无效的坐标')),
+      );
 
-      await expect(service.regeocode(0, 0)).rejects.toThrow('逆地理编码失败: 无效的坐标');
+      await expect(service.regeocode(0, 0)).rejects.toThrow(
+        '逆地理编码失败: 无效的坐标',
+      );
     });
   });
 
@@ -136,9 +144,13 @@ describe('AmapService', () => {
     });
 
     it('【异常路径】网络异常时应抛出错误', async () => {
-      mockHttpService.get.mockReturnValue(throwError(() => new Error('API限制')));
+      mockHttpService.get.mockReturnValue(
+        throwError(() => new Error('API限制')),
+      );
 
-      await expect(service.calculateDistance('1', '2')).rejects.toThrow('距离计算失败: API限制');
+      await expect(service.calculateDistance('1', '2')).rejects.toThrow(
+        '距离计算失败: API限制',
+      );
     });
   });
 
@@ -150,7 +162,10 @@ describe('AmapService', () => {
       const mockResponse = { data: { status: '1', results: [] } };
       mockHttpService.get.mockReturnValue(of(mockResponse));
 
-      const result = await service.calculateDistances(['116,39', '115,38'], '117,40');
+      const result = await service.calculateDistances(
+        ['116,39', '115,38'],
+        '117,40',
+      );
 
       expect(httpService.get).toHaveBeenCalledWith(
         'https://restapi.amap.com/v3/distance',
@@ -168,9 +183,13 @@ describe('AmapService', () => {
     });
 
     it('【异常路径】网络异常时应抛出错误', async () => {
-      mockHttpService.get.mockReturnValue(throwError(() => new Error('参数错误')));
+      mockHttpService.get.mockReturnValue(
+        throwError(() => new Error('参数错误')),
+      );
 
-      await expect(service.calculateDistances(['1'], '2')).rejects.toThrow('批量距离计算失败: 参数错误');
+      await expect(service.calculateDistances(['1'], '2')).rejects.toThrow(
+        '批量距离计算失败: 参数错误',
+      );
     });
   });
 
@@ -199,9 +218,13 @@ describe('AmapService', () => {
     });
 
     it('【异常路径】请求失败应抛出错误', async () => {
-      mockHttpService.get.mockReturnValue(throwError(() => new Error('Key报错')));
+      mockHttpService.get.mockReturnValue(
+        throwError(() => new Error('Key报错')),
+      );
 
-      await expect(service.inputTips('KFC')).rejects.toThrow('输入提示失败: Key报错');
+      await expect(service.inputTips('KFC')).rejects.toThrow(
+        '输入提示失败: Key报错',
+      );
     });
   });
 
@@ -212,7 +235,7 @@ describe('AmapService', () => {
     it('验证有效 API Key 时返回 true', async () => {
       // 只要 status 是 '1' 就是成功
       mockHttpService.get.mockReturnValue(of({ data: { status: '1' } }));
-      
+
       const isValid = await service.validateApiKey();
       expect(isValid).toBe(true);
     });
@@ -220,14 +243,16 @@ describe('AmapService', () => {
     it('验证无效 API Key 时返回 false', async () => {
       // status 不是 1 代表失败
       mockHttpService.get.mockReturnValue(of({ data: { status: '0' } }));
-      
+
       const isValid = await service.validateApiKey();
       expect(isValid).toBe(false);
     });
 
     it('验证 API Key 发生网络错误时，安全地捕获异常并返回 false', async () => {
-      mockHttpService.get.mockReturnValue(throwError(() => new Error('网络断开')));
-      
+      mockHttpService.get.mockReturnValue(
+        throwError(() => new Error('网络断开')),
+      );
+
       const isValid = await service.validateApiKey();
       expect(isValid).toBe(false);
     });
@@ -266,11 +291,21 @@ describe('AmapService', () => {
     });
 
     it('当 API Key 未配置时，所有业务方法都应直接抛出错误', async () => {
-      await expect(serviceWithoutKey.geocode('北京')).rejects.toThrow('高德地图API Key未配置');
-      await expect(serviceWithoutKey.regeocode(1, 1)).rejects.toThrow('高德地图API Key未配置');
-      await expect(serviceWithoutKey.calculateDistance('1', '2')).rejects.toThrow('高德地图API Key未配置');
-      await expect(serviceWithoutKey.calculateDistances(['1'], '2')).rejects.toThrow('高德地图API Key未配置');
-      await expect(serviceWithoutKey.inputTips('关键词')).rejects.toThrow('高德地图API Key未配置');
+      await expect(serviceWithoutKey.geocode('北京')).rejects.toThrow(
+        '高德地图API Key未配置',
+      );
+      await expect(serviceWithoutKey.regeocode(1, 1)).rejects.toThrow(
+        '高德地图API Key未配置',
+      );
+      await expect(
+        serviceWithoutKey.calculateDistance('1', '2'),
+      ).rejects.toThrow('高德地图API Key未配置');
+      await expect(
+        serviceWithoutKey.calculateDistances(['1'], '2'),
+      ).rejects.toThrow('高德地图API Key未配置');
+      await expect(serviceWithoutKey.inputTips('关键词')).rejects.toThrow(
+        '高德地图API Key未配置',
+      );
     });
 
     it('当 API Key 未配置时，validateApiKey 应直接返回 false', async () => {
