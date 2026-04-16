@@ -118,6 +118,70 @@ describe('PaymentService', () => {
 
       expect(result).toEqual(mockCreatedPayment);
     });
+
+    it('returns the payment even if sending the receipt email fails', async () => {
+      const mockCreatedPayment = {
+        id: 'payment-001',
+        bookingId: targetBookingId,
+        amount: paymentAmount,
+        status: 'SUCCESS',
+      };
+
+      mockPrismaService.booking.findUnique
+        .mockResolvedValueOnce({
+          id: targetBookingId,
+          status: BookingStatus.PENDING_PAYMENT,
+        })
+        .mockResolvedValueOnce({
+          id: targetBookingId,
+          user: { id: 'user-1', email: 'user@example.com' },
+        });
+      mockPrismaService.payment.create.mockResolvedValue(mockCreatedPayment);
+      mockPrismaService.booking.update.mockResolvedValue({
+        id: targetBookingId,
+        status: BookingStatus.CONFIRMED,
+      });
+      mockEmailService.sendPaymentReceipt.mockRejectedValue(
+        new Error('SMTP failure'),
+      );
+
+      const result = await paymentService.createPayment(
+        targetBookingId,
+        paymentAmount,
+      );
+
+      expect(mockEmailService.sendPaymentReceipt).toHaveBeenCalled();
+      expect(result).toEqual(mockCreatedPayment);
+    });
+
+    it('returns the payment when no receipt recipient can be loaded', async () => {
+      const mockCreatedPayment = {
+        id: 'payment-001',
+        bookingId: targetBookingId,
+        amount: paymentAmount,
+        status: 'SUCCESS',
+      };
+
+      mockPrismaService.booking.findUnique
+        .mockResolvedValueOnce({
+          id: targetBookingId,
+          status: BookingStatus.PENDING_PAYMENT,
+        })
+        .mockResolvedValueOnce(null);
+      mockPrismaService.payment.create.mockResolvedValue(mockCreatedPayment);
+      mockPrismaService.booking.update.mockResolvedValue({
+        id: targetBookingId,
+        status: BookingStatus.CONFIRMED,
+      });
+
+      const result = await paymentService.createPayment(
+        targetBookingId,
+        paymentAmount,
+      );
+
+      expect(mockEmailService.sendPaymentReceipt).not.toHaveBeenCalled();
+      expect(result).toEqual(mockCreatedPayment);
+    });
   });
 
   describe('getPaymentByBooking', () => {

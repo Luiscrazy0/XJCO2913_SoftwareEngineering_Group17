@@ -1,24 +1,33 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsEnum, IsNumber, IsOptional, IsString, Min } from 'class-validator';
-import { FeedbackPriority, FeedbackStatus, DamageType } from '@prisma/client';
+import type {
+  DamageType,
+  FeedbackPriority,
+  FeedbackStatus,
+} from '@prisma/client';
+import {
+  DAMAGE_TYPES,
+  FEEDBACK_PRIORITIES,
+  FEEDBACK_STATUSES,
+} from '../feedback.constants';
 
 export class UpdateFeedbackDto {
   @ApiProperty({
-    enum: FeedbackPriority,
+    enum: FEEDBACK_PRIORITIES,
     description: 'Priority of the feedback',
     required: false,
   })
   @IsOptional()
-  @IsEnum(FeedbackPriority)
+  @IsEnum(FEEDBACK_PRIORITIES)
   priority?: FeedbackPriority;
 
   @ApiProperty({
-    enum: FeedbackStatus,
+    enum: FEEDBACK_STATUSES,
     description: 'Status of the feedback',
     required: false,
   })
   @IsOptional()
-  @IsEnum(FeedbackStatus)
+  @IsEnum(FEEDBACK_STATUSES)
   status?: FeedbackStatus;
 
   @ApiProperty({ description: 'Manager notes (optional)', required: false })
@@ -33,11 +42,11 @@ export class UpdateFeedbackDto {
   resolutionCost?: number;
 
   @ApiProperty({
-    enum: DamageType,
+    enum: DAMAGE_TYPES,
     description: 'Type of damage (optional)',
     required: false,
   })
   @IsOptional()
-  @IsEnum(DamageType)
+  @IsEnum(DAMAGE_TYPES)
   damageType?: DamageType;
 }

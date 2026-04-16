@@ -1,201 +1,286 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { ScooterService } from './scooter.service';
-import { PrismaService } from '../../prisma/prisma.service';
-import { AmapService } from '../amap/amap.service';
-import { ScooterStatus } from '@prisma/client';
 import { BadRequestException } from '@nestjs/common';
+import { ScooterStatus } from '@prisma/client';
+import type { PrismaService } from '../../prisma/prisma.service';
+import { AmapService } from '../amap/amap.service';
+import { ScooterService } from './scooter.service';
+
+type ScooterRecord = {
+  id: string;
+  location: string;
+  status: ScooterStatus;
+  latitude?: number;
+  longitude?: number;
+};
+
+type ScooterFindManyArgs = Parameters<PrismaService['scooter']['findMany']>[0];
+type ScooterFindUniqueArgs = Parameters<
+  PrismaService['scooter']['findUnique']
+>[0];
+type ScooterCreateArgs = Parameters<PrismaService['scooter']['create']>[0];
+type ScooterUpdateArgs = Parameters<PrismaService['scooter']['update']>[0];
+type ScooterDeleteArgs = Parameters<PrismaService['scooter']['delete']>[0];
+type BookingCountArgs = Parameters<PrismaService['booking']['count']>[0];
+
+const scooterFindManyMock =
+  jest.fn<(args?: ScooterFindManyArgs) => Promise<ScooterRecord[]>>();
+const scooterFindUniqueMock =
+  jest.fn<(args: ScooterFindUniqueArgs) => Promise<ScooterRecord | null>>();
+const scooterCreateMock =
+  jest.fn<(args: ScooterCreateArgs) => Promise<ScooterRecord>>();
+const scooterUpdateMock =
+  jest.fn<(args: ScooterUpdateArgs) => Promise<ScooterRecord>>();
+const scooterDeleteMock =
+  jest.fn<(args: ScooterDeleteArgs) => Promise<ScooterRecord>>();
+const bookingCountMock = jest.fn<(args: BookingCountArgs) => Promise<number>>();
+
+const mockPrismaService = {
+  scooter: {
+    findMany: scooterFindManyMock,
+    findUnique: scooterFindUniqueMock,
+    create: scooterCreateMock,
+    update: scooterUpdateMock,
+    delete: scooterDeleteMock,
+  },
+  booking: {
+    count: bookingCountMock,
+  },
+} as unknown as PrismaService;
+
+type AmapServiceMock = Pick<AmapService, 'regeocode'>;
+
+const mockAmapService: jest.Mocked<AmapServiceMock> = {
+  regeocode: jest.fn(),
+};
 
 describe('ScooterService', () => {
-  let scooterService: ScooterService;
+  let service: ScooterService;
 
-  // 1. 创建假的 PrismaService（代替真实数据库）
-  const mockPrismaService = {
-    scooter: {
-      findMany: jest.fn(),
-      findUnique: jest.fn(),
-      create: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-    booking: {
-      count: jest.fn(),
-    },
-  };
-
-  // 创建假的 AmapService
-  const mockAmapService = {
-    regeocode: jest.fn(),
-  };
-
-  beforeEach(async () => {
-    // 2. 搭建测试模块环境
-    const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ScooterService,
-        {
-          provide: PrismaService,
-          useValue: mockPrismaService,
-        },
-        {
-          provide: AmapService,
-          useValue: mockAmapService,
-        },
-      ],
-    }).compile();
-
-    scooterService = module.get<ScooterService>(ScooterService);
-
-    // 每次测试前清空调用记录，防止互相干扰
+  beforeEach(() => {
+    service = new ScooterService(
+      mockPrismaService,
+      mockAmapService as unknown as AmapService,
+    );
     jest.clearAllMocks();
   });
 
-  it('模块应该被成功定义', () => {
-    expect(scooterService).toBeDefined();
+  it('should be defined', () => {
+    expect(service).toBeDefined();
   });
 
-  // ==========================================
-  // 测试组 1: findAll (获取所有滑板车)
-  // ==========================================
   describe('findAll', () => {
-    it('应该成功返回所有滑板车的列表', async () => {
-      const mockScooters = [
-        { id: '1', location: 'South Campus', status: ScooterStatus.AVAILABLE },
-        { id: '2', location: 'Library', status: ScooterStatus.RENTED },
-      ];
-      mockPrismaService.scooter.findMany.mockResolvedValue(mockScooters);
-      // Mock the amapService to return null address since scooters don't have coordinates
-      mockAmapService.regeocode.mockResolvedValue({
-        status: '1',
-        regeocode: { formatted_address: 'Test Address' },
-      });
+    it('returns all scooters and enriches them with amapAddress', async () => {
+      scooterFindManyMock.mockResolvedValue([
+        {
+          id: '1',
+          location: 'South Campus',
+          status: ScooterStatus.AVAILABLE,
+        },
+        {
+          id: '2',
+          location: 'Library',
+          status: ScooterStatus.RENTED,
+        },
+      ]);
 
-      const result = await scooterService.findAll();
+      const result = await service.findAll();
 
-      // 🌟 修复：对齐真实代码里的 include
-      expect(mockPrismaService.scooter.findMany).toHaveBeenCalledWith({
+      expect(scooterFindManyMock).toHaveBeenCalledWith({
         include: { station: true },
       });
-      // The service adds amapAddress field to each scooter
       expect(result).toEqual([
-        { ...mockScooters[0], amapAddress: null },
-        { ...mockScooters[1], amapAddress: null },
+        {
+          id: '1',
+          location: 'South Campus',
+          status: ScooterStatus.AVAILABLE,
+          amapAddress: null,
+        },
+        {
+          id: '2',
+          location: 'Library',
+          status: ScooterStatus.RENTED,
+          amapAddress: null,
+        },
       ]);
     });
   });
 
-  // ==========================================
-  // 测试组 2: findById (根据 ID 获取滑板车)
-  // ==========================================
   describe('findById', () => {
-    const testId = 'test-scooter-id';
+    const scooterId = 'scooter-1';
 
-    it('【正常路径】如果 ID 存在，应该返回对应的滑板车对象', async () => {
-      const mockScooter = {
-        id: testId,
+    it('returns the scooter when it exists', async () => {
+      scooterFindUniqueMock.mockResolvedValue({
+        id: scooterId,
         location: 'North Campus',
         status: ScooterStatus.AVAILABLE,
-      };
-      mockPrismaService.scooter.findUnique.mockResolvedValue(mockScooter);
+      });
 
-      const result = await scooterService.findById(testId);
+      const result = await service.findById(scooterId);
 
-      expect(mockPrismaService.scooter.findUnique).toHaveBeenCalledWith({
-        where: { id: testId },
+      expect(scooterFindUniqueMock).toHaveBeenCalledWith({
+        where: { id: scooterId },
         include: { station: true },
       });
-      // The service adds amapAddress field to the scooter
-      expect(result).toEqual({ ...mockScooter, amapAddress: null });
+      expect(result).toEqual({
+        id: scooterId,
+        location: 'North Campus',
+        status: ScooterStatus.AVAILABLE,
+        amapAddress: null,
+      });
     });
 
-    it('【异常路径】如果 ID 不存在，应该返回 null', async () => {
-      mockPrismaService.scooter.findUnique.mockResolvedValue(null);
+    it('returns null when the scooter does not exist', async () => {
+      scooterFindUniqueMock.mockResolvedValue(null);
 
-      const result = await scooterService.findById('wrong-id');
+      const result = await service.findById('missing');
 
       expect(result).toBeNull();
     });
+
+    it('reuses the cached amap address when the cache entry is still valid', async () => {
+      const nowSpy = jest.spyOn(Date, 'now').mockReturnValue(1000);
+      const scooterWithCoordinates = {
+        id: scooterId,
+        location: 'North Campus',
+        status: ScooterStatus.AVAILABLE,
+        latitude: 53.406,
+        longitude: -2.966,
+      };
+
+      scooterFindUniqueMock.mockResolvedValue(scooterWithCoordinates);
+      mockAmapService.regeocode.mockResolvedValue({
+        status: '1',
+        regeocode: { formatted_address: 'Liverpool Address' },
+      } as Awaited<ReturnType<AmapService['regeocode']>>);
+
+      await service.findById(scooterId);
+      mockAmapService.regeocode.mockClear();
+
+      const result = await service.findById(scooterId);
+
+      expect(mockAmapService.regeocode).not.toHaveBeenCalled();
+      expect(result).toEqual({
+        ...scooterWithCoordinates,
+        amapAddress: 'Liverpool Address',
+      });
+
+      nowSpy.mockRestore();
+    });
+
+    it('returns a null amapAddress when the amap API result is unsuccessful', async () => {
+      const scooterWithCoordinates = {
+        id: scooterId,
+        location: 'North Campus',
+        status: ScooterStatus.AVAILABLE,
+        latitude: 53.406,
+        longitude: -2.966,
+      };
+
+      scooterFindUniqueMock.mockResolvedValue(scooterWithCoordinates);
+      mockAmapService.regeocode.mockResolvedValue({
+        status: '0',
+        info: 'INVALID_USER_KEY',
+      } as Awaited<ReturnType<AmapService['regeocode']>>);
+
+      const result = await service.findById(scooterId);
+
+      expect(result).toEqual({
+        ...scooterWithCoordinates,
+        amapAddress: null,
+      });
+    });
+
+    it('returns a null amapAddress when amap geocoding throws', async () => {
+      const scooterWithCoordinates = {
+        id: scooterId,
+        location: 'North Campus',
+        status: ScooterStatus.AVAILABLE,
+        latitude: 53.406,
+        longitude: -2.966,
+      };
+
+      scooterFindUniqueMock.mockResolvedValue(scooterWithCoordinates);
+      mockAmapService.regeocode.mockRejectedValue(new Error('Network issue'));
+
+      const result = await service.findById(scooterId);
+
+      expect(result).toEqual({
+        ...scooterWithCoordinates,
+        amapAddress: null,
+      });
+    });
   });
 
-  // ==========================================
-  // 测试组 3: createScooter (创建滑板车)
-  // ==========================================
   describe('createScooter', () => {
-    it('应该成功在指定位置创建一辆新滑板车', async () => {
-      const newLocation = 'Engineering Building';
-      const mockCreatedScooter = {
+    it('creates a scooter at the requested location', async () => {
+      const createdScooter = {
         id: '3',
-        location: newLocation,
+        location: 'Engineering Building',
         status: ScooterStatus.AVAILABLE,
       };
+      scooterCreateMock.mockResolvedValue(createdScooter);
 
-      mockPrismaService.scooter.create.mockResolvedValue(mockCreatedScooter);
+      const result = await service.createScooter('Engineering Building');
 
-      const result = await scooterService.createScooter(newLocation);
-
-      expect(mockPrismaService.scooter.create).toHaveBeenCalledWith({
-        data: { location: newLocation },
+      expect(scooterCreateMock).toHaveBeenCalledWith({
+        data: { location: 'Engineering Building' },
       });
-      expect(result).toEqual(mockCreatedScooter);
+      expect(result).toEqual(createdScooter);
     });
   });
 
-  // ==========================================
-  // 测试组 4: updateStatus (更新滑板车状态)
-  // ==========================================
   describe('updateStatus', () => {
-    it('应该成功更新指定滑板车的状态', async () => {
-      const targetId = '1';
-      const newStatus = ScooterStatus.UNAVAILABLE;
-
-      const mockUpdatedScooter = {
-        id: targetId,
+    it('updates the scooter status', async () => {
+      const updatedScooter = {
+        id: '1',
         location: 'South Campus',
-        status: newStatus,
+        status: ScooterStatus.UNAVAILABLE,
       };
+      scooterUpdateMock.mockResolvedValue(updatedScooter);
 
-      mockPrismaService.scooter.update.mockResolvedValue(mockUpdatedScooter);
+      const result = await service.updateStatus('1', ScooterStatus.UNAVAILABLE);
 
-      const result = await scooterService.updateStatus(targetId, newStatus);
-
-      expect(mockPrismaService.scooter.update).toHaveBeenCalledWith({
-        where: { id: targetId },
-        data: { status: newStatus },
+      expect(scooterUpdateMock).toHaveBeenCalledWith({
+        where: { id: '1' },
+        data: { status: ScooterStatus.UNAVAILABLE },
       });
-      expect(result).toEqual(mockUpdatedScooter);
+      expect(result).toEqual(updatedScooter);
     });
   });
 
-  // ==========================================
-  // 测试组 5: deleteScooter (关键分支测试)
-  // ==========================================
   describe('deleteScooter', () => {
     const scooterId = 'scooter-123';
 
-    it('【异常路径】如果该滑板车还有关联的订单，应该抛出 BadRequestException 错误', async () => {
-      mockPrismaService.booking.count.mockResolvedValue(1);
+    it('throws when the scooter has existing bookings', async () => {
+      bookingCountMock.mockResolvedValue(1);
 
-      await expect(scooterService.deleteScooter(scooterId)).rejects.toThrow(
+      await expect(service.deleteScooter(scooterId)).rejects.toThrow(
         new BadRequestException('Scooter has existing bookings'),
       );
 
-      expect(mockPrismaService.scooter.delete).not.toHaveBeenCalled();
+      expect(scooterDeleteMock).not.toHaveBeenCalled();
     });
 
-    it('【正常路径】如果该滑板车没有关联订单，应该成功删除', async () => {
-      mockPrismaService.booking.count.mockResolvedValue(0);
+    it('deletes the scooter when no bookings are linked', async () => {
+      bookingCountMock.mockResolvedValue(0);
+      scooterDeleteMock.mockResolvedValue({
+        id: scooterId,
+        location: 'Campus A',
+        status: ScooterStatus.AVAILABLE,
+      });
 
-      const mockDeletedScooter = { id: scooterId, location: 'Campus A' };
-      mockPrismaService.scooter.delete.mockResolvedValue(mockDeletedScooter);
+      const result = await service.deleteScooter(scooterId);
 
-      const result = await scooterService.deleteScooter(scooterId);
-
-      expect(mockPrismaService.booking.count).toHaveBeenCalledWith({
+      expect(bookingCountMock).toHaveBeenCalledWith({
         where: { scooterId },
       });
-      expect(mockPrismaService.scooter.delete).toHaveBeenCalledWith({
+      expect(scooterDeleteMock).toHaveBeenCalledWith({
         where: { id: scooterId },
       });
-      expect(result).toEqual(mockDeletedScooter);
+      expect(result).toEqual({
+        id: scooterId,
+        location: 'Campus A',
+        status: ScooterStatus.AVAILABLE,
+      });
     });
   });
 });

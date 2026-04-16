@@ -6,7 +6,8 @@ import {
   IsString,
   IsUUID,
 } from 'class-validator';
-import { FeedbackCategory } from '@prisma/client';
+import type { FeedbackCategory } from '@prisma/client';
+import { FEEDBACK_CATEGORIES } from '../feedback.constants';
 
 export class CreateFeedbackDto {
   @ApiProperty({ description: 'Title of the feedback' })
@@ -20,11 +21,11 @@ export class CreateFeedbackDto {
   description: string;
 
   @ApiProperty({
-    enum: FeedbackCategory,
+    enum: FEEDBACK_CATEGORIES,
     description: 'Category of the feedback',
   })
   @IsNotEmpty()
-  @IsEnum(FeedbackCategory)
+  @IsEnum(FEEDBACK_CATEGORIES)
   category: FeedbackCategory;
 
   @ApiProperty({ description: 'ID of the scooter related to the feedback' })
