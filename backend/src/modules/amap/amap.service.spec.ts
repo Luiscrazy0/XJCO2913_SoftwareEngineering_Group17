@@ -7,7 +7,6 @@ import { of, throwError } from 'rxjs';
 describe('AmapService', () => {
   let service: AmapService;
   let httpService: HttpService;
-  let configService: ConfigService;
 
   // 1. 模拟 HttpService，防止真正发出网络请求
   const mockHttpService = {
@@ -39,8 +38,6 @@ describe('AmapService', () => {
 
     service = module.get<AmapService>(AmapService);
     httpService = module.get<HttpService>(HttpService);
-    configService = module.get<ConfigService>(ConfigService);
-
     jest.clearAllMocks();
   });
 
@@ -58,7 +55,7 @@ describe('AmapService', () => {
 
       const result = await service.geocode('北京市朝阳区', '北京');
 
-      expect(httpService.get).toHaveBeenCalledWith(
+      expect(mockHttpService.get).toHaveBeenCalledWith(
         'https://restapi.amap.com/v3/geocode/geo',
         {
           params: {
@@ -93,7 +90,7 @@ describe('AmapService', () => {
 
       const result = await service.regeocode(116.481488, 39.990464);
 
-      expect(httpService.get).toHaveBeenCalledWith(
+      expect(mockHttpService.get).toHaveBeenCalledWith(
         'https://restapi.amap.com/v3/geocode/regeo',
         {
           params: {
@@ -128,7 +125,7 @@ describe('AmapService', () => {
 
       const result = await service.calculateDistance('116,39', '117,40');
 
-      expect(httpService.get).toHaveBeenCalledWith(
+      expect(mockHttpService.get).toHaveBeenCalledWith(
         'https://restapi.amap.com/v3/distance',
         {
           params: {
@@ -167,7 +164,7 @@ describe('AmapService', () => {
         '117,40',
       );
 
-      expect(httpService.get).toHaveBeenCalledWith(
+      expect(mockHttpService.get).toHaveBeenCalledWith(
         'https://restapi.amap.com/v3/distance',
         {
           params: {
@@ -203,7 +200,7 @@ describe('AmapService', () => {
 
       const result = await service.inputTips('麦当劳', '北京');
 
-      expect(httpService.get).toHaveBeenCalledWith(
+      expect(mockHttpService.get).toHaveBeenCalledWith(
         'https://restapi.amap.com/v3/assistant/inputtips',
         {
           params: {
