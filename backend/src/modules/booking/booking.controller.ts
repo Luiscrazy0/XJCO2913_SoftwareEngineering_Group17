@@ -7,6 +7,8 @@ import {
   Body,
   UseGuards,
   Delete,
+  Req,
+  Request,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { PaymentCardService } from './payment-card.service';
@@ -84,8 +86,9 @@ export class BookingController {
       },
     },
   })
-  findAll() {
-    return this.bookingService.findAll();
+  findAll(@Req() req: Request) {
+    const userId = req.user?.id;
+    return this.bookingService.findAll(userId);
   }
 
   @Get(':id')
