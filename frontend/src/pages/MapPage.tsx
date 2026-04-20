@@ -7,6 +7,7 @@ import AmapMap from '../components/map/AmapMap'
 import { useToast } from '../components/ToastProvider'
 import { Station } from '../types'
 import { MarkerConfig } from '../types/amap'
+import { scooterKeys, stationKeys } from '../utils/queryKeys'
 
 const MapPage: React.FC = () => {
   const { showToast } = useToast()
@@ -38,7 +39,7 @@ const MapPage: React.FC = () => {
     isError: isStationsError,
     error: stationsError,
   } = useQuery({
-    queryKey: ['stations'],
+    queryKey: stationKeys.list('public'),
     queryFn: stationsApi.getAll,
     staleTime: 5 * 60 * 1000, // 5分钟缓存
   })
@@ -50,7 +51,7 @@ const MapPage: React.FC = () => {
     isError: isScootersError,
     error: scootersError,
   } = useQuery({
-    queryKey: ['scooters'],
+    queryKey: scooterKeys.list('public'),
     queryFn: scootersApi.getAll,
     staleTime: 5 * 60 * 1000, // 5分钟缓存
   })

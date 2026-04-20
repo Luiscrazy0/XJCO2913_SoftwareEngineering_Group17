@@ -8,6 +8,7 @@ import { FleetStats } from '../components/admin/FleetStats'
 import { DeleteConfirmationModal } from '../components/admin/DeleteConfirmationModal'
 import { useToast } from '../components/ToastProvider'
 import { Scooter } from '../types'
+import { scooterKeys } from '../utils/queryKeys'
 
 export default function AdminFleetPage() {
   const queryClient = useQueryClient()
@@ -25,7 +26,7 @@ export default function AdminFleetPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['scooters'],
+    queryKey: scooterKeys.list('admin'),
     queryFn: scootersApi.getAll,
   })
 
@@ -33,7 +34,7 @@ export default function AdminFleetPage() {
     mutationFn: (location: string) => scootersApi.create(location),
     onSuccess: () => {
       showToast('新增车辆成功，默认状态为可用。', 'success')
-      queryClient.invalidateQueries({ queryKey: ['scooters'] })
+      queryClient.invalidateQueries({ queryKey: scooterKeys.all })
       setIsModalOpen(false)
     },
     onError: () => showToast('新增失败，请稍后再试。', 'error'),
@@ -45,7 +46,7 @@ export default function AdminFleetPage() {
     onMutate: ({ id }) => setUpdatingId(id),
     onSuccess: () => {
       showToast('状态已更新。', 'success')
-      queryClient.invalidateQueries({ queryKey: ['scooters'] })
+      queryClient.invalidateQueries({ queryKey: scooterKeys.all })
     },
     onError: () => showToast('状态更新失败，请重试。', 'error'),
     onSettled: () => setUpdatingId(null),
@@ -56,7 +57,7 @@ export default function AdminFleetPage() {
     onMutate: (id) => setDeletingId(id),
     onSuccess: () => {
       showToast('车辆已删除。', 'success')
-      queryClient.invalidateQueries({ queryKey: ['scooters'] })
+      queryClient.invalidateQueries({ queryKey: scooterKeys.all })
       setIsDeleteModalOpen(false)
       setSelectedScooter(null)
     },

@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { User } from '../types'
 import { authApi } from '../api/auth'
 import { useToast } from '../components/ToastProvider'
+import { queryClient } from '../utils/queryClient'
+import { bookingKeys, feedbackKeys } from '../utils/queryKeys'
 
 interface AuthContextType {
   user: User | null
@@ -156,6 +158,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null)
     localStorage.removeItem('auth_token')
     localStorage.removeItem('user')
+
+    // Prevent cross-user cache leakage when accounts switch in the same browser session.
+    queryClient.cancelQueries()
+    queryClient.removeQueries({ queryKey: bookingKeys.all })
+    queryClient.removeQueries({ queryKey: feedbackKeys.all })
 
     if (options?.reason === 'expired') {
       showToast('会话已过期，请重新登录。', 'error')

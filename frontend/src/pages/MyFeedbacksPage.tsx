@@ -1,10 +1,8 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { feedbackApi, Feedback } from '../api/feedback'
-import { useAuth } from '../context/AuthContext'
 
 export default function MyFeedbacksPage() {
-  const { user } = useAuth()
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

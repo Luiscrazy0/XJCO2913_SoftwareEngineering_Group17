@@ -12,6 +12,7 @@ import ErrorState from '../components/ErrorState'
 import Navbar from '../components/Navbar'
 import ExtendBookingModal from '../components/ExtendBookingModal'
 import { Booking } from '../types'
+import { bookingKeys } from '../utils/queryKeys'
 
 const MyBookingsPage: React.FC = () => {
   const { user } = useAuth()
@@ -22,6 +23,8 @@ const MyBookingsPage: React.FC = () => {
   const [extendModalOpen, setExtendModalOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
 
+  const bookingsKey = bookingKeys.list(user?.id ?? null, user?.role ?? null)
+
   // 获取预约列表
   const {
     data: bookings = [],
@@ -30,9 +33,9 @@ const MyBookingsPage: React.FC = () => {
     error,
     refetch
   } = useQuery({
-    queryKey: ['bookings'],
+    queryKey: bookingsKey,
     queryFn: bookingsApi.getMyBookings,
-    enabled: !!user, // 只在用户登录时获取
+    enabled: !!user?.id, // 只在用户登录时获取
     staleTime: 5 * 60 * 1000, // 5分钟缓存
   })
 
@@ -41,7 +44,7 @@ const MyBookingsPage: React.FC = () => {
     mutationFn: bookingsApi.cancel,
     onSuccess: (updatedBooking) => {
       // 更新缓存
-      queryClient.setQueryData(['bookings'], (oldData: any) => {
+      queryClient.setQueryData(bookingsKey, (oldData: any) => {
         if (!oldData) return oldData
         return oldData.map((booking: any) =>
           booking.id === updatedBooking.id ? updatedBooking : booking
@@ -61,7 +64,7 @@ const MyBookingsPage: React.FC = () => {
       bookingsApi.extend(id, { additionalHours }),
     onSuccess: (updatedBooking) => {
       // 更新缓存
-      queryClient.setQueryData(['bookings'], (oldData: any) => {
+      queryClient.setQueryData(bookingsKey, (oldData: any) => {
         if (!oldData) return oldData
         return oldData.map((booking: any) =>
           booking.id === updatedBooking.id ? updatedBooking : booking

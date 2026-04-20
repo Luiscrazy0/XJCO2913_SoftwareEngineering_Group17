@@ -4,12 +4,15 @@ import { feedbackApi, Feedback, FeedbackFilters, FeedbackStatus, FeedbackPriorit
 import Navbar from '../components/Navbar'
 import { useToast } from '../components/ToastProvider'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { feedbackKeys } from '../utils/queryKeys'
 
 export default function AdminFeedbacksPage() {
   const queryClient = useQueryClient()
   const { showToast } = useToast()
+  const { user } = useAuth()
   const [filters, setFilters] = useState<FeedbackFilters>({ status: 'PENDING' })
-  const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null)
+  const role = user?.role ?? null
 
   const {
     data: feedbacks = [],
@@ -18,12 +21,12 @@ export default function AdminFeedbacksPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['feedbacks', filters],
+    queryKey: feedbackKeys.list(role, filters),
     queryFn: () => feedbackApi.getAll(filters),
   })
 
   const { data: pendingCount = 0 } = useQuery({
-    queryKey: ['feedbacks', 'pending-count'],
+    queryKey: feedbackKeys.pendingCount(role),
     queryFn: feedbackApi.getPendingCount,
   })
 
@@ -31,8 +34,7 @@ export default function AdminFeedbacksPage() {
     mutationFn: ({ id, data }: { id: string; data: any }) => feedbackApi.update(id, data),
     onSuccess: () => {
       showToast('Feedback updated successfully', 'success')
-      queryClient.invalidateQueries({ queryKey: ['feedbacks'] })
-      queryClient.invalidateQueries({ queryKey: ['feedbacks', 'pending-count'] })
+      queryClient.invalidateQueries({ queryKey: feedbackKeys.all })
     },
     onError: () => showToast('Failed to update feedback', 'error'),
   })

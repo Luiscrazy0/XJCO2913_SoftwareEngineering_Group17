@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
 import { feedbackApi, FeedbackCategory } from '../api/feedback'
 import { scootersApi } from '../api/scooters'
 import { bookingsApi } from '../api/bookings'
-import { Scooter } from '../api/scooters'
-import { Booking } from '../types'
+import type { Booking, Scooter } from '../types'
 
 export default function CreateFeedbackPage() {
   const navigate = useNavigate()
-  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [scooters, setScooters] = useState<Scooter[]>([])
   const [bookings, setBookings] = useState<Booking[]>([])
