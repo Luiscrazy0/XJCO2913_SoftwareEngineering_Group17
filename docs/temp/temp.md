@@ -68,6 +68,17 @@
 2. 管理员访问: 考虑是否需要管理员查看所有预订的权限
 3. 错误处理: 用户ID缺失时的适当错误响应
 4. 测试覆盖: 修复后必须进行完整的端到端测试
+
+🧪 本地环境排障（非常常见）
+如果出现「管理员账号无法登录 / 无可用车辆 / 数据库为空」：
+1. 确认 Postgres 已启动：`docker compose up -d`
+2. 初始化数据（会向空库写入站点/车辆/测试账号；重复运行会产生重复站点/车辆，建议只在空库运行）：
+   - `cd backend && npm run db:migrate`
+   - `cd backend && npm run seed`
+3. 种子账号（seed.ts 内置）：
+   - `admin@scooter.com / admin123`（MANAGER）
+   - `test1@example.com / user123`（CUSTOMER）
+   - `test2@example.com / user123`（CUSTOMER）
 📊 风险评估
 已完成步骤	状态
 分支创建	✅
