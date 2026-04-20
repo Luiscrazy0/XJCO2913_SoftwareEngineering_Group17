@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingStatus, HireType, Role, ScooterStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -155,6 +159,31 @@ describe('BookingService', () => {
         include: { user: true, scooter: true },
       });
     });
+
+    it('filters bookings by user id for non-manager callers', async () => {
+      const bookings = [createBookingRecord({ userId: 'user-1' })];
+      mockPrismaService.booking.findMany.mockResolvedValue(bookings);
+
+      await expect(service.findAll('user-1', Role.CUSTOMER)).resolves.toEqual(
+        bookings,
+      );
+      expect(mockPrismaService.booking.findMany).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+        include: { user: true, scooter: true },
+      });
+    });
+
+    it('does not filter bookings for manager callers', async () => {
+      const bookings = [createBookingRecord({ userId: 'someone-else' })];
+      mockPrismaService.booking.findMany.mockResolvedValue(bookings);
+
+      await expect(service.findAll('manager-1', Role.MANAGER)).resolves.toEqual(
+        bookings,
+      );
+      expect(mockPrismaService.booking.findMany).toHaveBeenCalledWith({
+        include: { user: true, scooter: true },
+      });
+    });
   });
 
   describe('findById', () => {
@@ -167,6 +196,15 @@ describe('BookingService', () => {
         where: { id: 'booking-1' },
         include: { user: true, scooter: true, payment: true },
       });
+    });
+
+    it('throws when a non-manager tries to access another user booking', async () => {
+      const booking = createBookingRecord({ userId: 'user-1' });
+      mockPrismaService.booking.findUnique.mockResolvedValue(booking);
+
+      await expect(
+        service.findById('booking-1', 'user-2', Role.CUSTOMER),
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -325,6 +363,17 @@ describe('BookingService', () => {
       );
     });
 
+    it('throws when a non-manager extends another user booking', async () => {
+      mockPrismaService.booking.findUnique.mockResolvedValue(
+        createBookingRecord({ userId: 'user-1', status: BookingStatus.CONFIRMED }),
+      );
+
+      await expect(
+        service.extendBooking('booking-1', 2, 'user-2', Role.CUSTOMER),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrismaService.booking.update).not.toHaveBeenCalled();
+    });
+
     it('throws when the booking status cannot be extended', async () => {
       mockPrismaService.booking.findUnique.mockResolvedValue(
         createBookingRecord({ status: BookingStatus.CANCELLED }),
@@ -418,6 +467,15 @@ describe('BookingService', () => {
         },
       });
     });
+
+    it('throws when a non-manager cancels another user booking', async () => {
+      mockPrismaService.booking.findUnique.mockResolvedValue({ userId: 'user-1' });
+
+      await expect(
+        service.cancelBooking('booking-1', 'user-2', Role.CUSTOMER),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrismaService.booking.update).not.toHaveBeenCalled();
+    });
   });
 
   describe('completeBooking', () => {
@@ -427,6 +485,17 @@ describe('BookingService', () => {
       await expect(service.completeBooking('missing')).rejects.toThrow(
         new NotFoundException('Booking not found'),
       );
+    });
+
+    it('throws when a non-manager completes another user booking', async () => {
+      mockPrismaService.booking.findUnique.mockResolvedValue(
+        createBookingRecord({ userId: 'user-1' }),
+      );
+
+      await expect(
+        service.completeBooking('booking-1', true, 'user-2', Role.CUSTOMER),
+      ).rejects.toThrow(ForbiddenException);
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
     });
 
     it('throws when trying to complete a cancelled booking', async () => {
