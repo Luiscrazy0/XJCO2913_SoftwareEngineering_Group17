@@ -1,18 +1,24 @@
 import { useState, useEffect } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams, useNavigate, Link } from 'react-router-dom'
-import { feedbackApi, Feedback, UpdateFeedbackRequest, DamageType } from '../api/feedback'
+import { feedbackApi, UpdateFeedbackRequest, DamageType } from '../api/feedback'
 import Navbar from '../components/Navbar'
 import { useToast } from '../components/ToastProvider'
+import { useAuth } from '../context/AuthContext'
+import { feedbackKeys } from '../utils/queryKeys'
 
 export default function FeedbackDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const { showToast } = useToast()
+  const { user } = useAuth()
+  const role = user?.role ?? null
   
   const [formData, setFormData] = useState<UpdateFeedbackRequest>({})
   const [isEditing, setIsEditing] = useState(false)
+
+  const feedbackKey = id ? feedbackKeys.detail(id, role) : feedbackKeys.detail('missing', role)
 
   const {
     data: feedback,
@@ -21,7 +27,7 @@ export default function FeedbackDetailPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['feedback', id],
+    queryKey: feedbackKey,
     queryFn: () => feedbackApi.getById(id!),
     enabled: !!id,
   })
@@ -30,9 +36,8 @@ export default function FeedbackDetailPage() {
     mutationFn: (data: UpdateFeedbackRequest) => feedbackApi.update(id!, data),
     onSuccess: (updatedFeedback) => {
       showToast('Feedback updated successfully', 'success')
-      queryClient.setQueryData(['feedback', id], updatedFeedback)
-      queryClient.invalidateQueries({ queryKey: ['feedbacks'] })
-      queryClient.invalidateQueries({ queryKey: ['feedbacks', 'pending-count'] })
+      queryClient.setQueryData(feedbackKey, updatedFeedback)
+      queryClient.invalidateQueries({ queryKey: feedbackKeys.all })
       setIsEditing(false)
     },
     onError: () => showToast('Failed to update feedback', 'error'),

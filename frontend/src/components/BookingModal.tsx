@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { bookingsApi } from '../api/bookings'
 import { HireType, Scooter } from '../types'
 import { useAuth } from '../context/AuthContext'
+import { bookingKeys, scooterKeys } from '../utils/queryKeys'
 
 interface BookingModalProps {
   isOpen: boolean
@@ -83,7 +84,12 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
   } = useMutation({
     mutationFn: (payload: Parameters<typeof bookingsApi.create>[0]) => bookingsApi.create(payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['scooters'] })
+      queryClient.invalidateQueries({ queryKey: scooterKeys.all })
+      if (user?.id) {
+        queryClient.invalidateQueries({
+          queryKey: bookingKeys.list(user.id, user.role),
+        })
+      }
     },
   })
 

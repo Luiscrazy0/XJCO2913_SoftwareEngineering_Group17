@@ -1,11 +1,15 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { feedbackApi, Feedback, FeedbackCategory } from '../api/feedback'
+import { feedbackApi, FeedbackCategory } from '../api/feedback'
 import Navbar from '../components/Navbar'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../context/AuthContext'
+import { feedbackKeys } from '../utils/queryKeys'
 
 export default function HighPriorityPage() {
   const [filterCategory, setFilterCategory] = useState<FeedbackCategory | 'ALL'>('ALL')
+  const { user } = useAuth()
+  const role = user?.role ?? null
 
   const {
     data: feedbacks = [],
@@ -14,7 +18,7 @@ export default function HighPriorityPage() {
     error,
     refetch,
   } = useQuery({
-    queryKey: ['feedbacks', 'high-priority'],
+    queryKey: feedbackKeys.highPriority(role),
     queryFn: feedbackApi.getHighPriority,
   })
 
