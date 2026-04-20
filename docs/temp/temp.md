@@ -1,8 +1,9 @@
 🔧 修复方案执行记录
 📋 当前状态
 - ✅ 分支创建: fix/frontend-cache-permission (新分支)
-- ✅ 后端开始: 已修改 booking.controller.ts 添加 Req, Request 导入
-- ⏸️ 暂停点: 需要继续完成后端权限修复
+- ✅ 阶段1完成: 后端 booking 权限修复（按用户隔离 + 管理员放行）
+- ✅ 阶段2完成: 前端 Query Key Factory + 登出缓存清理（避免跨账号缓存串数据）
+- ⏸️ 暂停点: 进入阶段4测试验证（权限/缓存/安全）
 🎯 完整修复计划
 阶段1：后端权限修复（必须优先）
 1. 修改 booking.controller.ts: 
@@ -55,21 +56,13 @@
    - 在 logout() 中清理特定用户缓存
 📍 继续执行点
 需要继续完成的步骤：
-1. 完成 booking.controller.ts 修改:
-      findAll(@Req() req: Request) {
-     const userId = req.user?.id;
-     return this.bookingService.findAll(userId);
-   }
-   
-2. 修改 booking.service.ts:
-      async findAll(userId?: string) {
-     return this.prisma.booking.findMany({
-       where: userId ? { userId } : undefined,
-       include: { user: true, scooter: true },
-     });
-   }
-   
-3. 验证其他 booking 端点权限（可并行进行）
+1. 阶段4：测试验证
+   - 权限测试: 用户A登录 -> 查看/操作自己的 bookings；切换用户B后不可查看/操作用户A的 booking
+   - 缓存测试: 用户A登录打开“我的预约” -> 登出 -> 用户B登录 -> 不应看到用户A缓存数据（应重新拉取）
+   - 安全测试: 尝试访问 /bookings/:id（他人ID）应被拒绝（403）或返回不可访问错误
+2.（可选）进一步加固
+   - POST /bookings：建议后端从 JWT 取 userId，忽略 body.userId（防止伪造下单）
+   - payment-card 相关接口：当前仍使用占位 user-id，可按同样模式改为从 JWT 获取
 🚨 注意事项
 1. JWT Guard 验证: 确保 req.user 正确包含用户信息
 2. 管理员访问: 考虑是否需要管理员查看所有预订的权限
@@ -79,6 +72,7 @@
 已完成步骤	状态
 分支创建	✅
 controller 导入添加	✅
-service 方法修改	⏳
-前端缓存架构	⏳
-现在可以继续执行。先完成后端权限修复，然后进行前端缓存架构重构。现在继续执行修复方案。首先完成后端权限修复：
+service 方法修改	✅
+其他 booking 端点权限校验	✅
+前端缓存架构	✅
+下一步：进入阶段4测试验证
