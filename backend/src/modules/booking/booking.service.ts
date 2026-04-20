@@ -2,9 +2,10 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
+import { BookingStatus, HireType, Role, ScooterStatus } from '@prisma/client';
 import { DiscountService } from './discount.service';
 import { EmailService } from './email.service';
 import * as bcrypt from 'bcrypt';
@@ -21,17 +22,20 @@ export class BookingService {
     private readonly emailService: EmailService,
   ) {}
 
-  async findAll() {
-    return this.prisma.booking.findMany({
-      include: {
-        user: true,
-        scooter: true,
-      },
-    });
+  async findAll(userId?: string, role?: Role) {
+    const where =
+      role === Role.MANAGER ? undefined : userId ? { userId } : undefined;
+
+    const query: Parameters<typeof this.prisma.booking.findMany>[0] = {
+      include: { user: true, scooter: true },
+    };
+    if (where) query.where = where;
+
+    return this.prisma.booking.findMany(query);
   }
 
-  async findById(id: string) {
-    return this.prisma.booking.findUnique({
+  async findById(id: string, requesterId?: string, requesterRole?: Role) {
+    const booking = await this.prisma.booking.findUnique({
       where: { id },
       include: {
         user: true,
@@ -39,6 +43,17 @@ export class BookingService {
         payment: true,
       },
     });
+
+    if (!booking) return booking;
+    if (
+      requesterId &&
+      requesterRole !== Role.MANAGER &&
+      booking.userId !== requesterId
+    ) {
+      throw new ForbiddenException('You do not have access to this booking');
+    }
+
+    return booking;
   }
 
   async createBooking(
@@ -103,7 +118,12 @@ export class BookingService {
     return booking;
   }
 
-  async extendBooking(bookingId: string, additionalHours: number) {
+  async extendBooking(
+    bookingId: string,
+    additionalHours: number,
+    requesterId?: string,
+    requesterRole?: Role,
+  ) {
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
       include: { scooter: true, user: true },
@@ -111,6 +131,14 @@ export class BookingService {
 
     if (!booking) {
       throw new NotFoundException('Booking not found');
+    }
+
+    if (
+      requesterId &&
+      requesterRole !== Role.MANAGER &&
+      booking.userId !== requesterId
+    ) {
+      throw new ForbiddenException('You do not have access to this booking');
     }
 
     if (
@@ -158,7 +186,18 @@ export class BookingService {
     return updatedBooking;
   }
 
-  async cancelBooking(id: string) {
+  async cancelBooking(id: string, requesterId?: string, requesterRole?: Role) {
+    if (requesterId && requesterRole !== Role.MANAGER) {
+      const booking = await this.prisma.booking.findUnique({
+        where: { id },
+        select: { userId: true },
+      });
+      if (!booking) throw new NotFoundException('Booking not found');
+      if (booking.userId !== requesterId) {
+        throw new ForbiddenException('You do not have access to this booking');
+      }
+    }
+
     return this.prisma.booking.update({
       where: { id },
       data: { status: BookingStatus.CANCELLED },
@@ -169,7 +208,12 @@ export class BookingService {
     });
   }
 
-  async completeBooking(id: string, isScooterIntact: boolean = true) {
+  async completeBooking(
+    id: string,
+    isScooterIntact: boolean = true,
+    requesterId?: string,
+    requesterRole?: Role,
+  ) {
     const booking = await this.prisma.booking.findUnique({
       where: { id },
       include: { scooter: true, user: true },
@@ -177,6 +221,14 @@ export class BookingService {
 
     if (!booking) {
       throw new NotFoundException('Booking not found');
+    }
+
+    if (
+      requesterId &&
+      requesterRole !== Role.MANAGER &&
+      booking.userId !== requesterId
+    ) {
+      throw new ForbiddenException('You do not have access to this booking');
     }
 
     if (booking.status === BookingStatus.CANCELLED) {

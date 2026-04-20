@@ -7,8 +7,8 @@ import {
   Body,
   UseGuards,
   Delete,
-  Req,
   Request,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { PaymentCardService } from './payment-card.service';
@@ -86,9 +86,11 @@ export class BookingController {
       },
     },
   })
-  findAll(@Req() req: Request) {
+  findAll(@Request() req) {
     const userId = req.user?.id;
-    return this.bookingService.findAll(userId);
+    const role = req.user?.role;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.findAll(userId, role);
   }
 
   @Get(':id')
@@ -158,8 +160,11 @@ export class BookingController {
       },
     },
   })
-  findOne(@Param('id') id: string) {
-    return this.bookingService.findById(id);
+  findOne(@Request() req, @Param('id') id: string) {
+    const userId = req.user?.id;
+    const role = req.user?.role;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.findById(id, userId, role);
   }
 
   @Post()
@@ -323,8 +328,20 @@ export class BookingController {
       },
     },
   })
-  extend(@Param('id') id: string, @Body() body: ExtendBookingDto) {
-    return this.bookingService.extendBooking(id, body.additionalHours);
+  extend(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: ExtendBookingDto,
+  ) {
+    const userId = req.user?.id;
+    const role = req.user?.role;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.extendBooking(
+      id,
+      body.additionalHours,
+      userId,
+      role,
+    );
   }
 
   @Patch(':id/cancel')
@@ -408,8 +425,11 @@ export class BookingController {
       },
     },
   })
-  cancel(@Param('id') id: string) {
-    return this.bookingService.cancelBooking(id);
+  cancel(@Request() req, @Param('id') id: string) {
+    const userId = req.user?.id;
+    const role = req.user?.role;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.cancelBooking(id, userId, role);
   }
 
   @Patch(':id/complete')
@@ -507,10 +527,19 @@ export class BookingController {
     },
   })
   complete(
+    @Request() req,
     @Param('id') id: string,
     @Body() body: { isScooterIntact: boolean },
   ) {
-    return this.bookingService.completeBooking(id, body.isScooterIntact);
+    const userId = req.user?.id;
+    const role = req.user?.role;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.completeBooking(
+      id,
+      body.isScooterIntact,
+      userId,
+      role,
+    );
   }
 
   // 银行卡管理API

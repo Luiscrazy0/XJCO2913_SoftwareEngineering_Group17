@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
-import { BookingStatus, HireType } from '@prisma/client';
+import { BookingStatus, HireType, Role } from '@prisma/client';
 import { validate } from 'class-validator';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { BookingController } from './booking.controller';
@@ -150,16 +150,27 @@ describe('BookingController', () => {
       const bookings = [{ id: 'booking-1' }];
       mockBookingService.findAll.mockResolvedValue(bookings);
 
-      await expect(controller.findAll()).resolves.toEqual(bookings);
-      expect(mockBookingService.findAll).toHaveBeenCalledTimes(1);
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.findAll(req as any)).resolves.toEqual(bookings);
+      expect(mockBookingService.findAll).toHaveBeenCalledWith(
+        req.user.id,
+        req.user.role,
+      );
     });
 
     it('findOne delegates to BookingService.findById', async () => {
       const booking = { id: 'booking-1' };
       mockBookingService.findById.mockResolvedValue(booking);
 
-      await expect(controller.findOne('booking-1')).resolves.toEqual(booking);
-      expect(mockBookingService.findById).toHaveBeenCalledWith('booking-1');
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.findOne(req as any, 'booking-1')).resolves.toEqual(
+        booking,
+      );
+      expect(mockBookingService.findById).toHaveBeenCalledWith(
+        'booking-1',
+        req.user.id,
+        req.user.role,
+      );
     });
 
     it('create delegates to BookingService.createBooking', async () => {
@@ -190,12 +201,15 @@ describe('BookingController', () => {
       const booking = { id: 'booking-1', status: BookingStatus.EXTENDED };
       mockBookingService.extendBooking.mockResolvedValue(booking);
 
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
       await expect(
-        controller.extend('booking-1', { additionalHours: 2 }),
+        controller.extend(req as any, 'booking-1', { additionalHours: 2 }),
       ).resolves.toEqual(booking);
       expect(mockBookingService.extendBooking).toHaveBeenCalledWith(
         'booking-1',
         2,
+        req.user.id,
+        req.user.role,
       );
     });
 
@@ -203,9 +217,14 @@ describe('BookingController', () => {
       const booking = { id: 'booking-1', status: BookingStatus.CANCELLED };
       mockBookingService.cancelBooking.mockResolvedValue(booking);
 
-      await expect(controller.cancel('booking-1')).resolves.toEqual(booking);
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.cancel(req as any, 'booking-1')).resolves.toEqual(
+        booking,
+      );
       expect(mockBookingService.cancelBooking).toHaveBeenCalledWith(
         'booking-1',
+        req.user.id,
+        req.user.role,
       );
     });
 
@@ -213,12 +232,15 @@ describe('BookingController', () => {
       const booking = { id: 'booking-1', status: BookingStatus.COMPLETED };
       mockBookingService.completeBooking.mockResolvedValue(booking);
 
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
       await expect(
-        controller.complete('booking-1', { isScooterIntact: false }),
+        controller.complete(req as any, 'booking-1', { isScooterIntact: false }),
       ).resolves.toEqual(booking);
       expect(mockBookingService.completeBooking).toHaveBeenCalledWith(
         'booking-1',
         false,
+        req.user.id,
+        req.user.role,
       );
     });
 
