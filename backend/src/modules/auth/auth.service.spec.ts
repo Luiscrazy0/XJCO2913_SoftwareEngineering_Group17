@@ -125,6 +125,7 @@ describe('AuthService', () => {
       );
       expect(mockJwtService.sign).toHaveBeenCalledWith({
         sub: fakeUser.id,
+        id: fakeUser.id,
         role: fakeUser.role,
       });
       expect(result).toEqual({ access_token: 'fake_jwt_token' });
