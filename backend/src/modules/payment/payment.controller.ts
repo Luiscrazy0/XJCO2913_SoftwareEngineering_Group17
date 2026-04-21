@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -74,11 +74,27 @@ export class PaymentController {
       },
     },
   })
+  @ApiResponse({
+    status: 403,
+    description: '无权访问此预约的支付',
+    schema: {
+      example: {
+        success: false,
+        error: 'Forbidden',
+        message: 'You can only pay for your own bookings',
+        statusCode: 403,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        path: '/payments',
+      },
+    },
+  })
   create(
     @Body()
     body: CreatePaymentDto,
+    @Req() req: any,
   ) {
-    return this.paymentService.createPayment(body.bookingId, body.amount);
+    const user = req.user as { sub: string; id: string; role: string };
+    return this.paymentService.createPayment(body.bookingId, body.amount, user.id);
   }
 
   /**
@@ -134,6 +150,20 @@ export class PaymentController {
     },
   })
   @ApiResponse({
+    status: 403,
+    description: '无权访问此预约的支付',
+    schema: {
+      example: {
+        success: false,
+        error: 'Forbidden',
+        message: 'You can only view payments for your own bookings',
+        statusCode: 403,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        path: '/payments/clx0987654321',
+      },
+    },
+  })
+  @ApiResponse({
     status: 404,
     description: '支付记录不存在',
     schema: {
@@ -147,7 +177,8 @@ export class PaymentController {
       },
     },
   })
-  getByBooking(@Param('bookingId') bookingId: string) {
-    return this.paymentService.getPaymentByBooking(bookingId);
+  getByBooking(@Param('bookingId') bookingId: string, @Req() req: any) {
+    const user = req.user as { sub: string; id: string; role: string };
+    return this.paymentService.getPaymentByBooking(bookingId, user.id);
   }
 }
