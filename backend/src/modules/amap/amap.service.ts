@@ -88,10 +88,16 @@ export class AmapService {
     private readonly httpService: HttpService,
     private readonly configService: ConfigService,
   ) {
-    this.apiKey = this.configService.get<string>('AMAP_WEB_KEY') || '';
+    const webKey = this.configService.get<string>('AMAP_WEB_KEY');
+    const legacyApiKey = this.configService.get<string>('AMAP_API_KEY');
+    const viteWebKey = this.configService.get<string>('VITE_AMAP_WEB_KEY');
+
+    this.apiKey = webKey || legacyApiKey || viteWebKey || '';
 
     if (!this.apiKey) {
-      this.logger.warn('高德地图Web API Key未配置，相关功能将不可用');
+      this.logger.warn(
+        '高德地图Web服务 Key 未配置（期望 AMAP_WEB_KEY；兼容 AMAP_API_KEY / VITE_AMAP_WEB_KEY），相关功能将不可用',
+      );
     } else {
       this.logger.log('高德地图Web API服务已初始化');
     }
