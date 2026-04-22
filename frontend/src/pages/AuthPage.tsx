@@ -1,136 +1,96 @@
-import React, { useState } from 'react'
+import React, { useState, useCallback } from 'react'
 import { useAuth } from '../context/AuthContext'
+import { useForm, validationRules } from '../hooks/useForm'
 
 type AuthTab = 'login' | 'register'
+
+interface AuthFormValues {
+  email: string
+  password: string
+  confirmPassword: string
+  insuranceAcknowledged: boolean
+  emergencyContact: string
+}
+
+const initialValues: AuthFormValues = {
+  email: '',
+  password: '',
+  confirmPassword: '',
+  insuranceAcknowledged: false,
+  emergencyContact: '',
+}
 
 export default function AuthPage() {
   const { login, register } = useAuth()
   const [activeTab, setActiveTab] = useState<AuthTab>('login')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [insuranceAcknowledged, setInsuranceAcknowledged] = useState(false)
-  const [emergencyContact, setEmergencyContact] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [focusedInput, setFocusedInput] = useState<string | null>(null)
-  const [formErrors, setFormErrors] = useState<{
-    email?: string
-    password?: string
-    confirmPassword?: string
-    emergencyContact?: string
-  }>({})
 
-  // 验证邮箱格式
-  const validateEmail = (email: string): string | null => {
-    if (!email) return '邮箱不能为空'
-    if (!email.includes('@') || !email.includes('.')) {
-      return '邮箱格式不正确'
-    }
-    return null
-  }
+  // Validation function using the shared validationRules
+  const validate = useCallback(
+    (values: AuthFormValues) => {
+      const errors: Partial<Record<keyof AuthFormValues, string>> = {}
 
-  // 验证密码
-  const validatePassword = (password: string): string | null => {
-    if (!password) return '密码不能为空'
-    if (password.length < 6) return '密码长度至少6位'
-    return null
-  }
+      const emailError = validationRules.required('邮箱不能为空')(values.email)
+        || validationRules.email('邮箱格式不正确')(values.email)
+      if (emailError) errors.email = emailError
 
-  // 验证确认密码
-  const validateConfirmPassword = (password: string, confirmPassword: string): string | null => {
-    if (!confirmPassword) return '请确认密码'
-    if (password !== confirmPassword) return '两次输入的密码不一致'
-    return null
-  }
+      const passwordError = validationRules.required('密码不能为空')(values.password)
+        || validationRules.minLength(6, '密码长度至少6位')(values.password)
+      if (passwordError) errors.password = passwordError
 
-  // 实时验证表单
-  const validateForm = () => {
-    const errors: typeof formErrors = {}
-    
-    const emailError = validateEmail(email)
-    if (emailError) errors.email = emailError
-    
-    const passwordError = validatePassword(password)
-    if (passwordError) errors.password = passwordError
-    
-    if (activeTab === 'register') {
-      const confirmError = validateConfirmPassword(password, confirmPassword)
-      if (confirmError) errors.confirmPassword = confirmError
-    }
-    
-    setFormErrors(errors)
-    return Object.keys(errors).length === 0
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    
-    // 表单验证
-    if (!validateForm()) {
-      return
-    }
-    
-    // 注册时需要确认保险条款
-    if (activeTab === 'register' && !insuranceAcknowledged) {
-      setError('请阅读并同意保险条款后才能注册')
-      return
-    }
-    
-    setIsLoading(true)
-
-    try {
       if (activeTab === 'register') {
-        await register(email, password, insuranceAcknowledged, emergencyContact)
-      } else {
-        await login(email, password)
+        const confirmError = validationRules.required('请确认密码')(values.confirmPassword)
+        if (!confirmError && values.password !== values.confirmPassword) {
+          errors.confirmPassword = '两次输入的密码不一致'
+        } else if (confirmError) {
+          errors.confirmPassword = confirmError
+        }
       }
-    } catch (err: any) {
-      // 提取后端错误消息
-      const errorMessage = err.response?.data?.message || err.message || '操作失败，请重试'
-      setError(errorMessage)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+
+      return errors
+    },
+    [activeTab]
+  )
+
+  const {
+    values,
+    errors: formErrors,
+    isSubmitting,
+    handleChange,
+    handleBlur,
+    handleSubmit,
+    setFieldValue,
+  } = useForm<AuthFormValues>({
+    initialValues,
+    validate,
+    onSubmit: async (vals) => {
+      setError(null)
+
+      // 注册时需要确认保险条款
+      if (activeTab === 'register' && !vals.insuranceAcknowledged) {
+        setError('请阅读并同意保险条款后才能注册')
+        return
+      }
+
+      try {
+        if (activeTab === 'register') {
+          await register(vals.email, vals.password, vals.insuranceAcknowledged, vals.emergencyContact)
+        } else {
+          await login(vals.email, vals.password)
+        }
+      } catch (err: any) {
+        const errorMessage = err.response?.data?.message || err.message || '操作失败，请重试'
+        setError(errorMessage)
+      }
+    },
+  })
 
   const handleTabChange = (tab: AuthTab) => {
     setActiveTab(tab)
     setError(null)
-    setFormErrors({})
-    setPassword('')
-    setConfirmPassword('')
-  }
-
-  const handleInputChange = (field: string, value: string) => {
-    switch (field) {
-      case 'email':
-        setEmail(value)
-        if (formErrors.email) {
-          const error = validateEmail(value)
-          setFormErrors(prev => ({ ...prev, email: error || undefined }))
-        }
-        break
-      case 'password':
-        setPassword(value)
-        if (formErrors.password) {
-          const error = validatePassword(value)
-          setFormErrors(prev => ({ ...prev, password: error || undefined }))
-        }
-        if (activeTab === 'register' && formErrors.confirmPassword) {
-          const error = validateConfirmPassword(value, confirmPassword)
-          setFormErrors(prev => ({ ...prev, confirmPassword: error || undefined }))
-        }
-        break
-      case 'confirmPassword':
-        setConfirmPassword(value)
-        if (formErrors.confirmPassword) {
-          const error = validateConfirmPassword(password, value)
-          setFormErrors(prev => ({ ...prev, confirmPassword: error || undefined }))
-        }
-        break
-    }
+    setFieldValue('password', '' as any)
+    setFieldValue('confirmPassword', '' as any)
   }
 
   const handleInputFocus = (field: string) => {
@@ -139,21 +99,7 @@ export default function AuthPage() {
 
   const handleInputBlur = (field: string) => {
     setFocusedInput(null)
-    // 失去焦点时验证
-    switch (field) {
-      case 'email':
-        const emailError = validateEmail(email)
-        setFormErrors(prev => ({ ...prev, email: emailError || undefined }))
-        break
-      case 'password':
-        const passwordError = validatePassword(password)
-        setFormErrors(prev => ({ ...prev, password: passwordError || undefined }))
-        break
-      case 'confirmPassword':
-        const confirmError = validateConfirmPassword(password, confirmPassword)
-        setFormErrors(prev => ({ ...prev, confirmPassword: confirmError || undefined }))
-        break
-    }
+    handleBlur({ target: { name: field } } as any)
   }
 
   // 获取输入框样式
@@ -189,8 +135,6 @@ export default function AuthPage() {
     return baseStyle
   }
 
-
-
   // 获取按钮样式
   const getButtonStyle = () => {
     const baseStyle = {
@@ -206,7 +150,7 @@ export default function AuthPage() {
       width: '100%',
     }
 
-    if (isLoading) {
+    if (isSubmitting) {
       return {
         ...baseStyle,
         backgroundColor: 'var(--auth-button-disabled, #86EFAC)',
@@ -275,14 +219,15 @@ export default function AuthPage() {
             </label>
             <input
               id="email"
+              name="email"
               type="email"
-              value={email}
-              onChange={(e) => handleInputChange('email', e.target.value)}
+              value={values.email}
+              onChange={handleChange}
               onFocus={() => handleInputFocus('email')}
               onBlur={() => handleInputBlur('email')}
               placeholder="请输入邮箱地址"
               style={getInputStyle('email', !!formErrors.email)}
-              disabled={isLoading}
+              disabled={isSubmitting}
               required
               aria-required="true"
               aria-invalid={!!formErrors.email}
@@ -304,14 +249,15 @@ export default function AuthPage() {
             </label>
             <input
               id="password"
+              name="password"
               type="password"
-              value={password}
-              onChange={(e) => handleInputChange('password', e.target.value)}
+              value={values.password}
+              onChange={handleChange}
               onFocus={() => handleInputFocus('password')}
               onBlur={() => handleInputBlur('password')}
               placeholder="请输入密码"
               style={getInputStyle('password', !!formErrors.password)}
-              disabled={isLoading}
+              disabled={isSubmitting}
               required
               aria-required="true"
               aria-invalid={!!formErrors.password}
@@ -334,14 +280,15 @@ export default function AuthPage() {
               </label>
               <input
                 id="confirmPassword"
+                name="confirmPassword"
                 type="password"
-                value={confirmPassword}
-                onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
+                value={values.confirmPassword}
+                onChange={handleChange}
                 onFocus={() => handleInputFocus('confirmPassword')}
                 onBlur={() => handleInputBlur('confirmPassword')}
                 placeholder="请再次输入密码"
                 style={getInputStyle('confirmPassword', !!formErrors.confirmPassword)}
-                disabled={isLoading}
+                disabled={isSubmitting}
                 required
                 aria-required="true"
                 aria-invalid={!!formErrors.confirmPassword}
@@ -362,10 +309,11 @@ export default function AuthPage() {
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                 <input
                   id="insuranceAcknowledged"
+                  name="insuranceAcknowledged"
                   type="checkbox"
-                  checked={insuranceAcknowledged}
-                  onChange={(e) => setInsuranceAcknowledged(e.target.checked)}
-                  disabled={isLoading}
+                  checked={values.insuranceAcknowledged}
+                  onChange={handleChange}
+                  disabled={isSubmitting}
                   required
                   aria-required="true"
                   style={{
@@ -395,14 +343,15 @@ export default function AuthPage() {
               </label>
               <input
                 id="emergencyContact"
+                name="emergencyContact"
                 type="text"
-                value={emergencyContact}
-                onChange={(e) => setEmergencyContact(e.target.value)}
+                value={values.emergencyContact}
+                onChange={handleChange}
                 onFocus={() => handleInputFocus('emergencyContact')}
                 onBlur={() => handleInputBlur('emergencyContact')}
                 placeholder="姓名 - 电话号码"
                 style={getInputStyle('emergencyContact', !!formErrors.emergencyContact)}
-                disabled={isLoading}
+                disabled={isSubmitting}
                 aria-invalid={!!formErrors.emergencyContact}
                 aria-describedby={formErrors.emergencyContact ? "emergency-contact-error" : undefined}
                 className="touch-target"
@@ -430,10 +379,10 @@ export default function AuthPage() {
             type="submit"
             style={getButtonStyle()}
             className="auth-button mclaren-btn-3d touch-target"
-            disabled={isLoading}
-            aria-busy={isLoading}
+            disabled={isSubmitting}
+            aria-busy={isSubmitting}
           >
-            {isLoading ? (
+            {isSubmitting ? (
               <>
                 <span className="sr-only">处理中</span>
                 处理中...
@@ -476,6 +425,7 @@ export default function AuthPage() {
     </div>
   )
 }
+
 
 // Styles using CSS variables from the design document
 const styles = {

@@ -4,6 +4,7 @@ import { authApi } from '../api/auth'
 import { useToast } from '../components/ToastProvider'
 import { queryClient } from '../utils/queryClient'
 import { bookingKeys, feedbackKeys } from '../utils/queryKeys'
+import { decodeJWT } from '../utils/jwt'
 
 interface AuthContextType {
   user: User | null
@@ -34,35 +35,6 @@ interface AuthProviderProps {
   children: ReactNode
 }
 
-// Helper function to decode JWT token
-const decodeJWT = (token?: string | null): any => {
-  if (!token) {
-    console.error('Failed to decode JWT token: token is missing')
-    return null
-  }
-
-  try {
-    // JWT uses Base64Url encoding, not standard Base64
-    const base64Url = token.split('.')[1]
-    if (!base64Url) {
-      throw new Error('Invalid JWT format')
-    }
-
-    // Replace Base64Url characters
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/')
-    // Decode
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    )
-    return JSON.parse(jsonPayload)
-  } catch (error) {
-    console.error('Failed to decode JWT token:', error)
-    return null
-  }
-}
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)

@@ -1,4 +1,4 @@
-import { ButtonHTMLAttributes } from 'react'
+import { ButtonHTMLAttributes, memo } from 'react'
 
 type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
 type ButtonSize = 'sm' | 'md' | 'lg'
@@ -29,7 +29,7 @@ const sizeClasses: Record<ButtonSize, string> = {
   lg: 'px-5 py-3 text-base',
 }
 
-export default function Button({
+const Button = memo(function Button({
   variant = 'primary',
   size = 'md',
   isLoading = false,
@@ -47,4 +47,7 @@ export default function Button({
       {isLoading ? '处理中...' : children}
     </button>
   )
-}
+})
+
+export default Button
+

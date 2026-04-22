@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { scootersApi } from '../api/scooters'
 import ScooterCard from '../components/ScooterCard'
@@ -38,26 +38,30 @@ export default function ScooterListPage() {
     refetchOnWindowFocus: false
   })
 
-  // 处理预约按钮点击
-  const handleBookClick = (scooter: Scooter) => {
+  // 处理预约按钮点击 - 使用useCallback避免不必要的重渲染
+  const handleBookClick = useCallback((scooter: Scooter) => {
     setSelectedScooter(scooter)
     setIsBookingModalOpen(true)
-  }
+  }, [])
 
   // 处理预约成功
-  const handleBookingSuccess = () => {
+  const handleBookingSuccess = useCallback(() => {
     // 重新获取车辆数据
     refetch()
-  }
+  }, [refetch])
 
   // 处理关闭预约弹窗
-  const handleCloseBookingModal = () => {
+  const handleCloseBookingModal = useCallback(() => {
     setIsBookingModalOpen(false)
     setSelectedScooter(null)
-  }
+  }, [])
 
-  // 过滤出可用的车辆
-  const availableScooters = scooters.filter(scooter => scooter.status === 'AVAILABLE')
+  // 过滤出可用的车辆 - 使用useMemo避免不必要的计算
+  const availableScooters = useMemo(
+    () => scooters.filter(scooter => scooter.status === 'AVAILABLE'),
+    [scooters]
+  )
+
 
   // 从地图页跳转时自动打开预订弹窗
   useEffect(() => {
