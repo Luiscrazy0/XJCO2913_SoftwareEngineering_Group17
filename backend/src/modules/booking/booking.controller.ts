@@ -234,14 +234,14 @@ export class BookingController {
       },
     },
   })
-  create(@Body() body: CreateBookingDto) {
-    // Dto
+  create(@Request() req, @Body() body: CreateBookingDto) {
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User information missing');
     return this.bookingService.createBooking(
-      body.userId,
+      userId,
       body.scooterId,
       body.hireType,
       new Date(body.startTime),
-      new Date(body.endTime),
     );
   }
 
@@ -563,10 +563,10 @@ export class BookingController {
   })
   @ApiResponse({ status: 201, description: '银行卡保存成功' })
   @ApiResponse({ status: 400, description: '银行卡信息无效' })
-  savePaymentCard(@Body() cardData: any) {
-    // 从JWT token获取用户ID（实际实现中需要从Auth装饰器获取）
-    // 这里暂时使用模拟的用户ID，实际项目中需要正确获取
-    return this.paymentCardService.savePaymentCard('user-id', cardData);
+  savePaymentCard(@Request() req, @Body() cardData: any) {
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.paymentCardService.savePaymentCard(userId, cardData);
   }
 
   @Get('payment-card')
@@ -577,9 +577,10 @@ export class BookingController {
     description: '获取用户保存的银行卡信息（卡号部分隐藏）',
   })
   @ApiResponse({ status: 200, description: '获取成功' })
-  getPaymentCard() {
-    // 从JWT token获取用户ID
-    return this.paymentCardService.getPaymentCard('user-id');
+  getPaymentCard(@Request() req) {
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.paymentCardService.getPaymentCard(userId);
   }
 
   @Delete('payment-card')
@@ -590,9 +591,10 @@ export class BookingController {
     description: '删除用户保存的银行卡信息',
   })
   @ApiResponse({ status: 200, description: '删除成功' })
-  deletePaymentCard() {
-    // 从JWT token获取用户ID
-    return this.paymentCardService.deletePaymentCard('user-id');
+  deletePaymentCard(@Request() req) {
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.paymentCardService.deletePaymentCard(userId);
   }
 
   // 员工代订API
@@ -619,34 +621,22 @@ export class BookingController {
           format: 'date-time',
           example: '2024-01-01T10:00:00.000Z',
         },
-        endTime: {
-          type: 'string',
-          format: 'date-time',
-          example: '2024-01-01T11:00:00.000Z',
-        },
       },
-      required: [
-        'customerEmail',
-        'scooterId',
-        'hireType',
-        'startTime',
-        'endTime',
-      ],
+      required: ['customerEmail', 'scooterId', 'hireType', 'startTime'],
     },
   })
   @ApiResponse({ status: 201, description: '代订成功' })
   @ApiResponse({ status: 403, description: '权限不足' })
   @ApiResponse({ status: 400, description: '请求参数错误' })
-  createStaffBooking(@Body() bookingData: any) {
-    // 从JWT token获取员工ID（实际实现中需要从Auth装饰器获取）
-    // 这里暂时使用模拟的员工ID，实际项目中需要正确获取
+  createStaffBooking(@Request() req, @Body() bookingData: any) {
+    const employeeId = req.user?.id;
+    if (!employeeId) throw new UnauthorizedException('User information missing');
     return this.bookingService.createBookingForCustomer(
-      'employee-id', // 员工ID
+      employeeId,
       bookingData.customerEmail,
       bookingData.scooterId,
       bookingData.hireType,
       new Date(bookingData.startTime),
-      new Date(bookingData.endTime),
     );
   }
 }

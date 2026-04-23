@@ -209,7 +209,6 @@ describe('EmployeeBookingService', () => {
       'scooter-1',
       'DAY_1',
       new Date('2026-04-16T09:00:00.000Z'),
-      new Date('2026-04-17T09:00:00.000Z'),
     );
     expect(employeeBookingCreateMock).toHaveBeenCalled();
     expect(result).toEqual({ id: 'booking-1' });
@@ -256,7 +255,6 @@ describe('EmployeeBookingService', () => {
       'scooter-1',
       'DAY_1',
       new Date('2026-04-16T09:00:00.000Z'),
-      new Date('2026-04-17T09:00:00.000Z'),
     );
   });
 

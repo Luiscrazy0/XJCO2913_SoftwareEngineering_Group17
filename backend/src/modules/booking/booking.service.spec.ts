@@ -210,7 +210,6 @@ describe('BookingService', () => {
 
   describe('createBooking', () => {
     const startTime = new Date('2026-04-01T10:00:00Z');
-    const endTime = new Date('2026-04-01T11:00:00Z');
 
     it('throws when the scooter does not exist', async () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue(null);
@@ -221,7 +220,6 @@ describe('BookingService', () => {
           'scooter-1',
           HireType.HOUR_1,
           startTime,
-          endTime,
         ),
       ).rejects.toThrow(new BadRequestException('Scooter not found'));
     });
@@ -237,13 +235,14 @@ describe('BookingService', () => {
           'scooter-1',
           HireType.HOUR_1,
           startTime,
-          endTime,
         ),
       ).rejects.toThrow(new BadRequestException('Scooter not available'));
     });
 
     it('creates a booking, updates the scooter, and sends a confirmation email', async () => {
       const scooter = createScooter();
+      const expectedEndTime = new Date(startTime.getTime());
+      expectedEndTime.setHours(expectedEndTime.getHours() + 4);
       const createdBooking = createBookingRecord({
         status: BookingStatus.PENDING_PAYMENT,
         totalCost: 12,
@@ -262,7 +261,6 @@ describe('BookingService', () => {
           'scooter-1',
           HireType.HOUR_4,
           startTime,
-          endTime,
         ),
       ).resolves.toEqual(createdBooking);
 
@@ -277,10 +275,10 @@ describe('BookingService', () => {
           scooterId: 'scooter-1',
           hireType: HireType.HOUR_4,
           startTime,
-          endTime,
+          endTime: expectedEndTime,
           totalCost: 12,
           status: BookingStatus.PENDING_PAYMENT,
-          originalEndTime: endTime,
+          originalEndTime: expectedEndTime,
         },
         include: {
           user: true,
@@ -315,7 +313,6 @@ describe('BookingService', () => {
           'scooter-1',
           HireType.HOUR_1,
           startTime,
-          endTime,
         ),
       ).resolves.toEqual(createdBooking);
 
@@ -323,34 +320,17 @@ describe('BookingService', () => {
       errorSpy.mockRestore();
     });
 
-    it('falls back to zero cost for an unknown hire type', async () => {
+    it('throws for an unknown hire type', async () => {
       mockPrismaService.scooter.findUnique.mockResolvedValue(createScooter());
-      mockPrismaService.booking.create.mockResolvedValue(
-        createBookingRecord({
-          hireType: 'UNKNOWN' as HireType,
-          totalCost: 0,
-          status: BookingStatus.PENDING_PAYMENT,
-        }),
-      );
-      mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
-        discountedPrice: 0,
-        discountAmount: 0,
-        discountReason: 'No discount',
-      });
-
-      await service.createBooking(
-        'user-1',
-        'scooter-1',
-        'UNKNOWN' as HireType,
-        startTime,
-        endTime,
-      );
-
-      expect(mockPrismaService.booking.create).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({ totalCost: 0 }),
-        }),
-      );
+      await expect(
+        service.createBooking(
+          'user-1',
+          'scooter-1',
+          'UNKNOWN' as HireType,
+          startTime,
+        ),
+      ).rejects.toThrow(new BadRequestException('Invalid hire type'));
+      expect(mockPrismaService.booking.create).not.toHaveBeenCalled();
     });
   });
 
@@ -591,7 +571,7 @@ describe('BookingService', () => {
 
   describe('createBookingForCustomer', () => {
     const startTime = new Date('2026-04-02T10:00:00Z');
-    const endTime = new Date('2026-04-02T11:00:00Z');
+    const expectedEndTime = new Date('2026-04-02T14:00:00Z');
 
     it('rejects non-manager employees', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(
@@ -605,7 +585,6 @@ describe('BookingService', () => {
           'scooter-1',
           HireType.HOUR_1,
           startTime,
-          endTime,
         ),
       ).rejects.toThrow(new BadRequestException('只有管理员可以进行代订操作'));
     });
@@ -620,7 +599,6 @@ describe('BookingService', () => {
           'scooter-1',
           HireType.HOUR_1,
           startTime,
-          endTime,
         ),
       ).rejects.toThrow(new BadRequestException('只有管理员可以进行代订操作'));
     });
@@ -638,7 +616,6 @@ describe('BookingService', () => {
           'scooter-1',
           HireType.HOUR_1,
           startTime,
-          endTime,
         ),
       ).rejects.toThrow(new BadRequestException('滑板车不存在'));
     });
@@ -658,7 +635,6 @@ describe('BookingService', () => {
           'scooter-1',
           HireType.HOUR_1,
           startTime,
-          endTime,
         ),
       ).rejects.toThrow(new BadRequestException('滑板车当前不可用'));
     });
@@ -679,8 +655,8 @@ describe('BookingService', () => {
         status: BookingStatus.CONFIRMED,
         totalCost: 12,
         startTime,
-        endTime,
-        originalEndTime: endTime,
+        endTime: expectedEndTime,
+        originalEndTime: expectedEndTime,
         hireType: HireType.HOUR_4,
       });
 
@@ -704,7 +680,6 @@ describe('BookingService', () => {
           'scooter-1',
           HireType.HOUR_4,
           startTime,
-          endTime,
         ),
       ).resolves.toEqual(booking);
 
@@ -721,10 +696,10 @@ describe('BookingService', () => {
           scooterId: 'scooter-1',
           hireType: HireType.HOUR_4,
           startTime,
-          endTime,
+          endTime: expectedEndTime,
           totalCost: 12,
           status: BookingStatus.CONFIRMED,
-          originalEndTime: endTime,
+          originalEndTime: expectedEndTime,
         },
         include: {
           user: true,
@@ -759,7 +734,7 @@ describe('BookingService', () => {
         user: customer,
         status: BookingStatus.CONFIRMED,
         startTime,
-        endTime,
+        endTime: new Date('2026-04-02T11:00:00Z'),
       });
 
       mockPrismaService.user.findUnique
@@ -779,7 +754,6 @@ describe('BookingService', () => {
           'scooter-1',
           HireType.HOUR_1,
           startTime,
-          endTime,
         ),
       ).resolves.toEqual(booking);
 
