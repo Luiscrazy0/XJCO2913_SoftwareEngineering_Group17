@@ -57,35 +57,18 @@ describe('BookingController', () => {
   describe('DTO validation', () => {
     it('accepts a valid CreateBookingDto', async () => {
       const dto = new CreateBookingDto();
-      dto.userId = '0199f4f6-8f16-490c-a176-605411b019d4';
       dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
       dto.hireType = HireType.HOUR_1;
       dto.startTime = '2026-04-12T10:00:00.000Z';
-      dto.endTime = '2026-04-12T11:00:00.000Z';
 
       expect(await validate(dto)).toHaveLength(0);
     });
 
-    it('rejects a non-UUID user id', async () => {
-      const dto = new CreateBookingDto();
-      dto.userId = 'user-1';
-      dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
-      dto.hireType = HireType.HOUR_1;
-      dto.startTime = '2026-04-12T10:00:00.000Z';
-      dto.endTime = '2026-04-12T11:00:00.000Z';
-
-      const [error] = await validate(dto);
-      expect(error.property).toBe('userId');
-      expect(error.constraints).toHaveProperty('isUuid');
-    });
-
     it('rejects a non-UUID scooter id', async () => {
       const dto = new CreateBookingDto();
-      dto.userId = '0199f4f6-8f16-490c-a176-605411b019d4';
       dto.scooterId = 'scooter-1';
       dto.hireType = HireType.HOUR_1;
       dto.startTime = '2026-04-12T10:00:00.000Z';
-      dto.endTime = '2026-04-12T11:00:00.000Z';
 
       const [error] = await validate(dto);
       expect(error.property).toBe('scooterId');
@@ -94,11 +77,9 @@ describe('BookingController', () => {
 
     it('rejects an invalid hire type', async () => {
       const dto = new CreateBookingDto();
-      dto.userId = '0199f4f6-8f16-490c-a176-605411b019d4';
       dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
       dto.hireType = 'INVALID' as HireType;
       dto.startTime = '2026-04-12T10:00:00.000Z';
-      dto.endTime = '2026-04-12T11:00:00.000Z';
 
       const [error] = await validate(dto);
       expect(error.property).toBe('hireType');
@@ -107,11 +88,9 @@ describe('BookingController', () => {
 
     it('rejects an invalid date string', async () => {
       const dto = new CreateBookingDto();
-      dto.userId = '0199f4f6-8f16-490c-a176-605411b019d4';
       dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
       dto.hireType = HireType.HOUR_1;
       dto.startTime = 'not-a-date';
-      dto.endTime = '2026-04-12T11:00:00.000Z';
 
       const [error] = await validate(dto);
       expect(error.property).toBe('startTime');
@@ -175,25 +154,23 @@ describe('BookingController', () => {
 
     it('create delegates to BookingService.createBooking', async () => {
       const dto: CreateBookingDto = {
-        userId: '0199f4f6-8f16-490c-a176-605411b019d4',
         scooterId: '3c08fcf4-5607-480c-b8a7-85cc674f51a7',
         hireType: HireType.HOUR_1,
         startTime: '2026-04-12T10:00:00.000Z',
-        endTime: '2026-04-12T11:00:00.000Z',
       };
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
       const booking = {
         id: 'booking-1',
         status: BookingStatus.PENDING_PAYMENT,
       };
       mockBookingService.createBooking.mockResolvedValue(booking);
 
-      await expect(controller.create(dto)).resolves.toEqual(booking);
+      await expect(controller.create(req as any, dto)).resolves.toEqual(booking);
       expect(mockBookingService.createBooking).toHaveBeenCalledWith(
-        dto.userId,
+        req.user.id,
         dto.scooterId,
         dto.hireType,
         new Date(dto.startTime),
-        new Date(dto.endTime),
       );
     });
 
@@ -244,7 +221,7 @@ describe('BookingController', () => {
       );
     });
 
-    it('savePaymentCard uses the placeholder user id', async () => {
+    it('savePaymentCard uses the authenticated user id', async () => {
       const cardData = {
         cardNumber: '4111111111111111',
         cardExpiry: '12/30',
@@ -253,32 +230,35 @@ describe('BookingController', () => {
       const result = { id: 'card-1' };
       mockPaymentCardService.savePaymentCard.mockResolvedValue(result);
 
-      await expect(controller.savePaymentCard(cardData)).resolves.toEqual(
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.savePaymentCard(req as any, cardData)).resolves.toEqual(
         result,
       );
       expect(mockPaymentCardService.savePaymentCard).toHaveBeenCalledWith(
-        'user-id',
+        req.user.id,
         cardData,
       );
     });
 
-    it('getPaymentCard uses the placeholder user id', async () => {
+    it('getPaymentCard uses the authenticated user id', async () => {
       const result = { cardNumber: '**** **** **** 1111' };
       mockPaymentCardService.getPaymentCard.mockResolvedValue(result);
 
-      await expect(controller.getPaymentCard()).resolves.toEqual(result);
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.getPaymentCard(req as any)).resolves.toEqual(result);
       expect(mockPaymentCardService.getPaymentCard).toHaveBeenCalledWith(
-        'user-id',
+        req.user.id,
       );
     });
 
-    it('deletePaymentCard uses the placeholder user id', async () => {
+    it('deletePaymentCard uses the authenticated user id', async () => {
       const result = { message: 'deleted' };
       mockPaymentCardService.deletePaymentCard.mockResolvedValue(result);
 
-      await expect(controller.deletePaymentCard()).resolves.toEqual(result);
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.deletePaymentCard(req as any)).resolves.toEqual(result);
       expect(mockPaymentCardService.deletePaymentCard).toHaveBeenCalledWith(
-        'user-id',
+        req.user.id,
       );
     });
 
@@ -288,39 +268,37 @@ describe('BookingController', () => {
         scooterId: 'scooter-1',
         hireType: HireType.HOUR_4,
         startTime: '2026-04-12T10:00:00.000Z',
-        endTime: '2026-04-12T14:00:00.000Z',
       };
       const result = { id: 'booking-1' };
       mockBookingService.createBookingForCustomer.mockResolvedValue(result);
 
-      await expect(controller.createStaffBooking(bookingData)).resolves.toEqual(
+      const req = { user: { id: 'employee-1', role: Role.MANAGER } };
+      await expect(controller.createStaffBooking(req as any, bookingData)).resolves.toEqual(
         result,
       );
       expect(mockBookingService.createBookingForCustomer).toHaveBeenCalledWith(
-        'employee-id',
+        req.user.id,
         bookingData.customerEmail,
         bookingData.scooterId,
         bookingData.hireType,
         new Date(bookingData.startTime),
-        new Date(bookingData.endTime),
       );
     });
   });
 
   it('propagates BookingService errors', async () => {
     const dto: CreateBookingDto = {
-      userId: '0199f4f6-8f16-490c-a176-605411b019d4',
       scooterId: '3c08fcf4-5607-480c-b8a7-85cc674f51a7',
       hireType: HireType.HOUR_1,
       startTime: '2026-04-12T10:00:00.000Z',
-      endTime: '2026-04-12T11:00:00.000Z',
     };
+    const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
     mockBookingService.createBooking.mockRejectedValue(
       new BadRequestException('Scooter not available'),
     );
 
-    await expect(controller.create(dto)).rejects.toThrow(BadRequestException);
-    await expect(controller.create(dto)).rejects.toThrow(
+    await expect(controller.create(req as any, dto)).rejects.toThrow(BadRequestException);
+    await expect(controller.create(req as any, dto)).rejects.toThrow(
       'Scooter not available',
     );
   });

@@ -67,7 +67,6 @@ export class EmployeeBookingService {
       scooterId,
       hireType,
       startTime,
-      endTime,
     );
 
     // 记录员工代订信息

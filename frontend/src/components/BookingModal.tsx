@@ -162,7 +162,6 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
       setFormError('')
 
       createBooking({
-        userId: user.id,
         scooterId: scooter.id,
         hireType: selectedHireType,
         startTime: parsedStart.toISOString(),

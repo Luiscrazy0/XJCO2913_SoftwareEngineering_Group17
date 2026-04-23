@@ -15,37 +15,12 @@ export const bookingsApi = {
 
   // Create new booking
   create: async (payload: {
-    userId: string
     scooterId: string
     hireType: HireType
     startTime: string
   }): Promise<Booking> => {
-    // 计算结束时间
-    const endTime = (() => {
-      const start = new Date(payload.startTime)
-      const end = new Date(start)
-      
-      switch (payload.hireType) {
-        case 'HOUR_1':
-          end.setHours(end.getHours() + 1)
-          break
-        case 'HOUR_4':
-          end.setHours(end.getHours() + 4)
-          break
-        case 'DAY_1':
-          end.setDate(end.getDate() + 1)
-          break
-        case 'WEEK_1':
-          end.setDate(end.getDate() + 7)
-          break
-      }
-      
-      return end.toISOString()
-    })()
-    
     const response = await axiosClient.post<ApiResponse<Booking>>('/bookings', {
-      ...payload,
-      endTime
+      ...payload
     })
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to create booking')

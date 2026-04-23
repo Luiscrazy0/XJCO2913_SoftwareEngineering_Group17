@@ -118,13 +118,15 @@
 **请求体**:
 ```json
 {
-  "userId": "user-123",
   "scooterId": "scooter-123",
   "hireType": "HOUR_1",
-  "startTime": "2024-01-01T10:00:00.000Z",
-  "endTime": "2024-01-01T11:00:00.000Z"
+  "startTime": "2024-01-01T10:00:00.000Z"
 }
 ```
+
+说明：
+- `userId` 从 JWT 中获取，后端不会信任前端传入的 `userId`（避免伪造下单/串单）。
+- `endTime` 由后端根据 `hireType + startTime` 计算，避免前端篡改时长/费用。
 
 ### 续租预约
 **端点**: `PATCH /bookings/:id/extend`

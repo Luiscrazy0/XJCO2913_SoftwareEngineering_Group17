@@ -61,8 +61,11 @@ export class BookingService {
     scooterId: string,
     hireType: HireType,
     startTime: Date,
-    endTime: Date,
   ) {
+    if (Number.isNaN(startTime.getTime())) {
+      throw new BadRequestException('Invalid start time');
+    }
+
     const scooter = await this.prisma.scooter.findUnique({
       where: { id: scooterId },
     });
@@ -82,6 +85,7 @@ export class BookingService {
       hireType,
     );
     const finalCost = discountResult.discountedPrice;
+    const endTime = this.calculateEndTime(startTime, hireType);
 
     const booking = await this.prisma.$transaction(async (tx) => {
       const createdBooking = await tx.booking.create({
@@ -290,7 +294,6 @@ export class BookingService {
     scooterId: string,
     hireType: HireType,
     startTime: Date,
-    endTime: Date,
   ) {
     // 验证员工权限
     const employee = await this.prisma.user.findUnique({
@@ -338,6 +341,10 @@ export class BookingService {
       throw new BadRequestException('滑板车当前不可用');
     }
 
+    if (Number.isNaN(startTime.getTime())) {
+      throw new BadRequestException('Invalid start time');
+    }
+
     // 计算费用（包含折扣）
     const totalCost = this.calculateCost(hireType);
     const discountResult = await this.discountService.calculateDiscountedPrice(
@@ -346,6 +353,7 @@ export class BookingService {
       hireType,
     );
     const finalCost = discountResult.discountedPrice;
+    const endTime = this.calculateEndTime(startTime, hireType);
 
     // 创建预订
     const booking = await this.prisma.$transaction(async (tx) => {
@@ -408,6 +416,26 @@ export class BookingService {
         return 90;
       default:
         return 0;
+    }
+  }
+
+  private calculateEndTime(startTime: Date, hireType: HireType): Date {
+    const endTime = new Date(startTime.getTime());
+    switch (hireType) {
+      case HireType.HOUR_1:
+        endTime.setHours(endTime.getHours() + 1);
+        return endTime;
+      case HireType.HOUR_4:
+        endTime.setHours(endTime.getHours() + 4);
+        return endTime;
+      case HireType.DAY_1:
+        endTime.setDate(endTime.getDate() + 1);
+        return endTime;
+      case HireType.WEEK_1:
+        endTime.setDate(endTime.getDate() + 7);
+        return endTime;
+      default:
+        throw new BadRequestException('Invalid hire type');
     }
   }
 }
