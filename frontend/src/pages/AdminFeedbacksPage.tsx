@@ -33,10 +33,10 @@ export default function AdminFeedbacksPage() {
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: any }) => feedbackApi.update(id, data),
     onSuccess: () => {
-      showToast('Feedback updated successfully', 'success')
+      showToast('反馈更新成功', 'success')
       queryClient.invalidateQueries({ queryKey: feedbackKeys.all })
     },
-    onError: () => showToast('Failed to update feedback', 'error'),
+    onError: () => showToast('更新反馈失败', 'error'),
   })
 
   const handleFilterChange = (key: keyof FeedbackFilters, value: string | undefined) => {
@@ -83,7 +83,7 @@ export default function AdminFeedbacksPage() {
         <Navbar />
         <div className="max-w-6xl mx-auto px-4 py-16 text-center">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[var(--mclaren-orange)] border-t-transparent" />
-          <p className="mt-4 text-[var(--text-secondary)]">Loading feedback data…</p>
+          <p className="mt-4 text-[var(--text-secondary)]">正在加载反馈数据…</p>
         </div>
       </div>
     )
@@ -91,20 +91,20 @@ export default function AdminFeedbacksPage() {
 
   // Error
   if (isError) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
+    const message = error instanceof Error ? error.message : '未知错误'
     return (
       <div className="min-h-screen bg-[var(--bg-main)]">
         <Navbar />
         <div className="max-w-4xl mx-auto px-4 py-16">
           <div className="rounded-2xl border border-rose-500/40 bg-rose-500/15 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-rose-200">Failed to load</h2>
+            <h2 className="text-lg font-semibold text-rose-200">加载失败</h2>
             <p className="mt-2 text-rose-200/80">{message}</p>
             <div className="mt-4 flex gap-3">
               <button
                 onClick={() => refetch()}
                 className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700"
               >
-                Retry
+                重试
               </button>
             </div>
           </div>
@@ -122,10 +122,10 @@ export default function AdminFeedbacksPage() {
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-10 space-y-8">
         <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-[var(--text-secondary)]">Admin · Feedback Management</p>
-            <h1 className="text-3xl font-bold text-[var(--text-main)]">Feedback Management</h1>
+            <p className="text-xs uppercase tracking-[0.25em] text-[var(--text-secondary)]">管理员 · 反馈管理</p>
+            <h1 className="text-3xl font-bold text-[var(--text-main)]">反馈管理</h1>
             <p className="mt-1 text-[var(--text-secondary)]">
-              View, filter, and manage all feedback reports from users.
+              查看、筛选和管理所有用户反馈报告。
             </p>
           </div>
           <div className="flex gap-3">
@@ -133,13 +133,13 @@ export default function AdminFeedbacksPage() {
               to="/admin/high-priority"
               className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
             >
-              View High Priority
+              查看高优先级
             </Link>
             <button
               onClick={() => refetch()}
               className="rounded-lg border border-[var(--border-line)] px-4 py-2 text-sm font-semibold text-[var(--text-main)] hover:border-[var(--mclaren-orange)] hover:bg-white/5 shadow-sm"
             >
-              Refresh
+              刷新
             </button>
           </div>
         </header>
@@ -149,20 +149,20 @@ export default function AdminFeedbacksPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Pending</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">待处理</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">{pendingCount}</h2>
               </div>
               <div className="h-10 w-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
                 <span className="text-yellow-500 font-bold">!</span>
               </div>
             </div>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">Awaiting review</p>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">等待审核</p>
           </div>
 
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Damage Reports</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">损坏报告</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">
                   {feedbacks.filter(f => f.category === 'DAMAGE').length}
                 </h2>
@@ -171,13 +171,13 @@ export default function AdminFeedbacksPage() {
                 <span className="text-red-500 font-bold">⚠</span>
               </div>
             </div>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">Require attention</p>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">需要关注</p>
           </div>
 
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Resolved</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">已解决</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">
                   {feedbacks.filter(f => f.status === 'RESOLVED').length}
                 </h2>
@@ -186,13 +186,13 @@ export default function AdminFeedbacksPage() {
                 <span className="text-green-500 font-bold">✓</span>
               </div>
             </div>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">Completed cases</p>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">已完成案例</p>
           </div>
 
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Chargeable</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">需要收费</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">
                   {feedbacks.filter(f => f.status === 'CHARGEABLE').length}
                 </h2>
@@ -201,7 +201,7 @@ export default function AdminFeedbacksPage() {
                 <span className="text-purple-500 font-bold">$</span>
               </div>
             </div>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">Require payment</p>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">需要支付</p>
           </div>
         </div>
 
@@ -209,8 +209,8 @@ export default function AdminFeedbacksPage() {
         <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex-1">
-              <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Filters</p>
-              <h2 className="text-xl font-semibold text-[var(--text-main)]">Filter Feedback</h2>
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">过滤器</p>
+              <h2 className="text-xl font-semibold text-[var(--text-main)]">筛选反馈</h2>
             </div>
             <div className="flex flex-wrap gap-3">
               <select
@@ -218,11 +218,11 @@ export default function AdminFeedbacksPage() {
                 onChange={(e) => handleFilterChange('status', e.target.value || undefined)}
                 className="rounded-lg border border-[var(--border-line)] bg-[var(--bg-main)] px-3 py-2 text-sm text-[var(--text-main)]"
               >
-                <option value="">All Status</option>
-                <option value="PENDING">Pending</option>
-                <option value="RESOLVED">Resolved</option>
-                <option value="ESCALATED">Escalated</option>
-                <option value="CHARGEABLE">Chargeable</option>
+                <option value="">所有状态</option>
+                <option value="PENDING">待处理</option>
+                <option value="RESOLVED">已解决</option>
+                <option value="ESCALATED">已升级</option>
+                <option value="CHARGEABLE">需要收费</option>
               </select>
 
               <select
@@ -230,11 +230,11 @@ export default function AdminFeedbacksPage() {
                 onChange={(e) => handleFilterChange('priority', e.target.value || undefined)}
                 className="rounded-lg border border-[var(--border-line)] bg-[var(--bg-main)] px-3 py-2 text-sm text-[var(--text-main)]"
               >
-                <option value="">All Priority</option>
-                <option value="LOW">Low</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="HIGH">High</option>
-                <option value="URGENT">Urgent</option>
+                <option value="">所有优先级</option>
+                <option value="LOW">低</option>
+                <option value="MEDIUM">中</option>
+                <option value="HIGH">高</option>
+                <option value="URGENT">紧急</option>
               </select>
 
               <select
@@ -242,17 +242,17 @@ export default function AdminFeedbacksPage() {
                 onChange={(e) => handleFilterChange('category', e.target.value || undefined)}
                 className="rounded-lg border border-[var(--border-line)] bg-[var(--bg-main)] px-3 py-2 text-sm text-[var(--text-main)]"
               >
-                <option value="">All Category</option>
-                <option value="FAULT">Fault</option>
-                <option value="DAMAGE">Damage</option>
-                <option value="SUGGESTION">Suggestion</option>
+                <option value="">所有分类</option>
+                <option value="FAULT">故障</option>
+                <option value="DAMAGE">损坏</option>
+                <option value="SUGGESTION">建议</option>
               </select>
 
               <button
                 onClick={() => setFilters({})}
                 className="rounded-lg border border-[var(--border-line)] px-4 py-2 text-sm font-semibold text-[var(--text-main)] hover:border-[var(--mclaren-orange)] hover:bg-white/5"
               >
-                Clear Filters
+                清除筛选
               </button>
             </div>
           </div>
@@ -263,11 +263,11 @@ export default function AdminFeedbacksPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between pb-3">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Feedback List</p>
-                <h2 className="text-xl font-semibold text-[var(--text-main)]">All Feedback Reports</h2>
+<p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">反馈列表</p>
+               <h2 className="text-xl font-semibold text-[var(--text-main)]">所有反馈报告</h2>
               </div>
               <div className="text-sm text-[var(--text-secondary)]">
-                Showing <span className="font-semibold text-[var(--text-main)]">{feedbacks.length}</span> feedbacks
+                显示 <span className="font-semibold text-[var(--text-main)]">{feedbacks.length}</span> 条反馈
               </div>
             </div>
 
@@ -275,14 +275,14 @@ export default function AdminFeedbacksPage() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-[var(--border-line)]">
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">Ticket ID</th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">Title</th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">Category</th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">Priority</th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">Status</th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">User</th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">Submitted</th>
-                    <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">Actions</th>
+<th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">工单ID</th>
+                     <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">标题</th>
+                     <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">分类</th>
+                     <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">优先级</th>
+                     <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">状态</th>
+                     <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">用户</th>
+                     <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">提交时间</th>
+                     <th className="py-3 px-4 text-left text-sm font-semibold text-[var(--text-secondary)]">操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -310,10 +310,10 @@ export default function AdminFeedbacksPage() {
                           onChange={(e) => handleQuickUpdate(feedback, 'priority', e.target.value)}
                           className={`rounded-lg px-2 py-1 text-xs font-medium ${getPriorityColor(feedback.priority)} border-none focus:ring-0`}
                         >
-                          <option value="LOW">Low</option>
-                          <option value="MEDIUM">Medium</option>
-                          <option value="HIGH">High</option>
-                          <option value="URGENT">Urgent</option>
+<option value="LOW">低</option>
+                           <option value="MEDIUM">中</option>
+                           <option value="HIGH">高</option>
+                           <option value="URGENT">紧急</option>
                         </select>
                       </td>
                       <td className="py-3 px-4">
@@ -322,15 +322,15 @@ export default function AdminFeedbacksPage() {
                           onChange={(e) => handleQuickUpdate(feedback, 'status', e.target.value)}
                           className={`rounded-lg px-2 py-1 text-xs font-medium ${getStatusColor(feedback.status)} border-none focus:ring-0`}
                         >
-                          <option value="PENDING">Pending</option>
-                          <option value="RESOLVED">Resolved</option>
-                          <option value="ESCALATED">Escalated</option>
-                          <option value="CHARGEABLE">Chargeable</option>
+<option value="PENDING">待处理</option>
+                           <option value="RESOLVED">已解决</option>
+                           <option value="ESCALATED">已升级</option>
+                           <option value="CHARGEABLE">需要收费</option>
                         </select>
                       </td>
                       <td className="py-3 px-4">
                         <div className="text-sm text-[var(--text-main)]">{feedback.createdByEmail}</div>
-                        <div className="text-xs text-[var(--text-secondary)]">Scooter: {feedback.scooterLocation}</div>
+                        <div className="text-xs text-[var(--text-secondary)]">电动车位置: {feedback.scooterLocation}</div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="text-sm text-[var(--text-main)]">
@@ -346,7 +346,7 @@ export default function AdminFeedbacksPage() {
                             to={`/admin/feedbacks/${feedback.id}`}
                             className="rounded-lg bg-blue-600 px-3 py-1 text-xs font-medium text-white hover:bg-blue-700"
                           >
-                            Details
+                            详情
                           </Link>
                         </div>
                       </td>
@@ -363,14 +363,14 @@ export default function AdminFeedbacksPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v12m6-6H6" />
               </svg>
             </div>
-            <h3 className="mt-4 text-lg font-semibold text-[var(--text-main)]">No feedback found</h3>
-            <p className="mt-2 text-[var(--text-secondary)]">Try adjusting your filters or check back later.</p>
+            <h3 className="mt-4 text-lg font-semibold text-[var(--text-main)]">未找到反馈</h3>
+            <p className="mt-2 text-[var(--text-secondary)]">尝试调整您的筛选条件或稍后再查看。</p>
             <div className="mt-4">
               <button
                 onClick={() => setFilters({})}
                 className="rounded-lg bg-[var(--mclaren-orange)] px-5 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
               >
-                Clear Filters
+                清除筛选
               </button>
             </div>
           </div>
