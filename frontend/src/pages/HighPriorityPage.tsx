@@ -77,7 +77,7 @@ export default function HighPriorityPage() {
         <Navbar />
         <div className="max-w-6xl mx-auto px-4 py-16 text-center">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[var(--mclaren-orange)] border-t-transparent" />
-          <p className="mt-4 text-[var(--text-secondary)]">Loading high priority issues…</p>
+          <p className="mt-4 text-[var(--text-secondary)]">正在加载高优先级问题…</p>
         </div>
       </div>
     )
@@ -85,21 +85,48 @@ export default function HighPriorityPage() {
 
   // Error
   if (isError) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
+    const message = error instanceof Error ? error.message : '未知错误'
+    
+    // 尝试提供更具体的错误信息
+    let detailedMessage = message
+    if (message.includes('400')) {
+      detailedMessage = '请求参数错误或缺少必要信息。请确保：\n1. 您已登录\n2. 您具有管理员权限\n3. 后端服务正在运行'
+    } else if (message.includes('401')) {
+      detailedMessage = '身份验证失败。请重新登录。'
+    } else if (message.includes('403')) {
+      detailedMessage = '权限不足。您需要管理员角色才能访问此页面。'
+    }
+    
     return (
       <div className="min-h-screen bg-[var(--bg-main)]">
         <Navbar />
         <div className="max-w-4xl mx-auto px-4 py-16">
           <div className="rounded-2xl border border-rose-500/40 bg-rose-500/15 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-rose-200">Failed to load</h2>
-            <p className="mt-2 text-rose-200/80">{message}</p>
+            <h2 className="text-lg font-semibold text-rose-200">加载失败</h2>
+            <p className="mt-2 text-rose-200/80 whitespace-pre-line">{detailedMessage}</p>
             <div className="mt-4 flex gap-3">
               <button
                 onClick={() => refetch()}
                 className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700"
               >
-                Retry
+                重试
               </button>
+              {!user && (
+                <a
+                  href="/auth"
+                  className="px-4 py-2 rounded-lg bg-[var(--mclaren-orange)] text-white font-semibold hover:brightness-110"
+                >
+                  前往登录
+                </a>
+              )}
+              {user && user.role !== 'MANAGER' && (
+                <a
+                  href="/"
+                  className="px-4 py-2 rounded-lg bg-yellow-600 text-white font-semibold hover:bg-yellow-700"
+                >
+                  返回首页
+                </a>
+              )}
             </div>
           </div>
         </div>
@@ -118,10 +145,10 @@ export default function HighPriorityPage() {
       <div className="max-w-7xl mx-auto px-4 lg:px-6 py-10 space-y-8">
         <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-xs uppercase tracking-[0.25em] text-[var(--text-secondary)]">Admin · High Priority Issues</p>
-            <h1 className="text-3xl font-bold text-[var(--text-main)]">High Priority Issues Dashboard</h1>
+            <p className="text-xs uppercase tracking-[0.25em] text-[var(--text-secondary)]">管理员 · 高优先级问题</p>
+            <h1 className="text-3xl font-bold text-[var(--text-main)]">高优先级问题仪表板</h1>
             <p className="mt-1 text-[var(--text-secondary)]">
-              Monitor and manage urgent feedback requiring immediate attention.
+              监控和管理需要立即关注的紧急反馈。
             </p>
           </div>
           <div className="flex gap-3">
@@ -129,13 +156,13 @@ export default function HighPriorityPage() {
               to="/admin/feedbacks"
               className="rounded-lg border border-[var(--border-line)] px-4 py-2 text-sm font-semibold text-[var(--text-main)] hover:border-[var(--mclaren-orange)] hover:bg-white/5 shadow-sm"
             >
-              All Feedbacks
+              所有反馈
             </Link>
             <button
               onClick={() => refetch()}
               className="rounded-lg border border-[var(--border-line)] px-4 py-2 text-sm font-semibold text-[var(--text-main)] hover:border-[var(--mclaren-orange)] hover:bg-white/5 shadow-sm"
             >
-              Refresh
+              刷新
             </button>
           </div>
         </header>
@@ -145,40 +172,40 @@ export default function HighPriorityPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Damage Reports</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">损坏报告</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">{damageCount}</h2>
               </div>
               <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center">
                 <span className="text-red-500 font-bold">⚠</span>
               </div>
             </div>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">Require immediate attention</p>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">需要立即关注</p>
           </div>
 
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Urgent Priority</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">紧急优先级</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">{urgentCount}</h2>
               </div>
               <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center">
                 <span className="text-red-500 font-bold">!</span>
               </div>
             </div>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">Highest priority issues</p>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">最高优先级问题</p>
           </div>
 
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Pending</p>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">待处理</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">{pendingCount}</h2>
               </div>
               <div className="h-10 w-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
                 <span className="text-yellow-500 font-bold">⏱</span>
               </div>
             </div>
-            <p className="mt-2 text-sm text-[var(--text-secondary)]">Awaiting resolution</p>
+            <p className="mt-2 text-sm text-[var(--text-secondary)]">等待解决</p>
           </div>
         </div>
 

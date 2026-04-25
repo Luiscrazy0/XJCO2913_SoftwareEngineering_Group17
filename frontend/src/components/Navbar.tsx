@@ -8,6 +8,7 @@ const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navigation = [
+    { name: '首页', href: '/' },
     { name: '发现车辆', href: '/scooters' },
     { name: '站点地图', href: '/map' },
     { name: '我的预约', href: '/bookings' },

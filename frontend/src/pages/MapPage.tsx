@@ -257,24 +257,46 @@ const MapPage: React.FC = () => {
                 {selectedStation ? selectedStation.name : '选择站点查看详情'}
               </h2>
 
-              {/* 高德地图 */}
-              <AmapMap
-                config={mapConfig}
-                markers={mapMarkers}
-                selectedMarker={selectedMarker}
-                userLocation={userLocation}
-                onMarkerClick={handleMarkerClick}
-                onMapClick={() => {
-                  // 点击地图空白处可以取消选中
-                  setSelectedStation(null)
+{/* 地图容器 */}
+          <div className="relative">
+            {/* 高德地图 */}
+            <AmapMap
+              config={mapConfig}
+              markers={mapMarkers}
+              selectedMarker={selectedMarker}
+              userLocation={userLocation}
+              onMarkerClick={handleMarkerClick}
+              onMapClick={() => {
+                // 点击地图空白处可以取消选中
+                setSelectedStation(null)
+              }}
+              className="h-[400px] rounded-lg overflow-hidden border border-gray-300"
+              loading={isLoadingStations || isLoadingScooters}
+              onError={(error) => {
+                console.error('地图加载错误:', error)
+                showToast('地图加载失败，请检查网络连接', 'error')
+              }}
+            />
+            
+            {/* 定位按钮 - 回到用户位置 */}
+            {userLocation && (
+              <button
+                onClick={() => {
+                  // 这里需要实现回到用户位置的功能
+                  // 目前先显示一个提示
+                  showToast('正在回到您的位置...', 'info')
                 }}
-                className="h-[400px] rounded-lg overflow-hidden border border-gray-300"
-                loading={isLoadingStations || isLoadingScooters}
-                onError={(error) => {
-                  console.error('地图加载错误:', error)
-                  showToast('地图加载失败，请检查网络连接', 'error')
-                }}
-              />
+                className="absolute bottom-4 right-4 bg-white rounded-full p-3 shadow-md hover:shadow-lg transition-shadow active:scale-95"
+                title="回到我的位置"
+                aria-label="回到我的位置"
+              >
+                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+              </button>
+            )}
+          </div>
 
               {/* 站点详情 */}
               {selectedStation && (
@@ -320,20 +342,20 @@ const MapPage: React.FC = () => {
                           {scooters
                             .filter(scooter => scooter.stationId === selectedStation.id && scooter.status === 'AVAILABLE')
                             .map(scooter => (
-                              <div
-                                key={scooter.id}
-                                className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
-                              >
-                                <div>
-                                  <span className="font-medium text-[var(--text-main)]">{scooter.id}</span>
-                                  <p className="text-sm text-[var(--text-secondary)]">{scooter.location}</p>
-                                </div>
+<div
+                                 key={scooter.id}
+                                 className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
+                               >
+                                 <div>
+                                   <span className="font-medium text-green-800">{scooter.id}</span>
+                                   <p className="text-sm text-green-700">{scooter.location}</p>
+                                 </div>
                                 <button
                                   onClick={() => {
                                     // 导航到车辆列表页面并自动打开预订
                                     window.location.href = `/scooters?highlight=${scooter.id}&book=1`
                                   }}
-                                  className="px-3 py-1 bg-[var(--mclaren-orange)] text-white text-sm rounded-lg hover:brightness-110 transition-colors"
+                                  className="px-4 py-2 bg-[var(--mclaren-orange)] text-white text-sm font-medium rounded-lg hover:brightness-110 transition-colors h-fit self-center"
                                 >
                                   立即预订
                                 </button>
