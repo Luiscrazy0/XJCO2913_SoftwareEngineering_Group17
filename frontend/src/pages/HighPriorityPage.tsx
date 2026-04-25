@@ -11,6 +11,51 @@ export default function HighPriorityPage() {
   const { user } = useAuth()
   const role = user?.role ?? null
 
+  // 检查用户是否有权限访问此页面
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-main)]">
+        <Navbar />
+        <div className="max-w-4xl mx-auto px-4 py-16">
+          <div className="rounded-2xl border border-yellow-500/40 bg-yellow-500/15 p-6 shadow-sm text-center">
+            <h2 className="text-lg font-semibold text-yellow-200">需要登录</h2>
+            <p className="mt-2 text-yellow-200/80">请先登录以访问此页面。</p>
+            <div className="mt-4">
+              <a
+                href="/auth"
+                className="px-4 py-2 rounded-lg bg-[var(--mclaren-orange)] text-white font-semibold hover:brightness-110 inline-block"
+              >
+                前往登录
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (user.role !== 'MANAGER') {
+    return (
+      <div className="min-h-screen bg-[var(--bg-main)]">
+        <Navbar />
+        <div className="max-w-4xl mx-auto px-4 py-16">
+          <div className="rounded-2xl border border-red-500/40 bg-red-500/15 p-6 shadow-sm text-center">
+            <h2 className="text-lg font-semibold text-red-200">权限不足</h2>
+            <p className="mt-2 text-red-200/80">您需要管理员权限才能访问高优先级问题页面。</p>
+            <div className="mt-4">
+              <a
+                href="/"
+                className="px-4 py-2 rounded-lg bg-[var(--mclaren-orange)] text-white font-semibold hover:brightness-110 inline-block"
+              >
+                返回首页
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const {
     data: feedbacks = [],
     isLoading,
@@ -221,25 +266,25 @@ export default function HighPriorityPage() {
                 onClick={() => setFilterCategory('ALL')}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold ${filterCategory === 'ALL' ? 'bg-[var(--mclaren-orange)] text-white' : 'border border-[var(--border-line)] text-[var(--text-main)] hover:border-[var(--mclaren-orange)] hover:bg-white/5'}`}
               >
-                All ({feedbacks.length})
+                全部 ({feedbacks.length})
               </button>
               <button
                 onClick={() => setFilterCategory('DAMAGE')}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold ${filterCategory === 'DAMAGE' ? 'bg-red-600 text-white' : 'border border-[var(--border-line)] text-[var(--text-main)] hover:border-red-500 hover:bg-red-500/5'}`}
               >
-                Damage ({damageCount})
+                损坏 ({damageCount})
               </button>
               <button
                 onClick={() => setFilterCategory('FAULT')}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold ${filterCategory === 'FAULT' ? 'bg-orange-600 text-white' : 'border border-[var(--border-line)] text-[var(--text-main)] hover:border-orange-500 hover:bg-orange-500/5'}`}
               >
-                Fault ({feedbacks.filter(f => f.category === 'FAULT').length})
+                故障 ({feedbacks.filter(f => f.category === 'FAULT').length})
               </button>
               <button
                 onClick={() => setFilterCategory('SUGGESTION')}
                 className={`rounded-lg px-4 py-2 text-sm font-semibold ${filterCategory === 'SUGGESTION' ? 'bg-blue-600 text-white' : 'border border-[var(--border-line)] text-[var(--text-main)] hover:border-blue-500 hover:bg-blue-500/5'}`}
               >
-                Suggestion ({feedbacks.filter(f => f.category === 'SUGGESTION').length})
+                建议 ({feedbacks.filter(f => f.category === 'SUGGESTION').length})
               </button>
             </div>
           </div>
@@ -318,12 +363,12 @@ export default function HighPriorityPage() {
                       to={`/admin/feedbacks/${feedback.id}`}
                       className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white text-center hover:bg-blue-700"
                     >
-                      View Details
+                      查看详情
                     </Link>
                     
                     {feedback.imageUrl && (
                       <div className="mt-2">
-                        <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)] mb-2">Image</p>
+                        <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)] mb-2">图片</p>
                         <img 
                           src={feedback.imageUrl} 
                           alt="Feedback" 
@@ -343,18 +388,18 @@ export default function HighPriorityPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
               </svg>
             </div>
-            <h3 className="mt-4 text-lg font-semibold text-[var(--text-main)]">No high priority issues</h3>
+            <h3 className="mt-4 text-lg font-semibold text-[var(--text-main)]">无高优先级问题</h3>
             <p className="mt-2 text-[var(--text-secondary)]">
               {filterCategory === 'ALL' 
-                ? 'All high priority issues have been resolved. Great work!'
-                : `No ${filterCategory.toLowerCase()} issues found in high priority.`}
+                ? '所有高优先级问题已解决。做得好！'
+                : `在高优先级中未找到${filterCategory === 'DAMAGE' ? '损坏' : filterCategory === 'FAULT' ? '故障' : '建议'}问题。`}
             </p>
             <div className="mt-4">
               <button
                 onClick={() => setFilterCategory('ALL')}
                 className="rounded-lg bg-[var(--mclaren-orange)] px-5 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
               >
-                View All Issues
+                查看所有问题
               </button>
             </div>
           </div>
@@ -365,10 +410,10 @@ export default function HighPriorityPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               <div className="flex-1">
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Export</p>
-                <h2 className="text-xl font-semibold text-[var(--text-main)]">Export Data</h2>
+                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">导出</p>
+                <h2 className="text-xl font-semibold text-[var(--text-main)]">导出数据</h2>
                 <p className="mt-1 text-sm text-[var(--text-secondary)]">
-                  Export the current filtered list for reporting purposes.
+                  导出当前筛选的列表用于报告目的。
                 </p>
               </div>
               <div className="flex gap-3">
@@ -405,7 +450,7 @@ export default function HighPriorityPage() {
                   }}
                   className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
                 >
-                  Export CSV
+                  导出CSV
                 </button>
                 <button
                   onClick={() => {
@@ -414,7 +459,7 @@ export default function HighPriorityPage() {
                   }}
                   className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
                 >
-                  Export PDF
+                  导出PDF
                 </button>
               </div>
             </div>
