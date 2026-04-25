@@ -19,8 +19,8 @@ export default function MyFeedbacksPage() {
       setFeedbacks(data)
       setError(null)
     } catch (err) {
-console.error('获取反馈失败:', err)
-    setError('加载您的反馈失败，请重试。')
+      console.error('获取反馈失败:', err)
+      setError('加载您的反馈失败，请重试。')
     } finally {
       setLoading(false)
     }
@@ -188,6 +188,7 @@ className="px-4 py-2 bg-[var(--mclaren-orange)] text-white rounded-lg hover:brig
           </ul>
         </div>
       )}
+      </div>
     </div>
   )
 }

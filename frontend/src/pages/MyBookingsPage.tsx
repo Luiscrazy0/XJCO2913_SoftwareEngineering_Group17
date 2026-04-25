@@ -22,7 +22,7 @@ const MyBookingsPage: React.FC = () => {
   
   const [extendModalOpen, setExtendModalOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
-  const [filterStatus, setFilterStatus] = useState<string>('ALL') // 筛选状态：ALL, PENDING_PAYMENT, ACTIVE, COMPLETED, CANCELLED
+  const [filterStatus, setFilterStatus] = useState<string>('ALL') // 筛选状态：ALL, PENDING_PAYMENT, CONFIRMED, COMPLETED, CANCELLED
 
   const bookingsKey = bookingKeys.list(user?.id ?? null, user?.role ?? null)
 
@@ -109,7 +109,7 @@ const MyBookingsPage: React.FC = () => {
     navigate('/scooters')
   }
 
-  // 排序预约：待支付 > 进行中 > 其他状态 > 按时间倒序
+  // 排序预约：待支付 > 已确认（进行中） > 其他状态 > 按时间倒序
   const sortedBookings = React.useMemo(() => {
     if (!bookings.length) return []
     
@@ -119,14 +119,13 @@ const MyBookingsPage: React.FC = () => {
       : bookings.filter(booking => booking.status === filterStatus)
     
     return [...filteredBookings].sort((a, b) => {
-      // 状态优先级映射
+      // 状态优先级映射 - 使用实际存在的BookingStatus
       const statusOrder: Record<string, number> = {
         'PENDING_PAYMENT': 100,  // 最高优先级：待支付
-        'ACTIVE': 90,            // 高优先级：进行中
-        'CONFIRMED': 80,         // 已确认
-        'EXTENDED': 70,          // 已续租
-        'COMPLETED': 60,         // 已完成
-        'CANCELLED': 50,         // 已取消
+        'CONFIRMED': 90,         // 高优先级：已确认（进行中）
+        'EXTENDED': 80,          // 已续租
+        'COMPLETED': 70,         // 已完成
+        'CANCELLED': 60,         // 已取消
       }
       
       // 按状态优先级排序（降序）
@@ -189,14 +188,14 @@ const MyBookingsPage: React.FC = () => {
               待支付 ({bookings.filter(b => b.status === 'PENDING_PAYMENT').length})
             </button>
             <button
-              onClick={() => setFilterStatus('ACTIVE')}
+              onClick={() => setFilterStatus('CONFIRMED')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filterStatus === 'ACTIVE'
+                filterStatus === 'CONFIRMED'
                   ? 'bg-blue-600 text-white'
                   : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-white/5'
               }`}
             >
-              进行中 ({bookings.filter(b => b.status === 'ACTIVE').length})
+              已确认 ({bookings.filter(b => b.status === 'CONFIRMED').length})
             </button>
             <button
               onClick={() => setFilterStatus('COMPLETED')}
