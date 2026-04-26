@@ -30,6 +30,7 @@
 - [Sprint 3计划](./sprints/sprint3-plan.md)
 - [Sprint 3实施步骤](./sprints/sprint3-steps.md)
 - [Sprint 3状态与CI建议](./sprints/sprint3-status-and-ci-recommendation.md)
+- [Sprint 3最终完成总结报告](./sprints/Sprint3_FINAL_SUMMARY_REPORT.md)
 
 ### 📦 归档文档
 - [代码审查报告](./archive/CODE_REVIEW_REPORT-Sprint2.md)
