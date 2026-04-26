@@ -29,12 +29,19 @@
 ## 2. 环境配置
 
 ### 2.1 更新环境变量
-在项目根目录的 `.env` 文件中添加：
+在项目根目录的 `.env` 文件中添加（前端会读取 `VITE_*` 变量）：
 
 ```bash
 # 高德地图API
 VITE_AMAP_JS_KEY=your_js_api_key_here
-VITE_AMAP_WEB_KEY=your_web_api_key_here
+# 如果你在控制台开启了「安全密钥（JS API）」则需要配置：
+VITE_AMAP_SECURITY_JS_CODE=your_security_js_code_here
+```
+
+后端（Web服务 API，`restapi.amap.com`）请在 `backend/.env`（或项目根目录 `.env`）中添加：
+
+```bash
+AMAP_WEB_KEY=your_webservice_api_key_here
 ```
 
 ### 2.2 更新环境变量示例文件
@@ -42,7 +49,6 @@ VITE_AMAP_WEB_KEY=your_web_api_key_here
 
 ```bash
 # 高德地图API
-VITE_AMAP_WEB_KEY=your_web_api_key_here
 VITE_AMAP_JS_KEY=your_js_api_key_here
 ```
 

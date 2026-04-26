@@ -25,15 +25,25 @@ export class UserService {
    * @param email - 用户的邮箱。
    * @param passwordHash - 用户的密码哈希值。
    * @param role - 用户的角色，默认为常客。
+   * @param insuranceAcknowledged - 用户是否确认保险条款。
+   * @param emergencyContact - 紧急联系人信息。
    * @returns 创建的用户对象。
    */
   async createUser(
     email: string,
     passwordHash: string,
     role: Role = Role.CUSTOMER,
+    insuranceAcknowledged: boolean = false,
+    emergencyContact?: string,
   ) {
     return this.prisma.user.create({
-      data: { email, passwordHash, role },
+      data: {
+        email,
+        passwordHash,
+        role,
+        insuranceAcknowledged,
+        emergencyContact,
+      },
     });
   }
 

@@ -45,7 +45,7 @@ const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
   const statusInfo = getStatusInfo()
 
   return (
-    <div className={`surface-card surface-lift overflow-hidden border ${statusInfo.borderColor}`}>
+    <div className={`surface-card surface-lift overflow-hidden border ${statusInfo.borderColor} min-h-[400px] flex flex-col h-full`}>
       {/* 车辆图片区域 */}
       <div className="h-48 bg-[var(--bg-input)] flex items-center justify-center">
         <div className="text-center">
@@ -57,9 +57,10 @@ const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
       </div>
 
       {/* 车辆信息区域 */}
-      <div className="p-6">
-        {/* 状态标签 */}
-        <div className="flex justify-between items-start mb-4">
+      <div className="p-6 flex flex-col flex-1">
+        <div className="flex-1">
+          {/* 状态标签 */}
+          <div className="flex justify-between items-start mb-4">
           <Badge variant={statusInfo.variant}>{statusInfo.text}</Badge>
           <span className="text-xs text-[var(--text-secondary)] font-mono">ID: {scooter.id.substring(0, 8)}...</span>
         </div>
@@ -76,13 +77,13 @@ const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
               {/* 优先显示高德地图解析的真实地址 */}
               {scooter.amapAddress ? (
                 <>
-                  <p className="text-[var(--text-main)] font-medium">{scooter.amapAddress}</p>
+                  <p className="text-[var(--text-main)] font-medium line-clamp-2">{scooter.amapAddress}</p>
                   <p className="text-sm text-[var(--text-secondary)] mt-1">
                     原始位置: {scooter.location}
                   </p>
                 </>
               ) : (
-                <p className="text-[var(--text-main)]">{scooter.location}</p>
+                <p className="text-[var(--text-main)] line-clamp-2">{scooter.location}</p>
               )}
               
               {scooter.station && (
@@ -99,6 +100,8 @@ const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
               )}
             </div>
           </div>
+        </div>
+
         </div>
 
         {/* 操作按钮 */}

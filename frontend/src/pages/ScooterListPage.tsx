@@ -7,6 +7,7 @@ import Navbar from '../components/Navbar'
 import Button from '../components/ui/Button'
 import { Scooter } from '../types'
 import { useSearchParams } from 'react-router-dom'
+import { scooterKeys } from '../utils/queryKeys'
 
 export default function ScooterListPage() {
   const [selectedScooter, setSelectedScooter] = useState<Scooter | null>(null)
@@ -22,7 +23,7 @@ export default function ScooterListPage() {
     error,
     refetch
   } = useQuery({
-    queryKey: ['scooters'],
+    queryKey: scooterKeys.list('public'),
     queryFn: async () => {
       try {
         const data = await scootersApi.getAll()

@@ -1,13 +1,13 @@
+import { BadRequestException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import { BookingStatus, HireType, Role } from '@prisma/client';
+import { validate } from 'class-validator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { BookingController } from './booking.controller';
 import { BookingService } from './booking.service';
-import { PaymentCardService } from './payment-card.service';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ExtendBookingDto } from './dto/extend-booking.dto';
-import { HireType, BookingStatus } from '@prisma/client';
-import { validate } from 'class-validator';
-import { BadRequestException } from '@nestjs/common';
+import { PaymentCardService } from './payment-card.service';
 
 describe('BookingController', () => {
   let controller: BookingController;
@@ -18,6 +18,7 @@ describe('BookingController', () => {
     createBooking: jest.fn(),
     extendBooking: jest.fn(),
     cancelBooking: jest.fn(),
+    completeBooking: jest.fn(),
     createBookingForCustomer: jest.fn(),
   };
 
@@ -49,229 +50,256 @@ describe('BookingController', () => {
     jest.clearAllMocks();
   });
 
-  it('应该被定义', () => {
+  it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 
-  describe('DTO验证测试', () => {
-    describe('CreateBookingDto', () => {
-      it('应该接受有效的UUID格式的scooterId和userId', async () => {
-        const dto = new CreateBookingDto();
-        dto.userId = '0199f4f6-8f16-490c-a176-605411b019d4';
-        dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
-        dto.hireType = HireType.HOUR_1;
-        dto.startTime = '2026-04-12T10:00:00.000Z';
-        dto.endTime = '2026-04-12T11:00:00.000Z';
+  describe('DTO validation', () => {
+    it('accepts a valid CreateBookingDto', async () => {
+      const dto = new CreateBookingDto();
+      dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
+      dto.hireType = HireType.HOUR_1;
+      dto.startTime = '2026-04-12T10:00:00.000Z';
 
-        const errors = await validate(dto);
-        expect(errors.length).toBe(0);
-      });
-
-      it('应该拒绝非UUID格式的scooterId', async () => {
-        const dto = new CreateBookingDto();
-        dto.userId = '0199f4f6-8f16-490c-a176-605411b019d4';
-        dto.scooterId = 'SC001'; // 非UUID格式
-        dto.hireType = HireType.HOUR_1;
-        dto.startTime = '2026-04-12T10:00:00.000Z';
-        dto.endTime = '2026-04-12T11:00:00.000Z';
-
-        const errors = await validate(dto);
-        expect(errors.length).toBeGreaterThan(0);
-        expect(errors[0].property).toBe('scooterId');
-        expect(errors[0].constraints).toHaveProperty('isUuid');
-      });
-
-      it('应该拒绝非UUID格式的userId', async () => {
-        const dto = new CreateBookingDto();
-        dto.userId = 'user-123'; // 非UUID格式
-        dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
-        dto.hireType = HireType.HOUR_1;
-        dto.startTime = '2026-04-12T10:00:00.000Z';
-        dto.endTime = '2026-04-12T11:00:00.000Z';
-
-        const errors = await validate(dto);
-        expect(errors.length).toBeGreaterThan(0);
-        expect(errors[0].property).toBe('userId');
-        expect(errors[0].constraints).toHaveProperty('isUuid');
-      });
-
-      it('应该拒绝无效的hireType', async () => {
-        const dto = new CreateBookingDto();
-        dto.userId = '0199f4f6-8f16-490c-a176-605411b019d4';
-        dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
-        dto.hireType = 'INVALID_TYPE' as HireType; // 无效的租赁类型
-        dto.startTime = '2026-04-12T10:00:00.000Z';
-        dto.endTime = '2026-04-12T11:00:00.000Z';
-
-        const errors = await validate(dto);
-        expect(errors.length).toBeGreaterThan(0);
-        expect(errors[0].property).toBe('hireType');
-        expect(errors[0].constraints).toHaveProperty('isEnum');
-      });
-
-      it('应该拒绝无效的日期格式', async () => {
-        const dto = new CreateBookingDto();
-        dto.userId = '0199f4f6-8f16-490c-a176-605411b019d4';
-        dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
-        dto.hireType = HireType.HOUR_1;
-        dto.startTime = 'invalid-date'; // 无效的日期格式
-        dto.endTime = '2026-04-12T11:00:00.000Z';
-
-        const errors = await validate(dto);
-        expect(errors.length).toBeGreaterThan(0);
-        expect(errors[0].property).toBe('startTime');
-        expect(errors[0].constraints).toHaveProperty('isDateString');
-      });
-
-      it('应该接受所有有效的HireType枚举值', async () => {
-        const validHireTypes = [
-          HireType.HOUR_1,
-          HireType.HOUR_4,
-          HireType.DAY_1,
-          HireType.WEEK_1,
-        ];
-
-        for (const hireType of validHireTypes) {
-          const dto = new CreateBookingDto();
-          dto.userId = '0199f4f6-8f16-490c-a176-605411b019d4';
-          dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
-          dto.hireType = hireType;
-          dto.startTime = '2026-04-12T10:00:00.000Z';
-          dto.endTime = '2026-04-12T11:00:00.000Z';
-
-          const errors = await validate(dto);
-          expect(errors.length).toBe(0);
-        }
-      });
+      expect(await validate(dto)).toHaveLength(0);
     });
 
-    describe('ExtendBookingDto', () => {
-      it('应该接受有效的additionalHours', async () => {
-        const dto = new ExtendBookingDto();
-        dto.additionalHours = 2;
+    it('rejects a non-UUID scooter id', async () => {
+      const dto = new CreateBookingDto();
+      dto.scooterId = 'scooter-1';
+      dto.hireType = HireType.HOUR_1;
+      dto.startTime = '2026-04-12T10:00:00.000Z';
 
-        const errors = await validate(dto);
-        expect(errors.length).toBe(0);
-      });
+      const [error] = await validate(dto);
+      expect(error.property).toBe('scooterId');
+      expect(error.constraints).toHaveProperty('isUuid');
+    });
 
-      it('应该拒绝非数字的additionalHours', async () => {
-        const dto = new ExtendBookingDto();
-        (dto as any).additionalHours = 'not-a-number';
+    it('rejects an invalid hire type', async () => {
+      const dto = new CreateBookingDto();
+      dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
+      dto.hireType = 'INVALID' as HireType;
+      dto.startTime = '2026-04-12T10:00:00.000Z';
 
-        const errors = await validate(dto);
-        expect(errors.length).toBeGreaterThan(0);
-      });
+      const [error] = await validate(dto);
+      expect(error.property).toBe('hireType');
+      expect(error.constraints).toHaveProperty('isEnum');
+    });
 
-      it('应该拒绝负数additionalHours', async () => {
-        const dto = new ExtendBookingDto();
-        dto.additionalHours = -1;
+    it('rejects an invalid date string', async () => {
+      const dto = new CreateBookingDto();
+      dto.scooterId = '3c08fcf4-5607-480c-b8a7-85cc674f51a7';
+      dto.hireType = HireType.HOUR_1;
+      dto.startTime = 'not-a-date';
 
-        const errors = await validate(dto);
-        expect(errors.length).toBeGreaterThan(0);
-      });
+      const [error] = await validate(dto);
+      expect(error.property).toBe('startTime');
+      expect(error.constraints).toHaveProperty('isDateString');
+    });
 
-      it('应该拒绝零additionalHours', async () => {
-        const dto = new ExtendBookingDto();
-        dto.additionalHours = 0;
+    it('accepts a valid ExtendBookingDto', async () => {
+      const dto = new ExtendBookingDto();
+      dto.additionalHours = 2;
 
-        const errors = await validate(dto);
-        expect(errors.length).toBeGreaterThan(0);
-      });
+      expect(await validate(dto)).toHaveLength(0);
+    });
+
+    it('rejects a non-number additionalHours value', async () => {
+      const dto = new ExtendBookingDto();
+      Object.assign(dto, { additionalHours: 'two' });
+
+      const [error] = await validate(dto);
+      expect(error.constraints).toHaveProperty('isNumber');
+    });
+
+    it('rejects non-positive additionalHours values', async () => {
+      const zeroDto = new ExtendBookingDto();
+      zeroDto.additionalHours = 0;
+
+      const negativeDto = new ExtendBookingDto();
+      negativeDto.additionalHours = -1;
+
+      expect(await validate(zeroDto)).not.toHaveLength(0);
+      expect(await validate(negativeDto)).not.toHaveLength(0);
     });
   });
 
-  describe('控制器方法', () => {
-    it('create方法应该调用bookingService.createBooking', async () => {
-      const createBookingDto: CreateBookingDto = {
-        userId: '0199f4f6-8f16-490c-a176-605411b019d4',
+  describe('controller methods', () => {
+    it('findAll delegates to BookingService.findAll', async () => {
+      const bookings = [{ id: 'booking-1' }];
+      mockBookingService.findAll.mockResolvedValue(bookings);
+
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.findAll(req as any)).resolves.toEqual(bookings);
+      expect(mockBookingService.findAll).toHaveBeenCalledWith(
+        req.user.id,
+        req.user.role,
+      );
+    });
+
+    it('findOne delegates to BookingService.findById', async () => {
+      const booking = { id: 'booking-1' };
+      mockBookingService.findById.mockResolvedValue(booking);
+
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.findOne(req as any, 'booking-1')).resolves.toEqual(
+        booking,
+      );
+      expect(mockBookingService.findById).toHaveBeenCalledWith(
+        'booking-1',
+        req.user.id,
+        req.user.role,
+      );
+    });
+
+    it('create delegates to BookingService.createBooking', async () => {
+      const dto: CreateBookingDto = {
         scooterId: '3c08fcf4-5607-480c-b8a7-85cc674f51a7',
         hireType: HireType.HOUR_1,
         startTime: '2026-04-12T10:00:00.000Z',
-        endTime: '2026-04-12T11:00:00.000Z',
       };
-
-      const mockBooking = {
-        id: 'booking-id',
-        userId: createBookingDto.userId,
-        scooterId: createBookingDto.scooterId,
-        hireType: createBookingDto.hireType,
-        startTime: new Date(createBookingDto.startTime),
-        endTime: new Date(createBookingDto.endTime),
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      const booking = {
+        id: 'booking-1',
         status: BookingStatus.PENDING_PAYMENT,
-        totalCost: 5,
       };
+      mockBookingService.createBooking.mockResolvedValue(booking);
 
-      mockBookingService.createBooking.mockResolvedValue(mockBooking);
-
-      const result = await controller.create(createBookingDto);
-
+      await expect(controller.create(req as any, dto)).resolves.toEqual(booking);
       expect(mockBookingService.createBooking).toHaveBeenCalledWith(
-        createBookingDto.userId,
-        createBookingDto.scooterId,
-        createBookingDto.hireType,
-        new Date(createBookingDto.startTime),
-        new Date(createBookingDto.endTime),
+        req.user.id,
+        dto.scooterId,
+        dto.hireType,
+        new Date(dto.startTime),
       );
-      expect(result).toBe(mockBooking);
     });
 
-    it('extend方法应该调用bookingService.extendBooking', async () => {
-      const bookingId = 'booking-id';
-      const extendBookingDto: ExtendBookingDto = { additionalHours: 2 };
-      const mockExtendedBooking = {
-        id: bookingId,
-        status: BookingStatus.EXTENDED,
-        totalCost: 15,
-      };
+    it('extend delegates to BookingService.extendBooking', async () => {
+      const booking = { id: 'booking-1', status: BookingStatus.EXTENDED };
+      mockBookingService.extendBooking.mockResolvedValue(booking);
 
-      mockBookingService.extendBooking.mockResolvedValue(mockExtendedBooking);
-
-      const result = await controller.extend(bookingId, extendBookingDto);
-
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(
+        controller.extend(req as any, 'booking-1', { additionalHours: 2 }),
+      ).resolves.toEqual(booking);
       expect(mockBookingService.extendBooking).toHaveBeenCalledWith(
-        bookingId,
-        extendBookingDto.additionalHours,
+        'booking-1',
+        2,
+        req.user.id,
+        req.user.role,
       );
-      expect(result).toBe(mockExtendedBooking);
     });
 
-    it('cancel方法应该调用bookingService.cancelBooking', async () => {
-      const bookingId = 'booking-id';
-      const mockCancelledBooking = {
-        id: bookingId,
-        status: BookingStatus.CANCELLED,
+    it('cancel delegates to BookingService.cancelBooking', async () => {
+      const booking = { id: 'booking-1', status: BookingStatus.CANCELLED };
+      mockBookingService.cancelBooking.mockResolvedValue(booking);
+
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.cancel(req as any, 'booking-1')).resolves.toEqual(
+        booking,
+      );
+      expect(mockBookingService.cancelBooking).toHaveBeenCalledWith(
+        'booking-1',
+        req.user.id,
+        req.user.role,
+      );
+    });
+
+    it('complete delegates to BookingService.completeBooking', async () => {
+      const booking = { id: 'booking-1', status: BookingStatus.COMPLETED };
+      mockBookingService.completeBooking.mockResolvedValue(booking);
+
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(
+        controller.complete(req as any, 'booking-1', { isScooterIntact: false }),
+      ).resolves.toEqual(booking);
+      expect(mockBookingService.completeBooking).toHaveBeenCalledWith(
+        'booking-1',
+        false,
+        req.user.id,
+        req.user.role,
+      );
+    });
+
+    it('savePaymentCard uses the authenticated user id', async () => {
+      const cardData = {
+        cardNumber: '4111111111111111',
+        cardExpiry: '12/30',
+        cardHolder: 'Test User',
       };
+      const result = { id: 'card-1' };
+      mockPaymentCardService.savePaymentCard.mockResolvedValue(result);
 
-      mockBookingService.cancelBooking.mockResolvedValue(mockCancelledBooking);
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.savePaymentCard(req as any, cardData)).resolves.toEqual(
+        result,
+      );
+      expect(mockPaymentCardService.savePaymentCard).toHaveBeenCalledWith(
+        req.user.id,
+        cardData,
+      );
+    });
 
-      const result = await controller.cancel(bookingId);
+    it('getPaymentCard uses the authenticated user id', async () => {
+      const result = { cardNumber: '**** **** **** 1111' };
+      mockPaymentCardService.getPaymentCard.mockResolvedValue(result);
 
-      expect(mockBookingService.cancelBooking).toHaveBeenCalledWith(bookingId);
-      expect(result).toBe(mockCancelledBooking);
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.getPaymentCard(req as any)).resolves.toEqual(result);
+      expect(mockPaymentCardService.getPaymentCard).toHaveBeenCalledWith(
+        req.user.id,
+      );
+    });
+
+    it('deletePaymentCard uses the authenticated user id', async () => {
+      const result = { message: 'deleted' };
+      mockPaymentCardService.deletePaymentCard.mockResolvedValue(result);
+
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(controller.deletePaymentCard(req as any)).resolves.toEqual(result);
+      expect(mockPaymentCardService.deletePaymentCard).toHaveBeenCalledWith(
+        req.user.id,
+      );
+    });
+
+    it('createStaffBooking delegates to BookingService.createBookingForCustomer', async () => {
+      const bookingData = {
+        customerEmail: 'customer@example.com',
+        scooterId: 'scooter-1',
+        hireType: HireType.HOUR_4,
+        startTime: '2026-04-12T10:00:00.000Z',
+      };
+      const result = { id: 'booking-1' };
+      mockBookingService.createBookingForCustomer.mockResolvedValue(result);
+
+      const req = { user: { id: 'employee-1', role: Role.MANAGER } };
+      await expect(controller.createStaffBooking(req as any, bookingData)).resolves.toEqual(
+        result,
+      );
+      expect(mockBookingService.createBookingForCustomer).toHaveBeenCalledWith(
+        req.user.id,
+        bookingData.customerEmail,
+        bookingData.scooterId,
+        bookingData.hireType,
+        new Date(bookingData.startTime),
+      );
     });
   });
 
-  describe('错误处理', () => {
-    it('当bookingService.createBooking抛出BadRequestException时应该传播异常', async () => {
-      const createBookingDto: CreateBookingDto = {
-        userId: '0199f4f6-8f16-490c-a176-605411b019d4',
-        scooterId: '3c08fcf4-5607-480c-b8a7-85cc674f51a7',
-        hireType: HireType.HOUR_1,
-        startTime: '2026-04-12T10:00:00.000Z',
-        endTime: '2026-04-12T11:00:00.000Z',
-      };
+  it('propagates BookingService errors', async () => {
+    const dto: CreateBookingDto = {
+      scooterId: '3c08fcf4-5607-480c-b8a7-85cc674f51a7',
+      hireType: HireType.HOUR_1,
+      startTime: '2026-04-12T10:00:00.000Z',
+    };
+    const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+    mockBookingService.createBooking.mockRejectedValue(
+      new BadRequestException('Scooter not available'),
+    );
 
-      const errorMessage = 'Scooter not available';
-      mockBookingService.createBooking.mockRejectedValue(
-        new BadRequestException(errorMessage),
-      );
-
-      await expect(controller.create(createBookingDto)).rejects.toThrow(
-        BadRequestException,
-      );
-      await expect(controller.create(createBookingDto)).rejects.toThrow(
-        errorMessage,
-      );
-    });
+    await expect(controller.create(req as any, dto)).rejects.toThrow(BadRequestException);
+    await expect(controller.create(req as any, dto)).rejects.toThrow(
+      'Scooter not available',
+    );
   });
 });

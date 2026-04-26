@@ -9,6 +9,11 @@ import AdminFleetPage from "../pages/AdminFleetPage"
 import TestScooterPage from "../pages/TestScooterPage"
 import MapPage from "../pages/MapPage"
 import RevenueStatisticsPage from "../pages/RevenueStatisticsPage"
+import CreateFeedbackPage from "../pages/CreateFeedbackPage"
+import MyFeedbacksPage from "../pages/MyFeedbacksPage"
+import AdminFeedbacksPage from "../pages/AdminFeedbacksPage"
+import FeedbackDetailPage from "../pages/FeedbackDetailPage"
+import HighPriorityPage from "../pages/HighPriorityPage"
 import ProtectedRoute from "../components/ProtectedRoute"
 import ForbiddenPage from "../pages/ForbiddenPage"
 
@@ -51,6 +56,37 @@ export default function AppRouter() {
         <Route path="/statistics" element={
           <ProtectedRoute requiredRole="MANAGER">
             <RevenueStatisticsPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/feedback/new" element={
+          <ProtectedRoute>
+            <CreateFeedbackPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/my-feedbacks" element={
+          <ProtectedRoute>
+            <MyFeedbacksPage />
+          </ProtectedRoute>
+        } />
+        
+        {/* Admin Feedback Management Routes */}
+        <Route path="/admin/feedbacks" element={
+          <ProtectedRoute requiredRole="MANAGER">
+            <AdminFeedbacksPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/admin/feedbacks/:id" element={
+          <ProtectedRoute requiredRole="MANAGER">
+            <FeedbackDetailPage />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="/admin/high-priority" element={
+          <ProtectedRoute requiredRole="MANAGER">
+            <HighPriorityPage />
           </ProtectedRoute>
         } />
       </Routes>

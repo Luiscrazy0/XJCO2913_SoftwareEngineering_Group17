@@ -2,12 +2,17 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { BookingStatus, HireType, ScooterStatus } from '@prisma/client';
+import { BookingStatus, HireType, Role, ScooterStatus } from '@prisma/client';
 import { DiscountService } from './discount.service';
 import { EmailService } from './email.service';
 import * as bcrypt from 'bcrypt';
+
+const DAMAGE_FEEDBACK_CATEGORY = 'DAMAGE';
+const HIGH_FEEDBACK_PRIORITY = 'HIGH';
+const PENDING_FEEDBACK_STATUS = 'PENDING';
 
 @Injectable()
 export class BookingService {
@@ -17,17 +22,20 @@ export class BookingService {
     private readonly emailService: EmailService,
   ) {}
 
-  async findAll() {
-    return this.prisma.booking.findMany({
-      include: {
-        user: true,
-        scooter: true,
-      },
-    });
+  async findAll(userId?: string, role?: Role) {
+    const where =
+      role === Role.MANAGER ? undefined : userId ? { userId } : undefined;
+
+    const query: Parameters<typeof this.prisma.booking.findMany>[0] = {
+      include: { user: true, scooter: true },
+    };
+    if (where) query.where = where;
+
+    return this.prisma.booking.findMany(query);
   }
 
-  async findById(id: string) {
-    return this.prisma.booking.findUnique({
+  async findById(id: string, requesterId?: string, requesterRole?: Role) {
+    const booking = await this.prisma.booking.findUnique({
       where: { id },
       include: {
         user: true,
@@ -35,6 +43,17 @@ export class BookingService {
         payment: true,
       },
     });
+
+    if (!booking) return booking;
+    if (
+      requesterId &&
+      requesterRole !== Role.MANAGER &&
+      booking.userId !== requesterId
+    ) {
+      throw new ForbiddenException('You do not have access to this booking');
+    }
+
+    return booking;
   }
 
   async createBooking(
@@ -42,20 +61,20 @@ export class BookingService {
     scooterId: string,
     hireType: HireType,
     startTime: Date,
-    endTime: Date,
   ) {
-    const scooter = await this.prisma.scooter.findUnique({
+    if (Number.isNaN(startTime.getTime())) {
+      throw new BadRequestException('Invalid start time');
+    }
 
+    const scooter = await this.prisma.scooter.findUnique({
       where: { id: scooterId },
     });
 
     if (!scooter) {
-
       throw new BadRequestException('Scooter not found');
     }
 
     if (scooter.status !== ScooterStatus.AVAILABLE) {
-
       throw new BadRequestException('Scooter not available');
     }
 
@@ -66,6 +85,7 @@ export class BookingService {
       hireType,
     );
     const finalCost = discountResult.discountedPrice;
+    const endTime = this.calculateEndTime(startTime, hireType);
 
     const booking = await this.prisma.$transaction(async (tx) => {
       const createdBooking = await tx.booking.create({
@@ -102,7 +122,12 @@ export class BookingService {
     return booking;
   }
 
-  async extendBooking(bookingId: string, additionalHours: number) {
+  async extendBooking(
+    bookingId: string,
+    additionalHours: number,
+    requesterId?: string,
+    requesterRole?: Role,
+  ) {
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
       include: { scooter: true, user: true },
@@ -110,6 +135,14 @@ export class BookingService {
 
     if (!booking) {
       throw new NotFoundException('Booking not found');
+    }
+
+    if (
+      requesterId &&
+      requesterRole !== Role.MANAGER &&
+      booking.userId !== requesterId
+    ) {
+      throw new ForbiddenException('You do not have access to this booking');
     }
 
     if (
@@ -157,9 +190,19 @@ export class BookingService {
     return updatedBooking;
   }
 
-  async cancelBooking(id: string) {
-    return this.prisma.booking.update({
+  async cancelBooking(id: string, requesterId?: string, requesterRole?: Role) {
+    if (requesterId && requesterRole !== Role.MANAGER) {
+      const booking = await this.prisma.booking.findUnique({
+        where: { id },
+        select: { userId: true },
+      });
+      if (!booking) throw new NotFoundException('Booking not found');
+      if (booking.userId !== requesterId) {
+        throw new ForbiddenException('You do not have access to this booking');
+      }
+    }
 
+    return this.prisma.booking.update({
       where: { id },
       data: { status: BookingStatus.CANCELLED },
       include: {
@@ -169,13 +212,88 @@ export class BookingService {
     });
   }
 
+  async completeBooking(
+    id: string,
+    isScooterIntact: boolean = true,
+    requesterId?: string,
+    requesterRole?: Role,
+  ) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id },
+      include: { scooter: true, user: true },
+    });
+
+    if (!booking) {
+      throw new NotFoundException('Booking not found');
+    }
+
+    if (
+      requesterId &&
+      requesterRole !== Role.MANAGER &&
+      booking.userId !== requesterId
+    ) {
+      throw new ForbiddenException('You do not have access to this booking');
+    }
+
+    if (booking.status === BookingStatus.CANCELLED) {
+      throw new BadRequestException('Cannot complete a cancelled booking');
+    }
+
+    if (booking.status === BookingStatus.COMPLETED) {
+      throw new BadRequestException('Booking is already completed');
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Update booking status to COMPLETED
+      const updatedBooking = await tx.booking.update({
+        where: { id },
+        data: { status: BookingStatus.COMPLETED },
+        include: {
+          user: true,
+          scooter: true,
+        },
+      });
+
+      // Update scooter status back to AVAILABLE
+      await tx.scooter.update({
+        where: { id: booking.scooterId },
+        data: { status: ScooterStatus.AVAILABLE },
+      });
+
+      // If scooter is not intact, create a damage feedback
+      if (!isScooterIntact) {
+        await tx.feedback.create({
+          data: {
+            title: 'Damage Report - Scooter Return',
+            description: `Damage reported during return of scooter ${booking.scooterId} for booking ${booking.id}. User reported scooter was not intact.`,
+            category: DAMAGE_FEEDBACK_CATEGORY,
+            priority: HIGH_FEEDBACK_PRIORITY,
+            status: PENDING_FEEDBACK_STATUS,
+            scooterId: booking.scooterId,
+            bookingId: booking.id,
+            createdById: booking.userId,
+          },
+        });
+      }
+
+      return updatedBooking;
+    });
+
+    try {
+      await this.emailService.sendReturnConfirmation(result, isScooterIntact);
+    } catch (error) {
+      console.error('发送还车确认邮件失败:', error);
+    }
+
+    return result;
+  }
+
   async createBookingForCustomer(
     employeeId: string,
     customerEmail: string,
     scooterId: string,
     hireType: HireType,
     startTime: Date,
-    endTime: Date,
   ) {
     // 验证员工权限
     const employee = await this.prisma.user.findUnique({
@@ -223,6 +341,10 @@ export class BookingService {
       throw new BadRequestException('滑板车当前不可用');
     }
 
+    if (Number.isNaN(startTime.getTime())) {
+      throw new BadRequestException('Invalid start time');
+    }
+
     // 计算费用（包含折扣）
     const totalCost = this.calculateCost(hireType);
     const discountResult = await this.discountService.calculateDiscountedPrice(
@@ -231,6 +353,7 @@ export class BookingService {
       hireType,
     );
     const finalCost = discountResult.discountedPrice;
+    const endTime = this.calculateEndTime(startTime, hireType);
 
     // 创建预订
     const booking = await this.prisma.$transaction(async (tx) => {
@@ -283,7 +406,6 @@ export class BookingService {
 
   private calculateCost(hireType: HireType): number {
     switch (hireType) {
-
       case HireType.HOUR_1:
         return 5;
       case HireType.HOUR_4:
@@ -294,6 +416,26 @@ export class BookingService {
         return 90;
       default:
         return 0;
+    }
+  }
+
+  private calculateEndTime(startTime: Date, hireType: HireType): Date {
+    const endTime = new Date(startTime.getTime());
+    switch (hireType) {
+      case HireType.HOUR_1:
+        endTime.setHours(endTime.getHours() + 1);
+        return endTime;
+      case HireType.HOUR_4:
+        endTime.setHours(endTime.getHours() + 4);
+        return endTime;
+      case HireType.DAY_1:
+        endTime.setDate(endTime.getDate() + 1);
+        return endTime;
+      case HireType.WEEK_1:
+        endTime.setDate(endTime.getDate() + 7);
+        return endTime;
+      default:
+        throw new BadRequestException('Invalid hire type');
     }
   }
 }

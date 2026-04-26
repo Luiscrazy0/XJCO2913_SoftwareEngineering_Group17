@@ -4,6 +4,8 @@ import tailwindcss from "@tailwindcss/vite"
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Load env from repo root (../.env) so monorepo-level VITE_* vars work
+  envDir: '..',
   plugins: [react(), tailwindcss()],
   
 })

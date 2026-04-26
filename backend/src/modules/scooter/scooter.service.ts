@@ -7,7 +7,10 @@ import { AmapService } from '../amap/amap.service';
 @Injectable()
 export class ScooterService {
   private readonly logger = new Logger(ScooterService.name);
-  private readonly amapCache = new Map<string, { address: string; timestamp: number }>();
+  private readonly amapCache = new Map<
+    string,
+    { address: string; timestamp: number }
+  >();
   private readonly CACHE_TTL = 24 * 60 * 60 * 1000; // 24小时缓存
 
   constructor(
@@ -26,7 +29,7 @@ export class ScooterService {
     const scootersWithAmap = await Promise.all(
       scooters.map(async (scooter) => {
         return await this.enrichWithAmapAddress(scooter);
-      })
+      }),
     );
 
     return scootersWithAmap;
@@ -92,7 +95,7 @@ export class ScooterService {
 
     // 检查缓存
     const cached = this.amapCache.get(cacheKey);
-    if (cached && (now - cached.timestamp) < this.CACHE_TTL) {
+    if (cached && now - cached.timestamp < this.CACHE_TTL) {
       this.logger.debug(`使用缓存地址: ${cacheKey} -> ${cached.address}`);
       return {
         ...scooter,
@@ -104,20 +107,20 @@ export class ScooterService {
       // 调用高德地图API获取地址
       const amapResult = await this.amapService.regeocode(
         scooter.longitude,
-        scooter.latitude
+        scooter.latitude,
       );
 
       if (amapResult.status === '1' && amapResult.regeocode) {
         const address = amapResult.regeocode.formatted_address;
-        
+
         // 更新缓存
         this.amapCache.set(cacheKey, { address, timestamp: now });
-        
+
         // 清理过期缓存
         this.cleanupCache();
 
         this.logger.debug(`高德地图地址解析成功: ${cacheKey} -> ${address}`);
-        
+
         return {
           ...scooter,
           amapAddress: address,

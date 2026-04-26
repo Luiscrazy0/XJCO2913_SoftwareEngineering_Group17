@@ -72,6 +72,9 @@ describe('AuthService', () => {
       expect(mockUserService.createUser).toHaveBeenCalledWith(
         testEmail,
         'fake_hashed_password',
+        'CUSTOMER',
+        false,
+        undefined,
       );
       expect(result).toEqual({ id: 1, email: testEmail });
     });
@@ -122,6 +125,7 @@ describe('AuthService', () => {
       );
       expect(mockJwtService.sign).toHaveBeenCalledWith({
         sub: fakeUser.id,
+        id: fakeUser.id,
         role: fakeUser.role,
       });
       expect(result).toEqual({ access_token: 'fake_jwt_token' });

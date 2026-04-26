@@ -1,6 +1,6 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { BookingStatus } from '@prisma/client';
+import { BookingStatus, Role } from '@prisma/client';
 import { EmailService } from '../booking/email.service';
 
 /**
@@ -13,10 +13,11 @@ export class PaymentService {
     private readonly emailService: EmailService,
   ) {}
 
-  async createPayment(bookingId: string, amount: number) {
+  async createPayment(bookingId: string, amount: number, userId: string) {
     //第一步：检查 booking 是否存在。
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
+      include: { user: true },
     });
 
     /**
@@ -24,6 +25,11 @@ export class PaymentService {
      */
     if (!booking) {
       throw new BadRequestException('Booking not found');
+    }
+
+    // 验证用户是否有权限为此预约支付
+    if (booking.userId !== userId) {
+      throw new ForbiddenException('You can only pay for your own bookings');
     }
 
     //第二步：检查 booking 是否允许支付。
@@ -55,12 +61,8 @@ export class PaymentService {
 
     // 发送支付收据邮件
     try {
-      const bookingWithUser = await this.prisma.booking.findUnique({
-        where: { id: bookingId },
-        include: { user: true },
-      });
-      if (bookingWithUser) {
-        await this.emailService.sendPaymentReceipt(bookingWithUser, amount);
+      if (booking.user) {
+        await this.emailService.sendPaymentReceipt(booking, amount);
       }
     } catch (error) {
       console.error('发送支付收据邮件失败:', error);
@@ -73,14 +75,36 @@ export class PaymentService {
   /**
    * Retrieves a payment by booking ID.
    * @param bookingId Unique ID of the booking.
+   * @param userId ID of the user requesting the payment.
    * @returns The payment details for the given booking ID.
    */
-  async getPaymentByBooking(bookingId: string) {
-    return this.prisma.payment.findUnique({
+  async getPaymentByBooking(bookingId: string, userId: string) {
+    const payment = await this.prisma.payment.findUnique({
       where: { bookingId },
       include: {
-        booking: true,
+        booking: {
+          include: {
+            user: true,
+          },
+        },
       },
     });
+
+    if (!payment) {
+      return null;
+    }
+
+    // 验证用户是否有权限查看此支付
+    // 管理员可以查看所有支付
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { role: true },
+    });
+
+    if (user?.role !== Role.MANAGER && payment.booking.userId !== userId) {
+      throw new ForbiddenException('You can only view payments for your own bookings');
+    }
+
+    return payment;
   }
 }

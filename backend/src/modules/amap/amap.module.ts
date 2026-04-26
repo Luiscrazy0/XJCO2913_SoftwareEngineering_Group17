@@ -10,7 +10,7 @@ import { AmapService } from './amap.service';
       timeout: 5000,
       maxRedirects: 5,
     }),
-    ConfigModule,
+    ConfigModule.forRoot({ isGlobal: true }),
   ],
   controllers: [AmapController],
   providers: [AmapService],
