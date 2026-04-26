@@ -8,11 +8,15 @@ const Navbar: React.FC = () => {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navigation = [
+    { name: '首页', href: '/' },
     { name: '发现车辆', href: '/scooters' },
     { name: '站点地图', href: '/map' },
     { name: '我的预约', href: '/bookings' },
+    { name: '我的反馈', href: '/my-feedbacks' },
     { name: '管理后台', href: '/admin', role: 'MANAGER' as const },
     { name: '收入统计', href: '/statistics', role: 'MANAGER' as const },
+    { name: '反馈管理', href: '/admin/feedbacks', role: 'MANAGER' as const },
+    { name: '高优先级', href: '/admin/high-priority', role: 'MANAGER' as const },
   ]
 
   const filteredNavigation = navigation.filter(item => {

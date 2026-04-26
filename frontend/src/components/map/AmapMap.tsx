@@ -61,7 +61,23 @@ const AmapMap: React.FC<AmapMapProps> = ({
         return;
       }
 
-      const apiKey = import.meta.env.VITE_AMAP_JS_KEY || 'your_js_api_key_here';
+      const apiKey = import.meta.env.VITE_AMAP_JS_KEY as string | undefined;
+      if (!apiKey || apiKey === 'your_js_api_key_here') {
+        const errorMsg = '未配置高德地图 JS Key（VITE_AMAP_JS_KEY）';
+        console.error(errorMsg);
+        setError(errorMsg);
+        if (onError) {
+          onError(new Error(errorMsg));
+        }
+        return;
+      }
+
+      // If you enabled "安全密钥（JS API）" in AMap console, set this before loading the script.
+      const securityJsCode = import.meta.env
+        .VITE_AMAP_SECURITY_JS_CODE as string | undefined;
+      if (securityJsCode) {
+        window._AMapSecurityConfig = { securityJsCode };
+      }
       const scriptId = 'amap-script';
 
       // 如果脚本已存在，直接使用

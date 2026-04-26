@@ -3,9 +3,6 @@ import { HireType } from '@prisma/client';
 
 export class CreateBookingDto {
   @IsUUID()
-  userId: string;
-
-  @IsUUID()
   // scooterId should be a UUID
   scooterId: string;
 
@@ -14,10 +11,6 @@ export class CreateBookingDto {
   hireType: HireType;
 
   @IsDateString()
-  // startTime and endTime should be valid date strings
+  // startTime should be a valid date string
   startTime: string;
-
-  @IsDateString()
-  // startTime and endTime should be valid date strings
-  endTime: string;
 }

@@ -82,6 +82,8 @@ describe('UserService', () => {
           email: testEmail,
           passwordHash: testPasswordHash,
           role: Role.CUSTOMER,
+          insuranceAcknowledged: false,
+          emergencyContact: undefined,
         },
       });
       expect(result).toEqual(mockCreatedUser);

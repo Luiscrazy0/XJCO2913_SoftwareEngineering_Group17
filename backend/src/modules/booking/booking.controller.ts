@@ -7,6 +7,8 @@ import {
   Body,
   UseGuards,
   Delete,
+  Request,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { BookingService } from './booking.service';
 import { PaymentCardService } from './payment-card.service';
@@ -84,8 +86,11 @@ export class BookingController {
       },
     },
   })
-  findAll() {
-    return this.bookingService.findAll();
+  findAll(@Request() req) {
+    const userId = req.user?.id;
+    const role = req.user?.role;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.findAll(userId, role);
   }
 
   @Get(':id')
@@ -155,8 +160,11 @@ export class BookingController {
       },
     },
   })
-  findOne(@Param('id') id: string) {
-    return this.bookingService.findById(id);
+  findOne(@Request() req, @Param('id') id: string) {
+    const userId = req.user?.id;
+    const role = req.user?.role;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.findById(id, userId, role);
   }
 
   @Post()
@@ -226,14 +234,14 @@ export class BookingController {
       },
     },
   })
-  create(@Body() body: CreateBookingDto) {
-    // Dto
+  create(@Request() req, @Body() body: CreateBookingDto) {
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User information missing');
     return this.bookingService.createBooking(
-      body.userId,
+      userId,
       body.scooterId,
       body.hireType,
       new Date(body.startTime),
-      new Date(body.endTime),
     );
   }
 
@@ -320,8 +328,20 @@ export class BookingController {
       },
     },
   })
-  extend(@Param('id') id: string, @Body() body: ExtendBookingDto) {
-    return this.bookingService.extendBooking(id, body.additionalHours);
+  extend(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: ExtendBookingDto,
+  ) {
+    const userId = req.user?.id;
+    const role = req.user?.role;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.extendBooking(
+      id,
+      body.additionalHours,
+      userId,
+      role,
+    );
   }
 
   @Patch(':id/cancel')
@@ -405,8 +425,121 @@ export class BookingController {
       },
     },
   })
-  cancel(@Param('id') id: string) {
-    return this.bookingService.cancelBooking(id);
+  cancel(@Request() req, @Param('id') id: string) {
+    const userId = req.user?.id;
+    const role = req.user?.role;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.cancelBooking(id, userId, role);
+  }
+
+  @Patch(':id/complete')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '完成预约',
+    description: '标记预约为已完成并归还滑板车（需要登录）',
+  })
+  @ApiParam({ name: 'id', description: '预约ID', example: 'clx1234567890' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        isScooterIntact: {
+          type: 'boolean',
+          description: '滑板车是否完好无损',
+          example: true,
+        },
+      },
+      required: ['isScooterIntact'],
+    },
+  })
+  @ApiResponse({
+    status: 200,
+    description: '还车成功',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: 'clx1234567890',
+          userId: 'clx0987654321',
+          scooterId: 'clx1234567890',
+          hireType: 'HOUR_1',
+          startTime: '2024-01-01T10:00:00.000Z',
+          endTime: '2024-01-01T11:00:00.000Z',
+          status: 'COMPLETED',
+          totalCost: 10.0,
+          scooter: {
+            id: 'clx1234567890',
+            location: 'Main Street, Building 5',
+            status: 'AVAILABLE',
+          },
+          user: {
+            id: 'clx0987654321',
+            email: 'user@example.com',
+            role: 'CUSTOMER',
+          },
+        },
+        message: 'Booking completed successfully',
+        timestamp: '2024-01-01T00:00:00.000Z',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: '预约无法完成',
+    schema: {
+      example: {
+        success: false,
+        error: 'Bad Request',
+        message: 'Cannot complete a cancelled booking',
+        statusCode: 400,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        path: '/bookings/clx1234567890/complete',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 401,
+    description: '未授权访问',
+    schema: {
+      example: {
+        success: false,
+        error: 'Unauthorized',
+        message: 'Unauthorized',
+        statusCode: 401,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        path: '/bookings/clx1234567890/complete',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: '预约不存在',
+    schema: {
+      example: {
+        success: false,
+        error: 'Not Found',
+        message: 'Booking not found',
+        statusCode: 404,
+        timestamp: '2024-01-01T00:00:00.000Z',
+        path: '/bookings/clx1234567890/complete',
+      },
+    },
+  })
+  complete(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { isScooterIntact: boolean },
+  ) {
+    const userId = req.user?.id;
+    const role = req.user?.role;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.completeBooking(
+      id,
+      body.isScooterIntact,
+      userId,
+      role,
+    );
   }
 
   // 银行卡管理API
@@ -430,10 +563,10 @@ export class BookingController {
   })
   @ApiResponse({ status: 201, description: '银行卡保存成功' })
   @ApiResponse({ status: 400, description: '银行卡信息无效' })
-  savePaymentCard(@Body() cardData: any) {
-    // 从JWT token获取用户ID（实际实现中需要从Auth装饰器获取）
-    // 这里暂时使用模拟的用户ID，实际项目中需要正确获取
-    return this.paymentCardService.savePaymentCard('user-id', cardData);
+  savePaymentCard(@Request() req, @Body() cardData: any) {
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.paymentCardService.savePaymentCard(userId, cardData);
   }
 
   @Get('payment-card')
@@ -444,9 +577,10 @@ export class BookingController {
     description: '获取用户保存的银行卡信息（卡号部分隐藏）',
   })
   @ApiResponse({ status: 200, description: '获取成功' })
-  getPaymentCard() {
-    // 从JWT token获取用户ID
-    return this.paymentCardService.getPaymentCard('user-id');
+  getPaymentCard(@Request() req) {
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.paymentCardService.getPaymentCard(userId);
   }
 
   @Delete('payment-card')
@@ -457,9 +591,10 @@ export class BookingController {
     description: '删除用户保存的银行卡信息',
   })
   @ApiResponse({ status: 200, description: '删除成功' })
-  deletePaymentCard() {
-    // 从JWT token获取用户ID
-    return this.paymentCardService.deletePaymentCard('user-id');
+  deletePaymentCard(@Request() req) {
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.paymentCardService.deletePaymentCard(userId);
   }
 
   // 员工代订API
@@ -486,34 +621,22 @@ export class BookingController {
           format: 'date-time',
           example: '2024-01-01T10:00:00.000Z',
         },
-        endTime: {
-          type: 'string',
-          format: 'date-time',
-          example: '2024-01-01T11:00:00.000Z',
-        },
       },
-      required: [
-        'customerEmail',
-        'scooterId',
-        'hireType',
-        'startTime',
-        'endTime',
-      ],
+      required: ['customerEmail', 'scooterId', 'hireType', 'startTime'],
     },
   })
   @ApiResponse({ status: 201, description: '代订成功' })
   @ApiResponse({ status: 403, description: '权限不足' })
   @ApiResponse({ status: 400, description: '请求参数错误' })
-  createStaffBooking(@Body() bookingData: any) {
-    // 从JWT token获取员工ID（实际实现中需要从Auth装饰器获取）
-    // 这里暂时使用模拟的员工ID，实际项目中需要正确获取
+  createStaffBooking(@Request() req, @Body() bookingData: any) {
+    const employeeId = req.user?.id;
+    if (!employeeId) throw new UnauthorizedException('User information missing');
     return this.bookingService.createBookingForCustomer(
-      'employee-id', // 员工ID
+      employeeId,
       bookingData.customerEmail,
       bookingData.scooterId,
       bookingData.hireType,
       new Date(bookingData.startTime),
-      new Date(bookingData.endTime),
     );
   }
 }

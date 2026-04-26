@@ -12,6 +12,7 @@ import ErrorState from '../components/ErrorState'
 import Navbar from '../components/Navbar'
 import ExtendBookingModal from '../components/ExtendBookingModal'
 import { Booking } from '../types'
+import { bookingKeys } from '../utils/queryKeys'
 
 const MyBookingsPage: React.FC = () => {
   const { user } = useAuth()
@@ -21,6 +22,9 @@ const MyBookingsPage: React.FC = () => {
   
   const [extendModalOpen, setExtendModalOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
+  const [filterStatus, setFilterStatus] = useState<string>('ALL') // 筛选状态：ALL, PENDING_PAYMENT, CONFIRMED, COMPLETED, CANCELLED
+
+  const bookingsKey = bookingKeys.list(user?.id ?? null, user?.role ?? null)
 
   // 获取预约列表
   const {
@@ -30,9 +34,9 @@ const MyBookingsPage: React.FC = () => {
     error,
     refetch
   } = useQuery({
-    queryKey: ['bookings'],
+    queryKey: bookingsKey,
     queryFn: bookingsApi.getMyBookings,
-    enabled: !!user, // 只在用户登录时获取
+    enabled: !!user?.id, // 只在用户登录时获取
     staleTime: 5 * 60 * 1000, // 5分钟缓存
   })
 
@@ -41,7 +45,7 @@ const MyBookingsPage: React.FC = () => {
     mutationFn: bookingsApi.cancel,
     onSuccess: (updatedBooking) => {
       // 更新缓存
-      queryClient.setQueryData(['bookings'], (oldData: any) => {
+      queryClient.setQueryData(bookingsKey, (oldData: any) => {
         if (!oldData) return oldData
         return oldData.map((booking: any) =>
           booking.id === updatedBooking.id ? updatedBooking : booking
@@ -61,7 +65,7 @@ const MyBookingsPage: React.FC = () => {
       bookingsApi.extend(id, { additionalHours }),
     onSuccess: (updatedBooking) => {
       // 更新缓存
-      queryClient.setQueryData(['bookings'], (oldData: any) => {
+      queryClient.setQueryData(bookingsKey, (oldData: any) => {
         if (!oldData) return oldData
         return oldData.map((booking: any) =>
           booking.id === updatedBooking.id ? updatedBooking : booking
@@ -105,6 +109,34 @@ const MyBookingsPage: React.FC = () => {
     navigate('/scooters')
   }
 
+  // 排序预约：待支付 > 已确认（进行中） > 其他状态 > 按时间倒序
+  const sortedBookings = React.useMemo(() => {
+    if (!bookings.length) return []
+    
+    // 先筛选
+    const filteredBookings = filterStatus === 'ALL' 
+      ? bookings 
+      : bookings.filter(booking => booking.status === filterStatus)
+    
+    return [...filteredBookings].sort((a, b) => {
+      // 状态优先级映射 - 使用实际存在的BookingStatus
+      const statusOrder: Record<string, number> = {
+        'PENDING_PAYMENT': 100,  // 最高优先级：待支付
+        'CONFIRMED': 90,         // 高优先级：已确认（进行中）
+        'EXTENDED': 80,          // 已续租
+        'COMPLETED': 70,         // 已完成
+        'CANCELLED': 60,         // 已取消
+      }
+      
+      // 按状态优先级排序（降序）
+      const statusDiff = (statusOrder[b.status] || 0) - (statusOrder[a.status] || 0)
+      if (statusDiff !== 0) return statusDiff
+      
+      // 相同状态按开始时间倒序（最新的在前）
+      return new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+    })
+  }, [bookings, filterStatus])
+
   // 渲染页面内容
   const renderContent = () => {
     if (isLoading) {
@@ -131,8 +163,65 @@ const MyBookingsPage: React.FC = () => {
     return (
       <>
         <BookingStats bookings={bookings} />
+        
+        {/* 状态筛选按钮 */}
+        <div className="mb-6">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setFilterStatus('ALL')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filterStatus === 'ALL'
+                  ? 'bg-[var(--mclaren-orange)] text-white'
+                  : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-white/5'
+              }`}
+            >
+              全部 ({bookings.length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('PENDING_PAYMENT')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filterStatus === 'PENDING_PAYMENT'
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-white/5'
+              }`}
+            >
+              待支付 ({bookings.filter(b => b.status === 'PENDING_PAYMENT').length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('CONFIRMED')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filterStatus === 'CONFIRMED'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-white/5'
+              }`}
+            >
+              已确认 ({bookings.filter(b => b.status === 'CONFIRMED').length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('COMPLETED')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filterStatus === 'COMPLETED'
+                  ? 'bg-green-600 text-white'
+                  : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-white/5'
+              }`}
+            >
+              已完成 ({bookings.filter(b => b.status === 'COMPLETED').length})
+            </button>
+            <button
+              onClick={() => setFilterStatus('CANCELLED')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                filterStatus === 'CANCELLED'
+                  ? 'bg-red-600 text-white'
+                  : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-white/5'
+              }`}
+            >
+              已取消 ({bookings.filter(b => b.status === 'CANCELLED').length})
+            </button>
+          </div>
+        </div>
+        
         <div className="space-y-6">
-          {bookings.map((booking) => (
+          {sortedBookings.map((booking) => (
             <BookingCard
               key={booking.id}
               booking={booking}

@@ -2,13 +2,15 @@ import React, { createContext, useContext, useState, useEffect, ReactNode, useCa
 import { User } from '../types'
 import { authApi } from '../api/auth'
 import { useToast } from '../components/ToastProvider'
+import { queryClient } from '../utils/queryClient'
+import { bookingKeys, feedbackKeys } from '../utils/queryKeys'
 
 interface AuthContextType {
   user: User | null
   token: string | null
   isLoading: boolean
   login: (email: string, password: string) => Promise<void>
-  register: (email: string, password: string) => Promise<void>
+  register: (email: string, password: string, insuranceAcknowledged: boolean, emergencyContact?: string) => Promise<void>
   logout: (options?: LogoutOptions) => void
   isAuthenticated: boolean
 }
@@ -136,10 +138,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }
 
-  const register = async (email: string, password: string) => {
+  const register = async (email: string, password: string, insuranceAcknowledged: boolean, emergencyContact?: string) => {
     try {
       // 1. 调用注册API
-      await authApi.register({ email, password })
+      await authApi.register({ email, password, insuranceAcknowledged, emergencyContact })
       
       // 2. 注册成功后自动登录
       await login(email, password)
@@ -156,6 +158,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     setUser(null)
     localStorage.removeItem('auth_token')
     localStorage.removeItem('user')
+
+    // Prevent cross-user cache leakage when accounts switch in the same browser session.
+    queryClient.cancelQueries()
+    queryClient.removeQueries({ queryKey: bookingKeys.all })
+    queryClient.removeQueries({ queryKey: feedbackKeys.all })
 
     if (options?.reason === 'expired') {
       showToast('会话已过期，请重新登录。', 'error')
