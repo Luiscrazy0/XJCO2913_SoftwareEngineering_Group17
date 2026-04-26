@@ -8,30 +8,36 @@
 ### 🚀 快速开始
 - [开发环境设置](./quick-start/development-setup.md)
 - [API文档](./api/api-reference.md)
-- [部署指南](./deployment/docker-setup.md)
+- [Docker部署指南](./deployment/docker-setup.md)
 
 ### 📊 项目规划
-- [项目需求](./project/requirements.md)
-- [Sprint计划](./project/sprint-plans.md)
-- [项目待办事项](./project/backlog.md)
+- [项目需求文档](./project/requirements.md)
+- [项目待办事项](./project/project-backlog.md)
 
 ### 🏗️ 技术架构
-- [系统架构](./architecture/system-overview.md)
-- [数据库设计](./architecture/database-schema.md)
-- [API设计](./architecture/api-design.md)
+- [系统架构概述](./architecture/system-overview.md)
+- [高德地图集成指南](./architecture/amap-integration-guide.md)
+- [高德地图集成完成报告](./architecture/amap-integration-report.md)
 
-### 💻 开发文档
-- [前端开发指南](./development/frontend-guide.md)
-- [后端开发指南](./development/backend-guide.md)
-- [代码规范](./development/coding-standards.md)
-
-### 🎨 设计规范
-- [UI/UX设计](./design/ui-ux-specification.md)
-- [视觉设计系统](./design/visual-design-system.md)
+### 💻 开发规范
+- [前端设计实施指南](./frontend/design-implementation-guide.md)
+- [前端结构与美化计划](./frontend/前端结构与美化计划.md)
+- [视觉设计方案](./frontend/视觉设计方案.md)
 
 ### 📈 Sprint文档
 - [Sprint 1总结](./sprints/sprint1-summary.md)
 - [Sprint 2计划](./sprints/sprint2-plan.md)
+- [Sprint 3计划](./sprints/sprint3-plan.md)
+- [Sprint 3实施步骤](./sprints/sprint3-steps.md)
+- [Sprint 3状态与CI建议](./sprints/sprint3-status-and-ci-recommendation.md)
+
+### 📦 归档文档
+- [代码审查报告](./archive/CODE_REVIEW_REPORT-Sprint2.md)
+- [E2E业务逻辑分析](./archive/E2E_BUSINESS_LOGIC_ANALYSIS.md)
+- [前端优化计划](./archive/FRONTEND_OPTIMIZATION_PLAN.md)
+- [临时API笔记](./archive/api.md)
+- [Sprint 3问题记录](./archive/question-sprint3.md)
+- [临时开发笔记](./archive/temp.md)
 
 ## 🔗 重要链接
 - **API文档**: http://localhost:3000/api (Swagger UI)
@@ -44,10 +50,11 @@
 - **后端**: NestJS + TypeScript + Prisma + PostgreSQL
 - **认证**: JWT + bcrypt
 - **API文档**: Swagger/OpenAPI
+- **地图服务**: 高德地图API
 - **容器化**: Docker + Docker Compose
 
 ## 📞 联系与支持
 如有问题，请查看相关文档或联系开发团队。
 
 ---
-*最后更新: 2024年4月*
+*最后更新: 2026年4月26日*
