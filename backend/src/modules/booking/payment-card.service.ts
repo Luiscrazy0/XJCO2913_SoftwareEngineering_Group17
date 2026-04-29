@@ -9,17 +9,17 @@ import * as crypto from 'crypto';
 @Injectable()
 export class PaymentCardService {
   private readonly algorithm = 'aes-256-cbc';
-  private readonly key = crypto.scryptSync(
-    (() => {
-      const key = process.env.ENCRYPTION_KEY;
-      if (!key)
-        throw new Error('ENCRYPTION_KEY environment variable is required');
-      return key;
-    })(),
-    'salt',
-    32,
-  );
-  private readonly iv = crypto.randomBytes(16); // 在生产环境中应该为每个用户生成唯一的IV
+  private _key?: Buffer;
+  private readonly iv = crypto.randomBytes(16);
+
+  private get key(): Buffer {
+    if (!this._key) {
+      const envKey = process.env.ENCRYPTION_KEY;
+      if (!envKey) throw new Error('ENCRYPTION_KEY environment variable is required');
+      this._key = crypto.scryptSync(envKey, 'salt', 32);
+    }
+    return this._key;
+  }
 
   constructor(private readonly prisma: PrismaService) {}
 
