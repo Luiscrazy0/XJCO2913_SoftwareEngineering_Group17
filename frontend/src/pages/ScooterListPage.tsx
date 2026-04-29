@@ -17,7 +17,7 @@ export default function ScooterListPage() {
 
   // 使用TanStack Query获取车辆数据
   const {
-    data: scooters = [],
+    data: scootersData,
     isLoading,
     isError,
     error,
@@ -26,8 +26,7 @@ export default function ScooterListPage() {
     queryKey: scooterKeys.list('public'),
     queryFn: async () => {
       try {
-        const data = await scootersApi.getAll()
-        console.log('获取到的车辆数据:', data)
+        const data = await scootersApi.getAll(1, 100)
         return data
       } catch (err) {
         console.error('获取车辆数据失败:', err)
@@ -37,6 +36,8 @@ export default function ScooterListPage() {
     retry: 1,
     refetchOnWindowFocus: false
   })
+
+  const scooters = scootersData?.items ?? []
 
   // 处理预约按钮点击
   const handleBookClick = (scooter: Scooter) => {

@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useMemo } from 'react'
+import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { stationsApi } from '../api/stations'
 import { scootersApi } from '../api/scooters'
 import Navbar from '../components/Navbar'
 import AmapMap from '../components/map/AmapMap'
+import BookingModal from '../components/BookingModal'
 import { useToast } from '../components/ToastProvider'
-import { Station } from '../types'
+import { Station, Scooter } from '../types'
 import { MarkerConfig } from '../types/amap'
 import { scooterKeys, stationKeys } from '../utils/queryKeys'
 
@@ -13,8 +14,9 @@ const MapPage: React.FC = () => {
   const { showToast } = useToast()
   const [userLocation, setUserLocation] = useState<{ latitude: number; longitude: number } | null>(null)
   const [selectedStation, setSelectedStation] = useState<Station | null>(null)
+  const [bookingScooter, setBookingScooter] = useState<Scooter | null>(null)
+  const mapRef = useRef<any>(null)
 
-  // 获取用户位置
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -26,62 +28,78 @@ const MapPage: React.FC = () => {
         },
         (error) => {
           console.error('Error getting location:', error)
-          showToast('无法获取您的位置，请确保已开启位置权限', 'warning')
-        }
+        },
       )
     }
-  }, [showToast])
+  }, [])
 
-  // 获取站点数据
+  // Fetch with pagination - get first 100 items
   const {
-    data: stations = [],
+    data: stationsData,
     isLoading: isLoadingStations,
     isError: isStationsError,
     error: stationsError,
   } = useQuery({
     queryKey: stationKeys.list('public'),
-    queryFn: stationsApi.getAll,
-    staleTime: 5 * 60 * 1000, // 5分钟缓存
+    queryFn: () => stationsApi.getAll(1, 100),
+    staleTime: 30000,
   })
 
-  // 获取滑板车数据
   const {
-    data: scooters = [],
+    data: scootersData,
     isLoading: isLoadingScooters,
     isError: isScootersError,
     error: scootersError,
   } = useQuery({
     queryKey: scooterKeys.list('public'),
-    queryFn: scootersApi.getAll,
-    staleTime: 5 * 60 * 1000, // 5分钟缓存
+    queryFn: () => scootersApi.getAll(1, 100),
+    staleTime: 30000,
   })
 
-  // 处理站点点击
+  const stations = stationsData?.items ?? []
+  const scooters = scootersData?.items ?? []
+
   const handleStationClick = (station: Station) => {
     setSelectedStation(station)
   }
 
-  // 处理地图标记点击
   const handleMarkerClick = (marker: MarkerConfig) => {
     const stationId = marker.extData?.stationId
     if (stationId) {
       const station = stations.find(s => s.id === stationId)
-      if (station) {
-        setSelectedStation(station)
-      }
+      if (station) setSelectedStation(station)
     }
   }
 
-  // 计算可用滑板车数量
+  const handleGoToMyLocation = () => {
+    if (userLocation && mapRef.current) {
+      try {
+        mapRef.current.setCenter([userLocation.longitude, userLocation.latitude])
+        mapRef.current.setZoom(15)
+        showToast('已回到您的位置', 'info')
+      } catch {
+        showToast('无法移动地图到您的位置', 'warning')
+      }
+    } else {
+      showToast('无法获取您的位置', 'warning')
+    }
+  }
+
   const getAvailableScootersCount = (stationId: string) => {
     return scooters.filter(
-      scooter => scooter.stationId === stationId && scooter.status === 'AVAILABLE'
+      scooter => scooter.stationId === stationId && scooter.status === 'AVAILABLE',
     ).length
   }
 
-  // 将站点数据转换为地图标记点
+  // Get marker color based on count
+  const getStationColor = (count: number) => {
+    if (count >= 3) return '#22c55e'  // green
+    if (count >= 1) return '#f97316'  // orange
+    return '#ef4444'  // red
+  }
+
   const mapMarkers = useMemo(() => {
-    return stations.map((station, index): MarkerConfig => {
+    return stations.map((station): MarkerConfig => {
       const availableCount = getAvailableScootersCount(station.id)
       return {
         position: [station.longitude, station.latitude] as [number, number],
@@ -91,31 +109,26 @@ const MapPage: React.FC = () => {
             <h4 class="font-bold text-gray-900 mb-2">${station.name}</h4>
             <p class="text-sm text-gray-600 mb-2">${station.address}</p>
             <div class="flex items-center justify-between">
-              <span class="text-sm ${availableCount > 0 ? 'text-green-600' : 'text-red-600'}">
+              <span class="text-sm" style="color:${getStationColor(availableCount)}">
                 ${availableCount} 辆可用
               </span>
-              <button class="text-xs bg-[var(--mclaren-orange)] text-white px-2 py-1 rounded hover:brightness-110">
-                查看详情
-              </button>
+              <button class="text-xs bg-gray-600 text-white px-2 py-1 rounded">查看</button>
             </div>
           </div>
         `,
         extData: {
           stationId: station.id,
           availableCount,
-          index,
         },
       }
     })
   }, [stations, scooters])
 
-  // 选中的标记点
   const selectedMarker = useMemo(() => {
     if (!selectedStation) return null
-    return mapMarkers.find(marker => marker.extData?.stationId === selectedStation.id) || null
+    return mapMarkers.find(m => m.extData?.stationId === selectedStation.id) || null
   }, [selectedStation, mapMarkers])
 
-  // 地图配置 - 使用西南交通大学坐标作为默认中心
   const mapConfig = useMemo(() => {
     if (userLocation) {
       return {
@@ -124,27 +137,32 @@ const MapPage: React.FC = () => {
       }
     }
     return {
-      center: [103.989265, 30.763613] as [number, number], // 西南交通大学校区中心点
+      center: [103.989265, 30.763613] as [number, number],
       zoom: 15,
     }
   }, [userLocation])
 
-  // 渲染加载状态
-  if (isLoadingStations || isLoadingScooters) {
+  const isLoading = isLoadingStations || isLoadingScooters
+  const isError = isStationsError || isScootersError
+
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-[var(--bg-main)]">
         <Navbar />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--mclaren-orange)]"></div>
+          <div className="animate-pulse space-y-6">
+            <div className="h-12 w-64 rounded-lg bg-[var(--bg-input)]" />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+              <div className="h-[500px] rounded-xl bg-[var(--bg-input)]" />
+              <div className="lg:col-span-2 h-[600px] rounded-xl bg-[var(--bg-input)]" />
+            </div>
           </div>
         </div>
       </div>
     )
   }
 
-  // 渲染错误状态
-  if (isStationsError || isScootersError) {
+  if (isError) {
     return (
       <div className="min-h-screen bg-[var(--bg-main)]">
         <Navbar />
@@ -156,7 +174,7 @@ const MapPage: React.FC = () => {
             </p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
             >
               重新加载
             </button>
@@ -169,80 +187,61 @@ const MapPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[var(--bg-main)]">
       <Navbar />
-      
-      {/* 主内容 */}
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 页面标题 */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[var(--text-main)]">滑板车站点地图</h1>
-          <p className="text-[var(--text-secondary)] mt-2">
-            查看附近的滑板车站点及可用车辆信息
-          </p>
+          <p className="text-[var(--text-secondary)] mt-2">查看附近的滑板车站点及可用车辆信息</p>
         </div>
 
-        {/* 地图容器 */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* 左侧：站点列表 */}
+          {/* Left: Station list */}
           <div className="lg:col-span-1">
             <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-line)] p-6">
               <h2 className="text-xl font-semibold text-[var(--text-main)] mb-4">站点列表</h2>
-              
+
               {userLocation && (
-                <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <p className="text-sm text-blue-800">
-                    📍 您的位置：{userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}
+                    📍 {userLocation.latitude.toFixed(4)}, {userLocation.longitude.toFixed(4)}
                   </p>
                 </div>
               )}
 
-              <div className="space-y-4 max-h-[500px] overflow-y-auto">
+              <div className="space-y-3 max-h-[500px] overflow-y-auto">
                 {stations.map((station) => {
                   const availableCount = getAvailableScootersCount(station.id)
+                  const isSelected = selectedStation?.id === station.id
                   return (
                     <div
                       key={station.id}
-                      className={`p-4 rounded-lg border cursor-pointer transition-all hover:shadow-md ${
-                        selectedStation?.id === station.id
+                      className={`p-4 rounded-lg border cursor-pointer transition-all ${
+                        isSelected
                           ? 'border-[var(--mclaren-orange)] bg-[rgba(255,106,0,0.16)]'
-                          : 'border-[var(--border-line)] bg-[var(--bg-card)]'
+                          : 'border-[var(--border-line)] bg-[var(--bg-card)] hover:border-gray-500'
                       }`}
                       onClick={() => handleStationClick(station)}
                     >
                       <div className="flex justify-between items-start">
                         <div>
                           <h3 className="font-medium text-[var(--text-main)]">{station.name}</h3>
-                          <p className="text-sm text-[var(--text-secondary)] mt-1">{station.address}</p>
+                          <p className="text-xs text-[var(--text-secondary)] mt-1">{station.address}</p>
                         </div>
-                        <div className="flex items-center">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            availableCount > 0
-                              ? 'bg-green-100 text-green-800'
-                              : 'bg-red-100 text-red-800'
-                          }`}>
-                            {availableCount} 辆可用
-                          </span>
-                        </div>
+                        <span
+                          className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium"
+                          style={{
+                            backgroundColor: getStationColor(availableCount) + '20',
+                            color: getStationColor(availableCount),
+                          }}
+                        >
+                          {availableCount} 辆
+                        </span>
                       </div>
-                      
-                      <div className="mt-3 text-sm text-[var(--text-secondary)]">
-                        <div className="flex items-center">
-                          <span className="mr-2">📍</span>
-                          <span>坐标：{station.latitude.toFixed(4)}, {station.longitude.toFixed(4)}</span>
-                        </div>
-                        {userLocation && (
-                          <div className="mt-1 flex items-center">
-                            <span className="mr-2">📏</span>
-                            <span>
-                              距离：{calculateDistance(
-                                userLocation.latitude,
-                                userLocation.longitude,
-                                station.latitude,
-                                station.longitude
-                              ).toFixed(2)} 公里
-                            </span>
-                          </div>
-                        )}
-                      </div>
+                      {userLocation && (
+                        <p className="mt-2 text-xs text-[var(--text-secondary)]">
+                          📏 {calculateDistance(userLocation.latitude, userLocation.longitude, station.latitude, station.longitude).toFixed(2)} km
+                        </p>
+                      )}
                     </div>
                   )
                 })}
@@ -250,87 +249,56 @@ const MapPage: React.FC = () => {
             </div>
           </div>
 
-          {/* 右侧：地图和详情 */}
+          {/* Right: Map + Station details */}
           <div className="lg:col-span-2">
             <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-line)] p-6">
               <h2 className="text-xl font-semibold text-[var(--text-main)] mb-4">
                 {selectedStation ? selectedStation.name : '选择站点查看详情'}
               </h2>
 
-{/* 地图容器 */}
-          <div className="relative">
-            {/* 高德地图 */}
-            <AmapMap
-              config={mapConfig}
-              markers={mapMarkers}
-              selectedMarker={selectedMarker}
-              userLocation={userLocation}
-              onMarkerClick={handleMarkerClick}
-              onMapClick={() => {
-                // 点击地图空白处可以取消选中
-                setSelectedStation(null)
-              }}
-              className="h-[400px] rounded-lg overflow-hidden border border-gray-300"
-              loading={isLoadingStations || isLoadingScooters}
-              onError={(error) => {
-                console.error('地图加载错误:', error)
-                showToast('地图加载失败，请检查网络连接', 'error')
-              }}
-            />
-            
-            {/* 定位按钮 - 回到用户位置 */}
-            {userLocation && (
-              <button
-                onClick={() => {
-                  // 这里需要实现回到用户位置的功能
-                  // 目前先显示一个提示
-                  showToast('正在回到您的位置...', 'info')
-                }}
-                className="absolute bottom-4 right-4 bg-white rounded-full p-3 shadow-md hover:shadow-lg transition-shadow active:scale-95"
-                title="回到我的位置"
-                aria-label="回到我的位置"
-              >
-                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                </svg>
-              </button>
-            )}
-          </div>
+              <div className="relative">
+                <AmapMap
+                  config={mapConfig}
+                  markers={mapMarkers}
+                  selectedMarker={selectedMarker}
+                  userLocation={userLocation}
+                  onMarkerClick={handleMarkerClick}
+                  onMapClick={() => setSelectedStation(null)}
+                  className="h-[400px] rounded-lg overflow-hidden border border-gray-300"
+                  loading={false}
+                  onError={(error) => {
+                    console.error('Map load error:', error)
+                    showToast('地图加载失败', 'error')
+                  }}
+                />
 
-              {/* 站点详情 */}
+                {userLocation && (
+                  <button
+                    onClick={handleGoToMyLocation}
+                    className="absolute bottom-4 right-4 bg-white rounded-full p-3 shadow-md hover:shadow-lg active:scale-95"
+                    title="回到我的位置"
+                    aria-label="回到我的位置"
+                  >
+                    <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+
+              {/* Station details with scooters */}
               {selectedStation && (
                 <div className="mt-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <h3 className="text-lg font-medium text-[var(--text-main)] mb-3">站点信息</h3>
-                      <div className="space-y-2">
-                        <div className="flex">
-                          <span className="w-24 text-[var(--text-secondary)]">名称：</span>
-                          <span className="text-[var(--text-main)]">{selectedStation.name}</span>
-                        </div>
-                        <div className="flex">
-                          <span className="w-24 text-[var(--text-secondary)]">地址：</span>
-                          <span className="text-[var(--text-main)]">{selectedStation.address}</span>
-                        </div>
-                        <div className="flex">
-                          <span className="w-24 text-[var(--text-secondary)]">坐标：</span>
-                          <span className="text-[var(--text-main)]">
-                            {selectedStation.latitude.toFixed(4)}, {selectedStation.longitude.toFixed(4)}
-                          </span>
-                        </div>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex"><span className="w-16 text-[var(--text-secondary)]">名称:</span><span className="text-[var(--text-main)]">{selectedStation.name}</span></div>
+                        <div className="flex"><span className="w-16 text-[var(--text-secondary)]">地址:</span><span className="text-[var(--text-main)]">{selectedStation.address}</span></div>
+                        <div className="flex"><span className="w-16 text-[var(--text-secondary)]">坐标:</span><span className="text-[var(--text-main)]">{selectedStation.latitude.toFixed(4)}, {selectedStation.longitude.toFixed(4)}</span></div>
                         {userLocation && (
-                          <div className="flex">
-                            <span className="w-24 text-[var(--text-secondary)]">距离：</span>
-                            <span className="text-[var(--text-main)]">
-                              {calculateDistance(
-                                userLocation.latitude,
-                                userLocation.longitude,
-                                selectedStation.latitude,
-                                selectedStation.longitude
-                              ).toFixed(2)} 公里
-                            </span>
-                          </div>
+                          <div className="flex"><span className="w-16 text-[var(--text-secondary)]">距离:</span><span className="text-[var(--text-main)]">{calculateDistance(userLocation.latitude, userLocation.longitude, selectedStation.latitude, selectedStation.longitude).toFixed(2)} km</span></div>
                         )}
                       </div>
                     </div>
@@ -338,33 +306,36 @@ const MapPage: React.FC = () => {
                     <div>
                       <h3 className="text-lg font-medium text-[var(--text-main)] mb-3">可用车辆</h3>
                       {getAvailableScootersCount(selectedStation.id) > 0 ? (
-                        <div className="space-y-2">
+                        <div className="space-y-2 max-h-[200px] overflow-y-auto">
                           {scooters
-                            .filter(scooter => scooter.stationId === selectedStation.id && scooter.status === 'AVAILABLE')
+                            .filter(s => s.stationId === selectedStation.id && s.status === 'AVAILABLE')
                             .map(scooter => (
-<div
-                                 key={scooter.id}
-                                 className="flex items-center justify-between p-3 bg-green-50 border border-green-200 rounded-lg"
-                               >
-                                 <div>
-                                   <span className="font-medium text-green-800">{scooter.id}</span>
-                                   <p className="text-sm text-green-700">{scooter.location}</p>
-                                 </div>
+                              <div
+                                key={scooter.id}
+                                className="flex items-center justify-between p-3 bg-[var(--bg-input)] border border-[var(--border-line)] rounded-lg"
+                              >
+                                <div>
+                                  <span className="font-medium text-[var(--text-main)] text-sm">🛴 #{scooter.id.substring(0, 8)}...</span>
+                                  <p className="text-xs text-[var(--text-secondary)]">{scooter.location}</p>
+                                </div>
                                 <button
                                   onClick={() => {
-                                    // 导航到车辆列表页面并自动打开预订
-                                    window.location.href = `/scooters?highlight=${scooter.id}&book=1`
+                                    // Use BookingModal directly - no page jump
+                                    setBookingScooter({
+                                      ...scooter,
+                                      station: selectedStation,
+                                    })
                                   }}
-                                  className="px-4 py-2 bg-[var(--mclaren-orange)] text-white text-sm font-medium rounded-lg hover:brightness-110 transition-colors h-fit self-center"
+                                  className="px-3 py-1.5 bg-[var(--mclaren-orange)] text-white text-xs font-medium rounded-lg hover:brightness-110"
                                 >
-                                  立即预订
+                                  预订
                                 </button>
                               </div>
                             ))}
                         </div>
                       ) : (
                         <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-                          <p className="text-red-700">当前站点暂无可用车辆</p>
+                          <p className="text-red-700 text-sm">当前站点暂无可用车辆</p>
                         </div>
                       )}
                     </div>
@@ -375,26 +346,33 @@ const MapPage: React.FC = () => {
           </div>
         </div>
       </main>
+
+      {/* BookingModal inline - no page jump */}
+      {bookingScooter && (
+        <BookingModal
+          isOpen={!!bookingScooter}
+          scooter={bookingScooter}
+          onClose={() => setBookingScooter(null)}
+        />
+      )}
     </div>
   )
 }
 
-// 计算两点之间的距离（公里）
 function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371 // 地球半径，单位：公里
+  const R = 6371
   const dLat = deg2rad(lat2 - lat1)
   const dLon = deg2rad(lon2 - lon1)
-  const a = 
-    Math.sin(dLat/2) * Math.sin(dLat/2) +
-    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) * 
-    Math.sin(dLon/2) * Math.sin(dLon/2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a))
-  const distance = R * c
-  return Math.round(distance * 100) / 100 // 保留两位小数
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon / 2) * Math.sin(dLon / 2)
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+  return Math.round(R * c * 100) / 100
 }
 
 function deg2rad(deg: number): number {
-  return deg * (Math.PI/180)
+  return deg * (Math.PI / 180)
 }
 
 export default MapPage

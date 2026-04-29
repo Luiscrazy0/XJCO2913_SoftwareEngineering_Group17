@@ -5,6 +5,7 @@ import { bookingsApi } from '../api/bookings'
 import { HireType, Scooter } from '../types'
 import { useAuth } from '../context/AuthContext'
 import { bookingKeys, scooterKeys } from '../utils/queryKeys'
+import PriceEstimate from './booking/PriceEstimate'
 
 interface BookingModalProps {
   isOpen: boolean
@@ -19,30 +20,10 @@ const hireTypeOptions: {
   description: string
   durationMinutes: number
 }[] = [
-  {
-    value: 'HOUR_1',
-    label: '1 小时',
-    description: '轻量体验',
-    durationMinutes: 60,
-  },
-  {
-    value: 'HOUR_4',
-    label: '4 小时',
-    description: '半天出行',
-    durationMinutes: 240,
-  },
-  {
-    value: 'DAY_1',
-    label: '1 天',
-    description: '全天使用',
-    durationMinutes: 1440,
-  },
-  {
-    value: 'WEEK_1',
-    label: '1 周',
-    description: '长租优选',
-    durationMinutes: 10080,
-  },
+  { value: 'HOUR_1', label: '1 小时', description: '轻量体验', durationMinutes: 60 },
+  { value: 'HOUR_4', label: '4 小时', description: '半天出行', durationMinutes: 240 },
+  { value: 'DAY_1', label: '1 天', description: '全天使用', durationMinutes: 1440 },
+  { value: 'WEEK_1', label: '1 周', description: '长租优选', durationMinutes: 10080 },
 ]
 
 const toDatetimeLocal = (date: Date) => {
@@ -57,7 +38,6 @@ const getInitialStartTime = () => {
   return toDatetimeLocal(now)
 }
 
-
 export default function BookingModal({ isOpen, scooter, onClose, onBookingSuccess }: BookingModalProps) {
   const { user } = useAuth()
   const navigate = useNavigate()
@@ -71,7 +51,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
 
   const minStartTime = useMemo(() => toDatetimeLocal(new Date()), [isOpen])
   const selectedDuration = useMemo(() => {
-    return hireTypeOptions.find((option) => option.value === selectedHireType)?.durationMinutes ?? 60
+    return hireTypeOptions.find((o) => o.value === selectedHireType)?.durationMinutes ?? 60
   }, [selectedHireType])
 
   const {
@@ -86,9 +66,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: scooterKeys.all })
       if (user?.id) {
-        queryClient.invalidateQueries({
-          queryKey: bookingKeys.list(user.id, user.role),
-        })
+        queryClient.invalidateQueries({ queryKey: bookingKeys.list(user.id, user.role) })
       }
     },
   })
@@ -96,38 +74,25 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
   const friendlyErrorMessage = useMemo(() => {
     if (isError) {
       if (mutationError instanceof Error && mutationError.message) {
-        // 尝试解析API错误响应
         try {
           if ('response' in mutationError) {
-            const axiosError = mutationError as any;
-            const errorData = axiosError.response?.data;
-            if (errorData?.message) {
-              return `预约失败: ${errorData.message}`;
-            }
+            const axiosError = mutationError as any
+            const errorData = axiosError.response?.data
+            if (errorData?.message) return `预约失败: ${errorData.message}`
           }
-        } catch (e) {
-          // 如果解析失败，使用原始错误消息
-        }
-        return mutationError.message;
+        } catch {}
+        return mutationError.message
       }
-      return '预约失败，请稍后重试';
+      return '预约失败，请稍后重试'
     }
-    return '';
+    return ''
   }, [isError, mutationError])
 
   const statusMessage = useMemo(() => {
-    if (isPending) {
-      return '正在创建预约...'
-    }
-    if (isSuccess) {
-      return '预约成功！即将跳转到我的预约'
-    }
-    if (formError) {
-      return formError
-    }
-    if (friendlyErrorMessage) {
-      return friendlyErrorMessage
-    }
+    if (isPending) return '正在创建预约...'
+    if (isSuccess) return '预约成功！即将跳转到我的预约'
+    if (formError) return formError
+    if (friendlyErrorMessage) return friendlyErrorMessage
     return ''
   }, [isPending, isSuccess, friendlyErrorMessage, formError])
 
@@ -141,44 +106,15 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
   const handleSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault()
-
-      if (!user) {
-        setFormError('用户信息缺失，请重新登录')
-        return
-      }
-
+      if (!user) { setFormError('用户信息缺失，请重新登录'); return }
       const parsedStart = new Date(startTime)
-      if (isNaN(parsedStart.getTime())) {
-        setFormError('请选择有效的开始时间')
-        return
-      }
-
-      const now = new Date()
-      if (parsedStart < now) {
-        setFormError('开始时间不能早于当前时间')
-        return
-      }
-
+      if (isNaN(parsedStart.getTime())) { setFormError('请选择有效的开始时间'); return }
+      if (parsedStart < new Date()) { setFormError('开始时间不能早于当前时间'); return }
       setFormError('')
-
-      createBooking({
-        scooterId: scooter.id,
-        hireType: selectedHireType,
-        startTime: parsedStart.toISOString(),
-      })
+      createBooking({ scooterId: scooter.id, hireType: selectedHireType, startTime: parsedStart.toISOString() })
     },
     [createBooking, selectedHireType, scooter.id, startTime, user],
   )
-
-  const handleHireTypeChange = (value: HireType) => {
-    setSelectedHireType(value)
-  }
-
-  const handleOverlayClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (event.currentTarget === event.target) {
-      onClose()
-    }
-  }
 
   useEffect(() => {
     if (!isOpen) {
@@ -191,43 +127,32 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
 
   useEffect(() => {
     if (isSuccess) {
-      if (successTimer.current) {
-        window.clearTimeout(successTimer.current)
-      }
+      if (successTimer.current) window.clearTimeout(successTimer.current)
       successTimer.current = window.setTimeout(() => {
         onBookingSuccess?.()
         onClose()
         navigate('/bookings')
       }, 1400)
     }
-
-    return () => {
-      if (successTimer.current) {
-        window.clearTimeout(successTimer.current)
-        successTimer.current = null
-      }
-    }
+    return () => { if (successTimer.current) { window.clearTimeout(successTimer.current); successTimer.current = null } }
   }, [isSuccess, navigate, onBookingSuccess, onClose])
 
-  if (!isOpen) {
-    return null
-  }
+  if (!isOpen) return null
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 px-4 py-8"
       role="dialog"
       aria-modal="true"
-      onClick={handleOverlayClick}
+      onClick={(e) => { if (e.currentTarget === e.target) onClose() }}
     >
-      <div className="relative w-full max-w-2xl rounded-3xl surface-card p-6 ring-1 ring-[var(--border-line)]">
+      <div className="relative w-full max-w-2xl rounded-3xl surface-card p-6 ring-1 ring-[var(--border-line)] max-h-[90vh] overflow-y-auto">
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-full bg-[var(--bg-input)] p-2 text-[var(--text-secondary)] transition hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/40"
+          className="absolute right-4 top-4 rounded-full bg-[var(--bg-input)] p-2 text-[var(--text-secondary)] hover:bg-white/10"
         >
-          <span className="sr-only">关闭弹窗</span>
-          ×
+          <span className="sr-only">关闭弹窗</span>×
         </button>
 
         <h2 className="text-2xl font-bold text-[var(--text-main)]">预约滑板车</h2>
@@ -235,15 +160,14 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
 
         <section className="mt-6 rounded-2xl border border-[var(--border-line)] bg-[var(--bg-input)] p-4">
           <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)]">车辆信息</p>
-          <div className="mt-2 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-[var(--text-main)]">ID</p>
-              <p className="text-xs text-[var(--text-secondary)]">{scooter.id}</p>
-            </div>
-            <div>
-              <p className="text-sm font-medium text-[var(--text-main)]">位置</p>
-              <p className="text-xs text-[var(--text-secondary)]">{scooter.location}</p>
-            </div>
+          <div className="mt-2 space-y-1">
+            <p className="text-sm text-[var(--text-main)]">🛴 Scooter #{scooter.id.substring(0, 8)}...</p>
+            {scooter.station && (
+              <p className="text-sm text-[var(--text-secondary)]">
+                📍 取车地点: {scooter.station.name} ({scooter.station.address})
+              </p>
+            )}
+            <p className="text-xs text-[var(--text-secondary)]">{scooter.location}</p>
           </div>
         </section>
 
@@ -260,7 +184,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
                   key={option.value}
                   type="button"
                   aria-pressed={isSelected}
-                  onClick={() => handleHireTypeChange(option.value)}
+                  onClick={() => setSelectedHireType(option.value)}
                   className={`flex flex-col rounded-2xl border px-4 py-3 text-left transition ${
                     isSelected
                       ? 'border-[var(--mclaren-orange)] bg-[rgba(255,106,0,0.12)] text-[var(--text-main)] shadow-sm'
@@ -275,6 +199,10 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
           </div>
         </section>
 
+        <section className="mt-6">
+          <PriceEstimate hireType={selectedHireType} />
+        </section>
+
         <form onSubmit={handleSubmit}>
           <section className="mt-6">
             <label htmlFor="startTime" className="text-sm font-semibold text-[var(--text-main)]">
@@ -286,8 +214,8 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
               type="datetime-local"
               value={startTime}
               min={minStartTime}
-              onChange={(event) => setStartTime(event.target.value)}
-              className="mt-2 w-full rounded-2xl border border-[var(--border-line)] bg-[var(--bg-input)] px-4 py-3 text-sm text-[var(--text-main)] transition focus:border-[var(--mclaren-orange)] focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/20"
+              onChange={(e) => setStartTime(e.target.value)}
+              className="mt-2 w-full rounded-2xl border border-[var(--border-line)] bg-[var(--bg-input)] px-4 py-3 text-sm text-[var(--text-main)] focus:border-[var(--mclaren-orange)] focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/20"
             />
             <p className="mt-1 text-xs text-[var(--text-secondary)]">支持未来 2 周内的开始时间</p>
           </section>
@@ -311,7 +239,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
             <button
               type="button"
               onClick={onClose}
-              className="rounded-2xl border border-[var(--border-line)] px-5 py-3 text-sm font-semibold text-[var(--text-secondary)] transition hover:border-[var(--mclaren-orange)]"
+              className="rounded-2xl border border-[var(--border-line)] px-5 py-3 text-sm font-semibold text-[var(--text-secondary)] hover:border-[var(--mclaren-orange)]"
             >
               取消
             </button>
@@ -324,7 +252,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
                   : 'bg-[var(--mclaren-orange)] hover:brightness-110 focus:ring-2 focus:ring-[var(--mclaren-orange)]/30'
               }`}
             >
-              {isPending ? '处理中...' : '确认预约'}
+              {isPending ? '处理中...' : '确认预约并支付 →'}
             </button>
           </div>
         </form>

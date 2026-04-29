@@ -15,15 +15,17 @@ export default function AdminFeedbacksPage() {
   const role = user?.role ?? null
 
   const {
-    data: feedbacks = [],
+    data: feedbacksData,
     isLoading,
     isError,
     error,
     refetch,
   } = useQuery({
     queryKey: feedbackKeys.list(role, filters),
-    queryFn: () => feedbackApi.getAll(filters),
+    queryFn: () => feedbackApi.getAll(filters, 1, 100),
   })
+
+  const feedbacks = feedbacksData?.items ?? []
 
   const { data: pendingCount = 0 } = useQuery({
     queryKey: feedbackKeys.pendingCount(role),
