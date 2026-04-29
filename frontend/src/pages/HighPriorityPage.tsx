@@ -57,15 +57,17 @@ export default function HighPriorityPage() {
   }
 
   const {
-    data: feedbacks = [],
+    data: feedbacksData,
     isLoading,
     isError,
     error,
     refetch,
   } = useQuery({
     queryKey: feedbackKeys.highPriority(role),
-    queryFn: feedbackApi.getHighPriority,
+    queryFn: () => feedbackApi.getHighPriority(1, 100),
   })
+
+  const feedbacks = feedbacksData?.items ?? []
 
   const filteredFeedbacks = filterCategory === 'ALL' 
     ? feedbacks 

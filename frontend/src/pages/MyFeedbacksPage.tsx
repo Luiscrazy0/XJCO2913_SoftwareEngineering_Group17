@@ -15,8 +15,8 @@ export default function MyFeedbacksPage() {
   const fetchFeedbacks = async () => {
     try {
       setLoading(true)
-      const data = await feedbackApi.getMyFeedbacks()
-      setFeedbacks(data)
+      const data = await feedbackApi.getMyFeedbacks(1, 100)
+      setFeedbacks(data.items)
       setError(null)
     } catch (err) {
       console.error('获取反馈失败:', err)

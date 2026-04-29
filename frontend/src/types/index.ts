@@ -6,7 +6,7 @@ export type HireType = 'HOUR_1' | 'HOUR_4' | 'DAY_1' | 'WEEK_1'
 
 export type ScooterStatus = 'AVAILABLE' | 'UNAVAILABLE' | 'RENTED'
 
-export type BookingStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'CANCELLED' | 'COMPLETED' | 'EXTENDED'
+export type BookingStatus = 'PENDING_PAYMENT' | 'CONFIRMED' | 'IN_PROGRESS' | 'CANCELLED' | 'COMPLETED' | 'EXTENDED'
 
 export type ToastType = 'success' | 'error' | 'warning' | 'info'
 
@@ -30,6 +30,7 @@ export interface Station {
   address: string
   latitude: number
   longitude: number
+  isActive?: boolean
   scooters: Scooter[]
   createdAt: string
   updatedAt: string
@@ -51,16 +52,22 @@ export interface Booking {
   id: string
   userId: string
   scooterId: string
+  pickupStationId?: string
+  returnStationId?: string
   hireType: HireType
-  originalEndTime?: string  // 原始结束时间（用于续租）
-  startTime: string   // ISO日期字符串
-  endTime: string     // ISO日期字符串
+  originalEndTime?: string
+  startTime: string
+  endTime: string
+  actualStartTime?: string
+  actualEndTime?: string
   status: BookingStatus
   totalCost: number
-  extensionCount: number  // 续租次数
-  extendedFrom?: string   // 原始预订ID（如果是续租）
-  scooter: Scooter    // 关联的电动车信息
-  user: User          // 关联的用户信息
+  extensionCount: number
+  extendedFrom?: string
+  scooter: Scooter
+  user: User
+  pickupStation?: Station
+  returnStation?: Station
   createdAt: string
   updatedAt: string
 }
@@ -109,4 +116,43 @@ export interface StationQueryParams {
   latitude?: number
   longitude?: number
   radius?: number
+}
+
+// Price estimate
+export interface PriceEstimateResponse {
+  baseCost: number
+  discountAmount: number
+  discountRate: number
+  discountedPrice: number
+  discountReason: string
+  hireType: HireType
+  durationHours: number
+}
+
+// End ride response
+export interface EndRideResponse {
+  booking: Booking
+  scooter: Scooter
+  damageReportCreated: boolean
+}
+
+// Payment
+export interface Payment {
+  id: string
+  bookingId: string
+  amount: number
+  status: string
+  idempotencyKey?: string
+  createdAt: string
+  booking?: Booking
+}
+
+// Payment card
+export interface PaymentCard {
+  id: string
+  lastFourDigits: string
+  expiryDate: string
+  cardHolder: string
+  isDefault: boolean
+  createdAt: string
 }

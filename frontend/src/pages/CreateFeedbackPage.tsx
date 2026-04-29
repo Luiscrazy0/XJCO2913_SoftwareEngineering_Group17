@@ -26,10 +26,11 @@ export default function CreateFeedbackPage() {
 
   const fetchScooters = async () => {
     try {
-      const data = await scootersApi.getAll()
-      setScooters(data)
-      if (data.length > 0 && !formData.scooterId) {
-        setFormData(prev => ({ ...prev, scooterId: data[0].id }))
+      const data = await scootersApi.getAll(1, 100)
+      const items = data.items
+      setScooters(items)
+      if (items.length > 0 && !formData.scooterId) {
+        setFormData(prev => ({ ...prev, scooterId: items[0].id }))
       }
     } catch (error) {
       console.error('Failed to fetch scooters:', error)
@@ -38,8 +39,8 @@ export default function CreateFeedbackPage() {
 
   const fetchBookings = async () => {
     try {
-      const data = await bookingsApi.getMyBookings()
-      setBookings(data)
+      const data = await bookingsApi.getMyBookings(1, 100)
+      setBookings(data.items)
     } catch (error) {
       console.error('Failed to fetch bookings:', error)
     }

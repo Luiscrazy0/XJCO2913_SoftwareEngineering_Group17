@@ -20,15 +20,17 @@ export default function AdminFleetPage() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const {
-    data: scooters = [],
+    data: scootersData,
     isLoading,
     isError,
     error,
     refetch,
   } = useQuery({
     queryKey: scooterKeys.list('admin'),
-    queryFn: scootersApi.getAll,
+    queryFn: () => scootersApi.getAll(1, 100),
   })
+
+  const scooters = scootersData?.items ?? []
 
   const createMutation = useMutation({
     mutationFn: (location: string) => scootersApi.create(location),

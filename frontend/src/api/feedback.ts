@@ -1,6 +1,6 @@
 // API module for feedback
 import axiosClient from '../utils/axiosClient'
-import { ApiResponse } from '../types'
+import { ApiResponse, PaginatedResponse } from '../types'
 
 export type FeedbackCategory = 'FAULT' | 'DAMAGE' | 'SUGGESTION'
 export type FeedbackPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
@@ -62,8 +62,10 @@ export const feedbackApi = {
   },
 
   // Get my feedbacks
-  getMyFeedbacks: async (): Promise<Feedback[]> => {
-    const response = await axiosClient.get<ApiResponse<Feedback[]>>('/feedbacks/my')
+  getMyFeedbacks: async (page?: number, limit?: number): Promise<PaginatedResponse<Feedback>> => {
+    const response = await axiosClient.get<ApiResponse<PaginatedResponse<Feedback>>>('/feedbacks/my', {
+      params: { page, limit },
+    })
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to fetch feedbacks')
     }
@@ -89,14 +91,16 @@ export const feedbackApi = {
   },
 
   // Get all feedbacks (Manager only)
-  getAll: async (filters?: FeedbackFilters): Promise<Feedback[]> => {
+  getAll: async (filters?: FeedbackFilters, page?: number, limit?: number): Promise<PaginatedResponse<Feedback>> => {
     const params = new URLSearchParams()
     if (filters?.status) params.append('status', filters.status)
     if (filters?.priority) params.append('priority', filters.priority)
     if (filters?.category) params.append('category', filters.category)
-    
+    if (page) params.append('page', String(page))
+    if (limit) params.append('limit', String(limit))
+
     const url = `/feedbacks${params.toString() ? `?${params.toString()}` : ''}`
-    const response = await axiosClient.get<ApiResponse<Feedback[]>>(url)
+    const response = await axiosClient.get<ApiResponse<PaginatedResponse<Feedback>>>(url)
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to fetch feedbacks')
     }
@@ -104,8 +108,10 @@ export const feedbackApi = {
   },
 
   // Get high priority feedbacks (Manager only)
-  getHighPriority: async (): Promise<Feedback[]> => {
-    const response = await axiosClient.get<ApiResponse<Feedback[]>>('/feedbacks/high-priority')
+  getHighPriority: async (page?: number, limit?: number): Promise<PaginatedResponse<Feedback>> => {
+    const response = await axiosClient.get<ApiResponse<PaginatedResponse<Feedback>>>('/feedbacks/high-priority', {
+      params: { page, limit },
+    })
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to fetch high priority feedbacks')
     }

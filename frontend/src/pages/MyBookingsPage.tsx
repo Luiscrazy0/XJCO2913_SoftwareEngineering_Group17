@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { bookingsApi } from '../api/bookings'
@@ -11,226 +11,209 @@ import EmptyState from '../components/EmptyState'
 import ErrorState from '../components/ErrorState'
 import Navbar from '../components/Navbar'
 import ExtendBookingModal from '../components/ExtendBookingModal'
+import PaymentModal from '../components/booking/PaymentModal'
+import StartRideModal from '../components/booking/StartRideModal'
+import EndRideModal from '../components/booking/EndRideModal'
 import { Booking } from '../types'
 import { bookingKeys } from '../utils/queryKeys'
+
+const PAGE_SIZE = 10
 
 const MyBookingsPage: React.FC = () => {
   const { user } = useAuth()
   const queryClient = useQueryClient()
   const { showToast } = useToast()
   const navigate = useNavigate()
-  
+
+  const [page, setPage] = useState(1)
+  const [filterStatus, setFilterStatus] = useState<string>('ALL')
   const [extendModalOpen, setExtendModalOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
-  const [filterStatus, setFilterStatus] = useState<string>('ALL') // 筛选状态：ALL, PENDING_PAYMENT, CONFIRMED, COMPLETED, CANCELLED
+  const [paymentBooking, setPaymentBooking] = useState<Booking | null>(null)
+  const [startRideBooking, setStartRideBooking] = useState<Booking | null>(null)
+  const [endRideBooking, setEndRideBooking] = useState<Booking | null>(null)
 
   const bookingsKey = bookingKeys.list(user?.id ?? null, user?.role ?? null)
 
-  // 获取预约列表
   const {
-    data: bookings = [],
+    data: pagedData,
     isLoading,
     isError,
     error,
-    refetch
+    refetch,
   } = useQuery({
-    queryKey: bookingsKey,
-    queryFn: bookingsApi.getMyBookings,
-    enabled: !!user?.id, // 只在用户登录时获取
-    staleTime: 5 * 60 * 1000, // 5分钟缓存
+    queryKey: [...bookingsKey, page],
+    queryFn: () => bookingsApi.getMyBookings(page, PAGE_SIZE),
+    enabled: !!user?.id,
+    staleTime: 30000,
   })
 
-  // 取消预约的mutation
+  const bookings = pagedData?.items ?? []
+  const totalPages = pagedData?.totalPages ?? 1
+  const totalItems = pagedData?.total ?? 0
+
   const cancelMutation = useMutation({
     mutationFn: bookingsApi.cancel,
-    onSuccess: (updatedBooking) => {
-      // 更新缓存
-      queryClient.setQueryData(bookingsKey, (oldData: any) => {
-        if (!oldData) return oldData
-        return oldData.map((booking: any) =>
-          booking.id === updatedBooking.id ? updatedBooking : booking
-        )
-      })
-      
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingsKey })
       showToast('预约已成功取消', 'success')
     },
     onError: (error: any) => {
       showToast(error.message || '取消预约失败', 'error')
-    }
+    },
   })
 
-  // 续租预约的mutation
   const extendMutation = useMutation({
     mutationFn: ({ id, additionalHours }: { id: string; additionalHours: number }) =>
       bookingsApi.extend(id, { additionalHours }),
-    onSuccess: (updatedBooking) => {
-      // 更新缓存
-      queryClient.setQueryData(bookingsKey, (oldData: any) => {
-        if (!oldData) return oldData
-        return oldData.map((booking: any) =>
-          booking.id === updatedBooking.id ? updatedBooking : booking
-        )
-      })
-      
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: bookingsKey })
       showToast('续租成功！', 'success')
       setExtendModalOpen(false)
       setSelectedBooking(null)
     },
     onError: (error: any) => {
       showToast(error.message || '续租失败', 'error')
-    }
+    },
   })
 
-  // 处理取消预约
   const handleCancelBooking = async (bookingId: string) => {
     if (window.confirm('确定要取消这个预约吗？')) {
       await cancelMutation.mutateAsync(bookingId)
     }
   }
 
-  // 处理续租预约
+  const handlePayBooking = (bookingId: string) => {
+    const booking = bookings.find(b => b.id === bookingId)
+    if (booking) setPaymentBooking(booking)
+  }
+
+  const handlePaymentSuccess = (_booking: Booking) => {
+    queryClient.invalidateQueries({ queryKey: bookingsKey })
+    showToast('支付成功！订单已确认', 'success')
+  }
+
   const handleExtendBooking = (booking: Booking) => {
     setSelectedBooking(booking)
     setExtendModalOpen(true)
   }
 
-  // 处理续租确认
   const handleExtendConfirm = async (bookingId: string, additionalHours: number) => {
     await extendMutation.mutateAsync({ id: bookingId, additionalHours })
   }
 
-  // 处理支付（暂未实现）
-  const handlePayBooking = (bookingId: string) => {
-    alert(`支付功能将在下一阶段实现 - Booking ID: ${bookingId}`)
+  const handleStartRide = (booking: Booking) => {
+    setStartRideBooking(booking)
   }
 
-  // 处理浏览车辆
-  const handleBrowseScooters = () => {
-    navigate('/scooters')
+  const handleStartRideSuccess = (_updated: Booking) => {
+    queryClient.invalidateQueries({ queryKey: bookingsKey })
+    showToast('骑行已开始！', 'success')
   }
 
-  // 排序预约：待支付 > 已确认（进行中） > 其他状态 > 按时间倒序
-  const sortedBookings = React.useMemo(() => {
-    if (!bookings.length) return []
-    
-    // 先筛选
-    const filteredBookings = filterStatus === 'ALL' 
-      ? bookings 
-      : bookings.filter(booking => booking.status === filterStatus)
-    
-    return [...filteredBookings].sort((a, b) => {
-      // 状态优先级映射 - 使用实际存在的BookingStatus
-      const statusOrder: Record<string, number> = {
-        'PENDING_PAYMENT': 100,  // 最高优先级：待支付
-        'CONFIRMED': 90,         // 高优先级：已确认（进行中）
-        'EXTENDED': 80,          // 已续租
-        'COMPLETED': 70,         // 已完成
-        'CANCELLED': 60,         // 已取消
-      }
-      
-      // 按状态优先级排序（降序）
-      const statusDiff = (statusOrder[b.status] || 0) - (statusOrder[a.status] || 0)
-      if (statusDiff !== 0) return statusDiff
-      
-      // 相同状态按开始时间倒序（最新的在前）
-      return new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-    })
+  const handleEndRide = (booking: Booking) => {
+    setEndRideBooking(booking)
+  }
+
+  const handleEndRideSuccess = (result: { booking: Booking; damageReportCreated: boolean }) => {
+    queryClient.invalidateQueries({ queryKey: bookingsKey })
+    if (result.damageReportCreated) {
+      showToast('还车成功，已自动提交损坏报告', 'warning')
+    } else {
+      showToast('骑行已结束，感谢使用！', 'success')
+    }
+  }
+
+  const filteredBookings = useMemo(() => {
+    if (filterStatus === 'ALL') return bookings
+    return bookings.filter(b => b.status === filterStatus)
   }, [bookings, filterStatus])
 
-  // 渲染页面内容
   const renderContent = () => {
-    if (isLoading) {
-      return <BookingSkeleton />
-    }
-
-    if (isError) {
-      return (
-        <ErrorState
-          message={error?.message || '无法加载预约数据'}
-          onRetry={refetch}
-        />
-      )
-    }
-
+    if (isLoading) return <BookingSkeleton />
+    if (isError) return <ErrorState message={error?.message || '无法加载预约数据'} onRetry={refetch} />
     if (bookings.length === 0) {
-      return (
-        <EmptyState
-          onAction={handleBrowseScooters}
-        />
-      )
+      return <EmptyState onAction={() => navigate('/scooters')} />
+    }
+
+    const statusCounts: Record<string, number> = {}
+    bookings.forEach(b => { statusCounts[b.status] = (statusCounts[b.status] || 0) + 1 })
+
+    const filterButtons = [
+      { key: 'ALL', label: '全部', count: totalItems },
+      { key: 'PENDING_PAYMENT', label: '待支付', count: statusCounts['PENDING_PAYMENT'] || 0 },
+      { key: 'CONFIRMED', label: '已确认', count: statusCounts['CONFIRMED'] || 0 },
+      { key: 'IN_PROGRESS', label: '骑行中', count: statusCounts['IN_PROGRESS'] || 0 },
+      { key: 'EXTENDED', label: '已续租', count: statusCounts['EXTENDED'] || 0 },
+      { key: 'COMPLETED', label: '已完成', count: statusCounts['COMPLETED'] || 0 },
+      { key: 'CANCELLED', label: '已取消', count: statusCounts['CANCELLED'] || 0 },
+    ]
+
+    const filterColors: Record<string, string> = {
+      ALL: 'bg-[var(--mclaren-orange)] text-white',
+      PENDING_PAYMENT: 'bg-yellow-600 text-white',
+      CONFIRMED: 'bg-blue-600 text-white',
+      IN_PROGRESS: 'bg-purple-600 text-white',
+      EXTENDED: 'bg-cyan-600 text-white',
+      COMPLETED: 'bg-green-600 text-white',
+      CANCELLED: 'bg-red-600 text-white',
     }
 
     return (
       <>
         <BookingStats bookings={bookings} />
-        
-        {/* 状态筛选按钮 */}
-        <div className="mb-6">
-          <div className="flex flex-wrap gap-2">
+
+        <div className="mb-6 flex flex-wrap gap-2">
+          {filterButtons.map(({ key, label, count }) => (
             <button
-              onClick={() => setFilterStatus('ALL')}
+              key={key}
+              onClick={() => { setFilterStatus(key); setPage(1) }}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filterStatus === 'ALL'
-                  ? 'bg-[var(--mclaren-orange)] text-white'
+                filterStatus === key
+                  ? filterColors[key] || 'bg-[var(--mclaren-orange)] text-white'
                   : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-white/5'
               }`}
             >
-              全部 ({bookings.length})
+              {label} ({count})
             </button>
-            <button
-              onClick={() => setFilterStatus('PENDING_PAYMENT')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filterStatus === 'PENDING_PAYMENT'
-                  ? 'bg-yellow-600 text-white'
-                  : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-white/5'
-              }`}
-            >
-              待支付 ({bookings.filter(b => b.status === 'PENDING_PAYMENT').length})
-            </button>
-            <button
-              onClick={() => setFilterStatus('CONFIRMED')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filterStatus === 'CONFIRMED'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-white/5'
-              }`}
-            >
-              已确认 ({bookings.filter(b => b.status === 'CONFIRMED').length})
-            </button>
-            <button
-              onClick={() => setFilterStatus('COMPLETED')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filterStatus === 'COMPLETED'
-                  ? 'bg-green-600 text-white'
-                  : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-white/5'
-              }`}
-            >
-              已完成 ({bookings.filter(b => b.status === 'COMPLETED').length})
-            </button>
-            <button
-              onClick={() => setFilterStatus('CANCELLED')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filterStatus === 'CANCELLED'
-                  ? 'bg-red-600 text-white'
-                  : 'bg-[var(--bg-input)] text-[var(--text-secondary)] hover:bg-white/5'
-              }`}
-            >
-              已取消 ({bookings.filter(b => b.status === 'CANCELLED').length})
-            </button>
-          </div>
+          ))}
         </div>
-        
+
         <div className="space-y-6">
-          {sortedBookings.map((booking) => (
+          {filteredBookings.map((booking) => (
             <BookingCard
               key={booking.id}
               booking={booking}
               onCancel={handleCancelBooking}
               onPay={handlePayBooking}
               onExtend={handleExtendBooking}
+              onStartRide={handleStartRide}
+              onEndRide={handleEndRide}
             />
           ))}
         </div>
+
+        {totalPages > 1 && (
+          <div className="mt-8 flex justify-center gap-2">
+            <button
+              disabled={page <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              className="px-4 py-2 rounded-lg bg-[var(--bg-input)] text-[var(--text-secondary)] disabled:opacity-40"
+            >
+              上一页
+            </button>
+            <span className="px-4 py-2 text-sm text-[var(--text-secondary)]">
+              第 {page} / {totalPages} 页
+            </span>
+            <button
+              disabled={page >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              className="px-4 py-2 rounded-lg bg-[var(--bg-input)] text-[var(--text-secondary)] disabled:opacity-40"
+            >
+              下一页
+            </button>
+          </div>
+        )}
       </>
     )
   }
@@ -238,39 +221,55 @@ const MyBookingsPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[var(--bg-main)]">
       <Navbar />
-      
-      {/* 主内容 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 页面标题 */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-[var(--text-main)]">我的预约</h1>
-          <p className="text-[var(--text-secondary)] mt-2">
-            查看和管理您的所有电动车租赁预约
-          </p>
+          <p className="text-[var(--text-secondary)] mt-2">查看和管理您的所有电动车租赁预约</p>
         </div>
 
-        {/* 页面内容 */}
         {renderContent()}
 
-        {/* 续租模态框 */}
         {selectedBooking && (
           <ExtendBookingModal
             booking={selectedBooking}
             isOpen={extendModalOpen}
-            onClose={() => {
-              setExtendModalOpen(false)
-              setSelectedBooking(null)
-            }}
+            onClose={() => { setExtendModalOpen(false); setSelectedBooking(null) }}
             onExtend={handleExtendConfirm}
           />
         )}
 
-        {/* 加载状态指示器 */}
+        {paymentBooking && (
+          <PaymentModal
+            isOpen={!!paymentBooking}
+            booking={paymentBooking}
+            onClose={() => setPaymentBooking(null)}
+            onSuccess={handlePaymentSuccess}
+          />
+        )}
+
+        {startRideBooking && (
+          <StartRideModal
+            isOpen={!!startRideBooking}
+            booking={startRideBooking}
+            onClose={() => setStartRideBooking(null)}
+            onSuccess={handleStartRideSuccess}
+          />
+        )}
+
+        {endRideBooking && (
+          <EndRideModal
+            isOpen={!!endRideBooking}
+            booking={endRideBooking}
+            onClose={() => setEndRideBooking(null)}
+            onSuccess={handleEndRideSuccess}
+          />
+        )}
+
         {(cancelMutation.isPending || extendMutation.isPending) && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
             <div className="bg-[var(--bg-card)] rounded-lg p-6 shadow-xl border border-[var(--border-line)]">
               <div className="flex items-center">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--mclaren-orange)] mr-3"></div>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[var(--mclaren-orange)] mr-3" />
                 <span className="text-[var(--text-secondary)]">正在处理...</span>
               </div>
             </div>
