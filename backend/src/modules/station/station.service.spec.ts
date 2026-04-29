@@ -32,6 +32,7 @@ type ScooterUpdateManyArgs = Parameters<
 
 const stationFindManyMock =
   jest.fn<(args?: StationFindManyArgs) => Promise<StationRecord[]>>();
+const stationCountMock = jest.fn<() => Promise<number>>();
 const stationFindUniqueMock =
   jest.fn<(args: StationFindUniqueArgs) => Promise<StationRecord | null>>();
 const stationCreateMock =
@@ -52,6 +53,7 @@ const mockPrismaService = {
     create: stationCreateMock,
     update: stationUpdateMock,
     delete: stationDeleteMock,
+    count: stationCountMock,
   },
   scooter: {
     findMany: scooterFindManyMock,
@@ -87,10 +89,14 @@ describe('StationService', () => {
     it('returns all stations ordered by creation time', async () => {
       const station = createStationRecord();
       stationFindManyMock.mockResolvedValue([station]);
+      stationCountMock.mockResolvedValue(1);
 
       const result = await service.findAll();
 
       expect(stationFindManyMock).toHaveBeenCalledWith({
+        skip: 0,
+        take: 20,
+        where: { isActive: true },
         include: {
           scooters: {
             include: {
@@ -100,7 +106,13 @@ describe('StationService', () => {
         },
         orderBy: { createdAt: 'desc' },
       });
-      expect(result).toEqual([station]);
+      expect(result).toEqual({
+        items: [station],
+        total: 1,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      });
     });
   });
 

@@ -2,13 +2,26 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentService } from './payment.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../booking/email.service';
-import { BookingStatus, Role } from '@prisma/client';
+import { BookingStatus, Role, ScooterStatus } from '@prisma/client';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 
 describe('PaymentService', () => {
   let paymentService: PaymentService;
 
+  const txPaymentCreateMock = jest.fn();
+  const txBookingUpdateMock = jest.fn();
+  const txScooterUpdateMock = jest.fn();
+  const mockTx = {
+    payment: { create: txPaymentCreateMock },
+    booking: { update: txBookingUpdateMock },
+    scooter: { update: txScooterUpdateMock },
+  };
+  const transactionMock = jest.fn(
+    (cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx),
+  );
+
   const mockPrismaService = {
+    $transaction: transactionMock,
     booking: {
       findUnique: jest.fn(),
       update: jest.fn(),
@@ -19,6 +32,9 @@ describe('PaymentService', () => {
     },
     user: {
       findUnique: jest.fn(),
+    },
+    scooter: {
+      update: jest.fn(),
     },
   };
 
@@ -62,8 +78,7 @@ describe('PaymentService', () => {
         paymentService.createPayment(targetBookingId, paymentAmount, userId),
       ).rejects.toThrow(new BadRequestException('Booking not found'));
 
-      expect(mockPrismaService.payment.create).not.toHaveBeenCalled();
-      expect(mockPrismaService.booking.update).not.toHaveBeenCalled();
+      expect(transactionMock).not.toHaveBeenCalled();
     });
 
     it('【异常路径】如果用户尝试支付他人的预约，应该抛出 ForbiddenException', async () => {
@@ -80,8 +95,7 @@ describe('PaymentService', () => {
         new ForbiddenException('You can only pay for your own bookings'),
       );
 
-      expect(mockPrismaService.payment.create).not.toHaveBeenCalled();
-      expect(mockPrismaService.booking.update).not.toHaveBeenCalled();
+      expect(transactionMock).not.toHaveBeenCalled();
     });
 
     it('【异常路径】如果 booking 状态不是 PENDING_PAYMENT，应该抛出 Booking cannot be paid', async () => {
@@ -96,15 +110,18 @@ describe('PaymentService', () => {
         paymentService.createPayment(targetBookingId, paymentAmount, userId),
       ).rejects.toThrow(new BadRequestException('Booking cannot be paid'));
 
-      expect(mockPrismaService.payment.create).not.toHaveBeenCalled();
+      expect(transactionMock).not.toHaveBeenCalled();
     });
 
     it('【正常路径】应该成功创建支付记录，并将订单状态更新为 CONFIRMED', async () => {
+      const scooterId = 'scooter-123';
       mockPrismaService.booking.findUnique.mockResolvedValue({
         id: targetBookingId,
         userId: userId,
+        scooterId,
         status: BookingStatus.PENDING_PAYMENT,
         user: { id: userId, email: 'user@example.com' },
+        scooter: { id: scooterId, stationId: 'station-1' },
       });
 
       const mockCreatedPayment = {
@@ -113,12 +130,14 @@ describe('PaymentService', () => {
         amount: paymentAmount,
         status: 'SUCCESS',
       };
-      mockPrismaService.payment.create.mockResolvedValue(mockCreatedPayment);
+      txPaymentCreateMock.mockResolvedValue(mockCreatedPayment);
 
-      mockPrismaService.booking.update.mockResolvedValue({
+      txBookingUpdateMock.mockResolvedValue({
         id: targetBookingId,
         status: BookingStatus.CONFIRMED,
       });
+
+      txScooterUpdateMock.mockResolvedValue({ id: scooterId, status: ScooterStatus.RENTED });
 
       const result = await paymentService.createPayment(
         targetBookingId,
@@ -128,26 +147,35 @@ describe('PaymentService', () => {
 
       expect(mockPrismaService.booking.findUnique).toHaveBeenCalledWith({
         where: { id: targetBookingId },
-        include: { user: true },
+        include: { user: true, scooter: true },
       });
 
-      expect(mockPrismaService.payment.create).toHaveBeenCalledWith({
+      expect(transactionMock).toHaveBeenCalled();
+      expect(txPaymentCreateMock).toHaveBeenCalledWith({
         data: {
           bookingId: targetBookingId,
           amount: paymentAmount,
           status: 'SUCCESS',
+          idempotencyKey: null,
         },
       });
 
-      expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
+      expect(txBookingUpdateMock).toHaveBeenCalledWith({
         where: { id: targetBookingId },
-        data: { status: BookingStatus.CONFIRMED },
+        data: { status: BookingStatus.CONFIRMED, pickupStationId: 'station-1' },
+        include: { scooter: true, user: true },
+      });
+
+      expect(txScooterUpdateMock).toHaveBeenCalledWith({
+        where: { id: scooterId },
+        data: { status: ScooterStatus.RENTED },
       });
 
       expect(result).toEqual(mockCreatedPayment);
     });
 
     it('returns the payment even if sending the receipt email fails', async () => {
+      const scooterId = 'scooter-123';
       const mockCreatedPayment = {
         id: 'payment-001',
         bookingId: targetBookingId,
@@ -158,14 +186,17 @@ describe('PaymentService', () => {
       mockPrismaService.booking.findUnique.mockResolvedValue({
         id: targetBookingId,
         userId: userId,
+        scooterId,
         status: BookingStatus.PENDING_PAYMENT,
         user: { id: userId, email: 'user@example.com' },
+        scooter: { id: scooterId, stationId: 'station-1' },
       });
-      mockPrismaService.payment.create.mockResolvedValue(mockCreatedPayment);
-      mockPrismaService.booking.update.mockResolvedValue({
+      txPaymentCreateMock.mockResolvedValue(mockCreatedPayment);
+      txBookingUpdateMock.mockResolvedValue({
         id: targetBookingId,
         status: BookingStatus.CONFIRMED,
       });
+      txScooterUpdateMock.mockResolvedValue({ id: scooterId, status: ScooterStatus.RENTED });
       mockEmailService.sendPaymentReceipt.mockRejectedValue(
         new Error('SMTP failure'),
       );
