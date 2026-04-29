@@ -15,8 +15,9 @@ on:
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
-  # 🌟 新增：全局注入测试数据库连接字符串
   DATABASE_URL: "postgresql://test:test@localhost:5432/test_db"
+  JWT_SECRET: "ci-test-jwt-secret"
+  ENCRYPTION_KEY: "ci-test-encryption-key-32chars"
 
 jobs:
   test-backend:
