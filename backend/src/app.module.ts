@@ -1,5 +1,6 @@
 // backend/src/app.module.ts
 import { Module } from '@nestjs/common';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthModule } from './modules/health/health.module';
@@ -8,25 +9,26 @@ import { AuthModule } from './modules/auth/auth.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { ScooterModule } from './modules/scooter/scooter.module';
 import { BookingModule } from './modules/booking/booking.module';
-import { PaymentModule } from './modules/payment/payment.module'; // <- PaymentModule registration
-import { StationModule } from './modules/station/station.module'; // <- 新增StationModule
-import { StatisticsModule } from './modules/statistics/statistics.module'; // <- 新增StatisticsModule
-import { AmapModule } from './modules/amap/amap.module'; // <- 新增AmapModule
-import { FeedbackModule } from './modules/feedback/feedback.module'; // <- 新增FeedbackModule
+import { PaymentModule } from './modules/payment/payment.module';
+import { StationModule } from './modules/station/station.module';
+import { StatisticsModule } from './modules/statistics/statistics.module';
+import { AmapModule } from './modules/amap/amap.module';
+import { FeedbackModule } from './modules/feedback/feedback.module';
 
 @Module({
   imports: [
+    ThrottlerModule.forRoot([{ ttl: 60000, limit: 100 }]),
     HealthModule,
     PrismaModule,
     UserModule,
     AuthModule,
     ScooterModule,
     BookingModule,
-    PaymentModule, // <- PaymentModule registration
-    StationModule, // <- 新增StationModule
-    StatisticsModule, // <- 新增StatisticsModule
-    AmapModule, // <- 新增AmapModule
-    FeedbackModule, // <- 新增FeedbackModule
+    PaymentModule,
+    StationModule,
+    StatisticsModule,
+    AmapModule,
+    FeedbackModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,11 +1,8 @@
 import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { BookingStatus, Role } from '@prisma/client';
+import { BookingStatus, Role, ScooterStatus } from '@prisma/client';
 import { EmailService } from '../booking/email.service';
 
-/**
- * PaymentService class handles payment-related operations.
- */
 @Injectable()
 export class PaymentService {
   constructor(
@@ -13,71 +10,75 @@ export class PaymentService {
     private readonly emailService: EmailService,
   ) {}
 
-  async createPayment(bookingId: string, amount: number, userId: string) {
-    //第一步：检查 booking 是否存在。
+  async createPayment(
+    bookingId: string,
+    amount: number,
+    userId: string,
+    idempotencyKey?: string,
+  ) {
+    // Step 0: Idempotency check
+    if (idempotencyKey) {
+      const existingPayment = await this.prisma.payment.findUnique({
+        where: { idempotencyKey },
+        include: { booking: true },
+      });
+      if (existingPayment) {
+        return { payment: existingPayment, booking: existingPayment.booking };
+      }
+    }
+
+    // Step 1: Validate booking
     const booking = await this.prisma.booking.findUnique({
       where: { id: bookingId },
-      include: { user: true },
+      include: { user: true, scooter: true },
     });
 
-    /**
-     * Throws a BadRequestException if the booking is not found.
-     */
-    if (!booking) {
-      throw new BadRequestException('Booking not found');
-    }
-
-    // 验证用户是否有权限为此预约支付
-    if (booking.userId !== userId) {
-      throw new ForbiddenException('You can only pay for your own bookings');
-    }
-
-    //第二步：检查 booking 是否允许支付。
+    if (!booking) throw new BadRequestException('Booking not found');
+    if (booking.userId !== userId) throw new ForbiddenException('You can only pay for your own bookings');
     if (booking.status !== BookingStatus.PENDING_PAYMENT) {
       throw new BadRequestException('Booking cannot be paid');
     }
 
-    //第三步：创建 payment。
-    const payment = await this.prisma.payment.create({
-      data: {
-        bookingId,
-        amount,
-        status: 'SUCCESS',
-      },
+    // Step 2: Atomic transaction
+    const result = await this.prisma.$transaction(async (tx) => {
+      const payment = await tx.payment.create({
+        data: {
+          bookingId,
+          amount,
+          status: 'SUCCESS',
+          idempotencyKey: idempotencyKey || null,
+        },
+      });
+
+      const updatedBooking = await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: BookingStatus.CONFIRMED,
+          pickupStationId: booking.scooter.stationId,
+        },
+        include: { scooter: true, user: true },
+      });
+
+      await tx.scooter.update({
+        where: { id: booking.scooterId },
+        data: { status: ScooterStatus.RENTED },
+      });
+
+      return { payment, booking: updatedBooking };
     });
 
-    /**
-     * Updates the booking status to CONFIRMED.
-     */
-    await this.prisma.booking.update({
-      where: { id: bookingId },
-      data: {
-        /**
-         * Status of the booking (CONFIRMED).
-         */
-        status: BookingStatus.CONFIRMED,
-      },
-    });
-
-    // 发送支付收据邮件
+    // Send receipt email (non-critical)
     try {
       if (booking.user) {
-        await this.emailService.sendPaymentReceipt(booking, amount);
+        await this.emailService.sendPaymentReceipt(result.booking, amount);
       }
     } catch (error) {
-      console.error('发送支付收据邮件失败:', error);
-      // 不抛出错误，以免影响主要业务流程
+      console.error('Failed to send payment receipt email:', error);
     }
 
-    return payment;
+    return result.payment;
   }
 
-  /**
-   * Retrieves a payment by booking ID.
-   * @param bookingId Unique ID of the booking.
-   * @param userId ID of the user requesting the payment.
-   * @returns The payment details for the given booking ID.
-   */
   async getPaymentByBooking(bookingId: string, userId: string) {
     const payment = await this.prisma.payment.findUnique({
       where: { bookingId },
@@ -90,12 +91,8 @@ export class PaymentService {
       },
     });
 
-    if (!payment) {
-      return null;
-    }
+    if (!payment) return null;
 
-    // 验证用户是否有权限查看此支付
-    // 管理员可以查看所有支付
     const user = await this.prisma.user.findUnique({
       where: { id: userId },
       select: { role: true },

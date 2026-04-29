@@ -12,9 +12,13 @@ model Station {
   address   String
   latitude  Float
   longitude Float
+  isActive  Boolean   @default(true)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
-  scooters  Scooter[]
+
+  scooters        Scooter[]
+  pickupBookings  Booking[]  @relation("PickupStation")
+  returnBookings  Booking[]  @relation("ReturnStation")
 }
 
 model User {
@@ -45,32 +49,41 @@ model Scooter {
 }
 
 model Booking {
-  id              String           @id @default(uuid())
-  userId          String
-  scooterId       String
-  hireType        HireType
-  originalEndTime DateTime?
-  startTime       DateTime
-  endTime         DateTime
-  status          BookingStatus    @default(PENDING_PAYMENT)
-  totalCost       Float
-  extensionCount  Int              @default(0)
-  extendedFrom    String?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  id                String           @id @default(uuid())
+  userId            String
+  scooterId         String
+  pickupStationId   String?
+  returnStationId   String?
+  hireType          HireType
+  originalEndTime   DateTime?
+  startTime         DateTime
+  endTime           DateTime
+  actualStartTime   DateTime?
+  actualEndTime     DateTime?
+  status            BookingStatus    @default(PENDING_PAYMENT)
+  totalCost         Float
+  extensionCount    Int              @default(0)
+  extendedFrom      String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
   scooter         Scooter          @relation(fields: [scooterId], references: [id])
   user            User             @relation(fields: [userId], references: [id])
+  pickupStation   Station?         @relation("PickupStation", fields: [pickupStationId], references: [id])
+  returnStation   Station?         @relation("ReturnStation", fields: [returnStationId], references: [id])
   employeeBooking EmployeeBooking?
   payment         Payment?
   feedbacks       Feedback[]
 }
 
 model Payment {
-  id        String  @id @default(uuid())
-  bookingId String  @unique
-  amount    Float
-  status    String
-  booking   Booking @relation(fields: [bookingId], references: [id])
+  id              String   @id @default(uuid())
+  bookingId       String   @unique
+  amount          Float
+  status          String
+  idempotencyKey  String?  @unique
+  createdAt       DateTime @default(now())
+  booking         Booking  @relation(fields: [bookingId], references: [id])
 }
 
 model PaymentCard {
@@ -117,6 +130,7 @@ enum ScooterStatus {
 enum BookingStatus {
   PENDING_PAYMENT
   CONFIRMED
+  IN_PROGRESS
   CANCELLED
   COMPLETED
   EXTENDED

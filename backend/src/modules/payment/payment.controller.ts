@@ -1,4 +1,5 @@
 import { Controller, Post, Get, Body, Param, UseGuards, Req } from '@nestjs/common';
+import { Throttle } from '@nestjs/throttler';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -21,6 +22,7 @@ export class PaymentController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '创建支付',
@@ -94,7 +96,7 @@ export class PaymentController {
     @Req() req: any,
   ) {
     const user = req.user as { sub: string; id: string; role: string };
-    return this.paymentService.createPayment(body.bookingId, body.amount, user.id);
+    return this.paymentService.createPayment(body.bookingId, body.amount, user.id, body.idempotencyKey);
   }
 
   /**

@@ -5,6 +5,7 @@ import {
   Patch,
   Param,
   Body,
+  Query,
   UseGuards,
   Delete,
   Request,
@@ -20,6 +21,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiQuery,
   ApiBody,
   ApiBearerAuth,
 } from '@nestjs/swagger';
@@ -86,11 +88,15 @@ export class BookingController {
       },
     },
   })
-  findAll(@Request() req) {
+  findAll(
+    @Request() req,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
     const userId = req.user?.id;
     const role = req.user?.role;
     if (!userId) throw new UnauthorizedException('User information missing');
-    return this.bookingService.findAll(userId, role);
+    return this.bookingService.findAll(userId, role, Number(page), Number(limit));
   }
 
   @Get(':id')
@@ -540,6 +546,54 @@ export class BookingController {
       userId,
       role,
     );
+  }
+
+  @Get('estimate-price')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '费用估算',
+    description: '根据租赁类型估算费用（含折扣）（需要登录）',
+  })
+  @ApiQuery({ name: 'hireType', enum: ['HOUR_1', 'HOUR_4', 'DAY_1', 'WEEK_1'] })
+  async estimatePrice(@Request() req, @Query('hireType') hireType: string) {
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.estimatePrice(userId, hireType as any);
+  }
+
+  @Post(':id/start-ride')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '开始骑行', description: '确认取车，开始骑行计时' })
+  async startRide(@Request() req, @Param('id') id: string) {
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.startRide(id, userId);
+  }
+
+  @Post(':id/end-ride')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: '结束骑行', description: '还车到指定站点，结束骑行' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        returnStationId: { type: 'string' },
+        isScooterIntact: { type: 'boolean', default: true },
+      },
+      required: ['returnStationId'],
+    },
+  })
+  async endRide(
+    @Request() req,
+    @Param('id') id: string,
+    @Body() body: { returnStationId: string; isScooterIntact?: boolean },
+  ) {
+    const userId = req.user?.id;
+    if (!userId) throw new UnauthorizedException('User information missing');
+    return this.bookingService.endRide(id, userId, body.returnStationId, body.isScooterIntact ?? true);
   }
 
   // 银行卡管理API

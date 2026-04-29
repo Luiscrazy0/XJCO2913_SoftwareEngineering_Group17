@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ScooterService } from './scooter.service';
@@ -20,6 +21,7 @@ import {
   ApiOperation,
   ApiResponse,
   ApiParam,
+  ApiQuery,
   ApiBody,
   ApiBearerAuth,
 } from '@nestjs/swagger';
@@ -32,28 +34,16 @@ export class ScooterController {
   @Get()
   @ApiOperation({
     summary: '获取所有电动车',
-    description: '获取系统中所有电动车的列表',
+    description: '获取系统中所有电动车的列表（支持分页）',
   })
+  @ApiQuery({ name: 'page', required: false, description: '页码，默认1' })
+  @ApiQuery({ name: 'limit', required: false, description: '每页数量，默认20，最大100' })
   @ApiResponse({
     status: 200,
     description: '获取成功',
-    schema: {
-      example: {
-        success: true,
-        data: [
-          {
-            id: 'clx1234567890',
-            location: 'Main Street, Building 5',
-            status: 'AVAILABLE',
-          },
-        ],
-        message: 'Request successful',
-        timestamp: '2024-01-01T00:00:00.000Z',
-      },
-    },
   })
-  findAll() {
-    return this.scooterService.findAll();
+  findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.scooterService.findAll(Number(page), Number(limit));
   }
 
   @Get(':id')

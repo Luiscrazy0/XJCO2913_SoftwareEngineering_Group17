@@ -18,21 +18,34 @@ export class ScooterService {
     private readonly amapService: AmapService,
   ) {}
 
-  async findAll() {
-    const scooters = await this.prisma.scooter.findMany({
-      include: {
-        station: true,
-      },
-    });
+  async findAll(page?: number, limit?: number) {
+    const p = Math.max(1, Number(page) || 1);
+    const l = Math.min(100, Math.max(1, Number(limit) || 20));
+    const skip = (p - 1) * l;
 
-    // 为每个滑板车添加高德地图地址
+    const [scooters, total] = await Promise.all([
+      this.prisma.scooter.findMany({
+        skip,
+        take: l,
+        include: { station: true },
+        orderBy: { updatedAt: 'desc' },
+      }),
+      this.prisma.scooter.count(),
+    ]);
+
     const scootersWithAmap = await Promise.all(
       scooters.map(async (scooter) => {
         return await this.enrichWithAmapAddress(scooter);
       }),
     );
 
-    return scootersWithAmap;
+    return {
+      items: scootersWithAmap,
+      total,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(total / l),
+    };
   }
 
   async findById(id: string) {

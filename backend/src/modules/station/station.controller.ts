@@ -67,8 +67,8 @@ export class StationController {
       },
     },
   })
-  findAll() {
-    return this.stationService.findAll();
+  findAll(@Query('page') page?: string, @Query('limit') limit?: string) {
+    return this.stationService.findAll(Number(page), Number(limit));
   }
 
   @Get('available')

@@ -6,19 +6,33 @@ import { CreateStationDto } from './dto/create-station.dto';
 export class StationService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.station.findMany({
-      include: {
-        scooters: {
-          include: {
-            station: true,
+  async findAll(page?: number, limit?: number) {
+    const p = Math.max(1, Number(page) || 1);
+    const l = Math.min(100, Math.max(1, Number(limit) || 20));
+    const skip = (p - 1) * l;
+
+    const [stations, total] = await Promise.all([
+      this.prisma.station.findMany({
+        skip,
+        take: l,
+        where: { isActive: true },
+        include: {
+          scooters: {
+            include: { station: true },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.station.count({ where: { isActive: true } }),
+    ]);
+
+    return {
+      items: stations,
+      total,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(total / l),
+    };
   }
 
   async findById(id: string) {

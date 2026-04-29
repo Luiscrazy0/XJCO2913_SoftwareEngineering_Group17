@@ -30,6 +30,7 @@
     "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.0.1",
     "@nestjs/swagger": "^11.2.6",
+    "@nestjs/throttler": "^6.5.0",
     "@prisma/adapter-pg": "*",
     "@prisma/client": "^7.4.2",
     "@types/nodemailer": "^8.0.0",

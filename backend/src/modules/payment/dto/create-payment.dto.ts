@@ -1,10 +1,14 @@
-import { IsUUID, IsNumber, Min } from 'class-validator';
+import { IsUUID, IsNumber, Min, IsString, IsOptional } from 'class-validator';
 
 export class CreatePaymentDto {
   @IsUUID()
   bookingId: string;
 
   @IsNumber()
-  @Min(0) //金额必须大于等于0
+  @Min(0)
   amount: number;
+
+  @IsString()
+  @IsOptional()
+  idempotencyKey?: string;
 }
