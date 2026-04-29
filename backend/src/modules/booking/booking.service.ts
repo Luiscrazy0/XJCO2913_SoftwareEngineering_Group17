@@ -22,16 +22,32 @@ export class BookingService {
     private readonly emailService: EmailService,
   ) {}
 
-  async findAll(userId?: string, role?: Role) {
+  async findAll(userId?: string, role?: Role, page?: number, limit?: number) {
+    const p = Math.max(1, Number(page) || 1);
+    const l = Math.min(100, Math.max(1, Number(limit) || 20));
+    const skip = (p - 1) * l;
+
     const where =
-      role === Role.MANAGER ? undefined : userId ? { userId } : undefined;
+      role === Role.MANAGER ? {} : userId ? { userId } : {};
 
-    const query: Parameters<typeof this.prisma.booking.findMany>[0] = {
-      include: { user: true, scooter: true },
+    const [bookings, total] = await Promise.all([
+      this.prisma.booking.findMany({
+        where,
+        skip,
+        take: l,
+        include: { user: true, scooter: true, pickupStation: true, returnStation: true },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.booking.count({ where }),
+    ]);
+
+    return {
+      items: bookings,
+      total,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(total / l),
     };
-    if (where) query.where = where;
-
-    return this.prisma.booking.findMany(query);
   }
 
   async findById(id: string, requesterId?: string, requesterRole?: Role) {
@@ -147,7 +163,8 @@ export class BookingService {
 
     if (
       booking.status !== BookingStatus.CONFIRMED &&
-      booking.status !== BookingStatus.EXTENDED
+      booking.status !== BookingStatus.EXTENDED &&
+      booking.status !== BookingStatus.IN_PROGRESS
     ) {
       throw new BadRequestException(
         'Only confirmed or extended bookings can be extended',
@@ -402,6 +419,131 @@ export class BookingService {
     }
 
     return booking;
+  }
+
+  async estimatePrice(userId: string, hireType: HireType) {
+    const baseCost = this.calculateCost(hireType);
+    const discountResult = await this.discountService.calculateDiscountedPrice(
+      userId, baseCost, hireType,
+    );
+    return {
+      baseCost,
+      ...discountResult,
+      hireType,
+      durationHours: this.getDurationHours(hireType),
+    };
+  }
+
+  async startRide(bookingId: string, userId: string) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { scooter: true },
+    });
+
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.userId !== userId) throw new ForbiddenException('You do not have access to this booking');
+    if (booking.status !== BookingStatus.CONFIRMED) {
+      throw new BadRequestException('Only confirmed bookings can start a ride');
+    }
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: BookingStatus.IN_PROGRESS,
+          actualStartTime: new Date(),
+          pickupStationId: booking.scooter.stationId,
+        },
+        include: { scooter: true, user: true, pickupStation: true },
+      });
+
+      await tx.scooter.update({
+        where: { id: booking.scooterId },
+        data: { status: ScooterStatus.RENTED },
+      });
+
+      return updated;
+    });
+
+    return result;
+  }
+
+  async endRide(
+    bookingId: string,
+    userId: string,
+    returnStationId: string,
+    isScooterIntact: boolean = true,
+  ) {
+    const booking = await this.prisma.booking.findUnique({
+      where: { id: bookingId },
+      include: { scooter: true, user: true },
+    });
+
+    if (!booking) throw new NotFoundException('Booking not found');
+    if (booking.userId !== userId) throw new ForbiddenException('You do not have access to this booking');
+    if (booking.status !== BookingStatus.IN_PROGRESS && booking.status !== BookingStatus.EXTENDED) {
+      throw new BadRequestException('Only in-progress or extended bookings can end a ride');
+    }
+
+    const station = await this.prisma.station.findUnique({ where: { id: returnStationId } });
+    if (!station) throw new BadRequestException('Return station not found');
+
+    const result = await this.prisma.$transaction(async (tx) => {
+      const updated = await tx.booking.update({
+        where: { id: bookingId },
+        data: {
+          status: BookingStatus.COMPLETED,
+          actualEndTime: new Date(),
+          returnStationId,
+        },
+        include: { scooter: true, user: true, returnStation: true },
+      });
+
+      await tx.scooter.update({
+        where: { id: booking.scooterId },
+        data: {
+          status: ScooterStatus.AVAILABLE,
+          stationId: returnStationId,
+        },
+      });
+
+      let damageReportCreated = false;
+      if (!isScooterIntact) {
+        await tx.feedback.create({
+          data: {
+            title: 'Damage Report - Scooter Return',
+            description: `Damage reported during return of scooter ${booking.scooterId} for booking ${booking.id}. User reported scooter was not intact.`,
+            category: 'DAMAGE',
+            priority: 'HIGH',
+            status: 'PENDING',
+            scooterId: booking.scooterId,
+            bookingId: booking.id,
+            createdById: booking.userId,
+          },
+        });
+        damageReportCreated = true;
+      }
+
+      return { booking: updated, scooter: updated.scooter, damageReportCreated };
+    });
+
+    try {
+      await this.emailService.sendReturnConfirmation(result.booking, isScooterIntact);
+    } catch (error) {
+      console.error('Failed to send return confirmation email:', error);
+    }
+
+    return result;
+  }
+
+  private getDurationHours(hireType: HireType): number {
+    switch (hireType) {
+      case HireType.HOUR_1: return 1;
+      case HireType.HOUR_4: return 4;
+      case HireType.DAY_1: return 24;
+      case HireType.WEEK_1: return 168;
+      default: return 0;
+    }
   }
 
   private calculateCost(hireType: HireType): number {

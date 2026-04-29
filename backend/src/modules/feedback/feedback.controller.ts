@@ -65,8 +65,12 @@ export class FeedbackController {
     type: [FeedbackResponseDto],
   })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getMyFeedbacks(@Request() req) {
-    return this.feedbackService.getMyFeedbacks(req.user.id);
+  async getMyFeedbacks(
+    @Request() req,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.feedbackService.getMyFeedbacks(req.user.id, Number(page), Number(limit));
   }
 
   // 静态路由应该在动态路由之前
@@ -84,8 +88,12 @@ export class FeedbackController {
     status: 403,
     description: 'Forbidden - Manager role required',
   })
-  async getHighPriorityFeedbacks(@Request() req) {
-    return this.feedbackService.getHighPriorityFeedbacks(req.user.role);
+  async getHighPriorityFeedbacks(
+    @Request() req,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+  ) {
+    return this.feedbackService.getHighPriorityFeedbacks(req.user.role, Number(page), Number(limit));
   }
 
   @Get('stats/pending-count')
@@ -125,13 +133,15 @@ export class FeedbackController {
     @Query('status') status?: FeedbackStatus,
     @Query('priority') priority?: FeedbackPriority,
     @Query('category') category?: FeedbackCategory,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
     const filters = {
       ...(status && { status }),
       ...(priority && { priority }),
       ...(category && { category }),
     };
-    return this.feedbackService.getAllFeedbacks(req.user.role, filters);
+    return this.feedbackService.getAllFeedbacks(req.user.role, filters, Number(page), Number(limit));
   }
 
   // 动态路由应该在静态路由之后

@@ -61,24 +61,34 @@ export class FeedbackService {
     return new FeedbackResponseDto(feedback as any);
   }
 
-  async getMyFeedbacks(userId: string) {
-    const feedbacks = await this.prisma.feedback.findMany({
-      where: { createdById: userId },
-      include: {
-        createdBy: {
-          select: { email: true },
-        },
-        scooter: {
-          select: { location: true },
-        },
-        booking: {
-          select: { startTime: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+  async getMyFeedbacks(userId: string, page?: number, limit?: number) {
+    const p = Math.max(1, Number(page) || 1);
+    const l = Math.min(100, Math.max(1, Number(limit) || 20));
+    const skip = (p - 1) * l;
+    const where = { createdById: userId };
 
-    return feedbacks.map((feedback) => new FeedbackResponseDto(feedback));
+    const [feedbacks, total] = await Promise.all([
+      this.prisma.feedback.findMany({
+        where,
+        skip,
+        take: l,
+        include: {
+          createdBy: { select: { email: true } },
+          scooter: { select: { location: true } },
+          booking: { select: { startTime: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.feedback.count({ where }),
+    ]);
+
+    return {
+      items: feedbacks.map((f) => new FeedbackResponseDto(f)),
+      total,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(total / l),
+    };
   }
 
   async getFeedbackById(id: string, userId: string, userRole: Role) {
@@ -173,73 +183,89 @@ export class FeedbackService {
       priority?: FeedbackPriority;
       category?: FeedbackCategory;
     },
+    page?: number,
+    limit?: number,
   ) {
-    // Only managers can view all feedbacks
     if (userRole !== FEEDBACK_MANAGER_ROLE) {
       throw new ForbiddenException('Only managers can view all feedbacks');
     }
+
+    const p = Math.max(1, Number(page) || 1);
+    const l = Math.min(100, Math.max(1, Number(limit) || 20));
+    const skip = (p - 1) * l;
 
     const where: any = {};
     if (filters?.status) where.status = filters.status;
     if (filters?.priority) where.priority = filters.priority;
     if (filters?.category) where.category = filters.category;
 
-    const feedbacks = await this.prisma.feedback.findMany({
-      where,
-      include: {
-        createdBy: {
-          select: { email: true },
+    const [feedbacks, total] = await Promise.all([
+      this.prisma.feedback.findMany({
+        where,
+        skip,
+        take: l,
+        include: {
+          createdBy: { select: { email: true } },
+          scooter: { select: { location: true } },
+          booking: { select: { startTime: true } },
         },
-        scooter: {
-          select: { location: true },
-        },
-        booking: {
-          select: { startTime: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+      }),
+      this.prisma.feedback.count({ where }),
+    ]);
 
-    return feedbacks.map((feedback) => new FeedbackResponseDto(feedback));
+    return {
+      items: feedbacks.map((f) => new FeedbackResponseDto(f)),
+      total,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(total / l),
+    };
   }
 
-  async getHighPriorityFeedbacks(userRole: Role) {
-    // Only managers can view high priority feedbacks
+  async getHighPriorityFeedbacks(userRole: Role, page?: number, limit?: number) {
     if (userRole !== FEEDBACK_MANAGER_ROLE) {
-      throw new ForbiddenException(
-        'Only managers can view high priority feedbacks',
-      );
+      throw new ForbiddenException('Only managers can view high priority feedbacks');
     }
 
-    const feedbacks = await this.prisma.feedback.findMany({
-      where: {
-        OR: [
-          { priority: FEEDBACK_PRIORITIES.HIGH },
-          { priority: FEEDBACK_PRIORITIES.URGENT },
-        ],
-        status: {
-          not: FEEDBACK_STATUSES.RESOLVED,
-        },
-      },
-      include: {
-        createdBy: {
-          select: { email: true },
-        },
-        scooter: {
-          select: { location: true },
-        },
-        booking: {
-          select: { startTime: true },
-        },
-      },
-      orderBy: [
-        { category: 'desc' }, // DAMAGE first
-        { priority: 'desc' },
-        { createdAt: 'desc' },
-      ],
-    });
+    const p = Math.max(1, Number(page) || 1);
+    const l = Math.min(100, Math.max(1, Number(limit) || 20));
+    const skip = (p - 1) * l;
 
-    return feedbacks.map((feedback) => new FeedbackResponseDto(feedback));
+    const where = {
+      OR: [
+        { priority: FEEDBACK_PRIORITIES.HIGH },
+        { priority: FEEDBACK_PRIORITIES.URGENT },
+      ],
+      status: { not: FEEDBACK_STATUSES.RESOLVED },
+    };
+
+    const [feedbacks, total] = await Promise.all([
+      this.prisma.feedback.findMany({
+        where,
+        skip,
+        take: l,
+        include: {
+          createdBy: { select: { email: true } },
+          scooter: { select: { location: true } },
+          booking: { select: { startTime: true } },
+        },
+        orderBy: [
+          { category: 'desc' },
+          { priority: 'desc' },
+          { createdAt: 'desc' },
+        ],
+      }),
+      this.prisma.feedback.count({ where }),
+    ]);
+
+    return {
+      items: feedbacks.map((f) => new FeedbackResponseDto(f)),
+      total,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(total / l),
+    };
   }
 
   async getPendingCount(userRole: Role) {

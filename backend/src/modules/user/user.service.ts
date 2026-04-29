@@ -13,11 +13,28 @@ import { Role } from '@prisma/client';
 export class UserService {
   constructor(private readonly prisma: PrismaService) {}
 
-  //获取所有用户的异步方法。@returns 用户列表。
-  async findAll() {
-    return await this.prisma.user.findMany({
-      select: { id: true, email: true, role: true },
-    });
+  async findAll(page?: number, limit?: number) {
+    const p = Math.max(1, Number(page) || 1);
+    const l = Math.min(100, Math.max(1, Number(limit) || 20));
+    const skip = (p - 1) * l;
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        skip,
+        take: l,
+        select: { id: true, email: true, role: true },
+        orderBy: { email: 'asc' },
+      }),
+      this.prisma.user.count(),
+    ]);
+
+    return {
+      items: users,
+      total,
+      page: p,
+      limit: l,
+      totalPages: Math.ceil(total / l),
+    };
   }
 
   /**

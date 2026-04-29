@@ -10,7 +10,11 @@ import * as crypto from 'crypto';
 export class PaymentCardService {
   private readonly algorithm = 'aes-256-cbc';
   private readonly key = crypto.scryptSync(
-    process.env.ENCRYPTION_KEY || 'default-key-change-in-production',
+    (() => {
+      const key = process.env.ENCRYPTION_KEY;
+      if (!key) throw new Error('ENCRYPTION_KEY environment variable is required');
+      return key;
+    })(),
     'salt',
     32,
   );
