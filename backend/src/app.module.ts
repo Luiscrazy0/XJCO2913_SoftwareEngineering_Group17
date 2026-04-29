@@ -1,5 +1,4 @@
-// backend/src/app.module.ts
-import { Module } from '@nestjs/common';
+import { Module, NestModule, MiddlewareConsumer } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -14,6 +13,8 @@ import { StationModule } from './modules/station/station.module';
 import { StatisticsModule } from './modules/statistics/statistics.module';
 import { AmapModule } from './modules/amap/amap.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
+import { RequestIdMiddleware } from './middleware/request-id.middleware';
+import { LoggerMiddleware } from './middleware/logger.middleware';
 
 @Module({
   imports: [
@@ -33,4 +34,8 @@ import { FeedbackModule } from './modules/feedback/feedback.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(RequestIdMiddleware, LoggerMiddleware).forRoutes('*');
+  }
+}
