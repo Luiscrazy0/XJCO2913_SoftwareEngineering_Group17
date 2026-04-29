@@ -202,28 +202,24 @@ describe('FeedbackService', () => {
   });
 
   describe('getMyFeedbacks', () => {
-    it('returns feedbacks created by the current user', async () => {
+    it('returns feedbacks created by the current user in paginated format', async () => {
       findManyMock.mockResolvedValue([createFeedbackRecord()]);
 
       const result = await service.getMyFeedbacks('user-1');
 
       expect(findManyMock).toHaveBeenCalledWith({
         where: { createdById: 'user-1' },
+        skip: 0,
+        take: 20,
         include: {
-          createdBy: {
-            select: { email: true },
-          },
-          scooter: {
-            select: { location: true },
-          },
-          booking: {
-            select: { startTime: true },
-          },
+          createdBy: { select: { email: true } },
+          scooter: { select: { location: true } },
+          booking: { select: { startTime: true } },
         },
         orderBy: { createdAt: 'desc' },
       });
-      expect(result).toHaveLength(1);
-      expect(result[0]?.createdByEmail).toBe('test@test.com');
+      expect(result.items).toHaveLength(1);
+      expect(result.items[0]?.createdByEmail).toBe('test@test.com');
     });
   });
 
