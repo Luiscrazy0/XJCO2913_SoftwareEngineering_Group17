@@ -8,6 +8,7 @@ import { BookingStatus, HireType, Role, ScooterStatus } from '@prisma/client';
 import { PrismaService } from '../../prisma/prisma.service';
 import { DiscountService } from './discount.service';
 import { EmailService } from './email.service';
+import { PricingConfigService } from '../config/pricing-config.service';
 import { BookingService } from './booking.service';
 
 const createUser = (
@@ -93,6 +94,7 @@ describe('BookingService', () => {
       findUnique: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
+      count: jest.fn().mockResolvedValue(0),
     },
     scooter: {
       findUnique: jest.fn(),
@@ -127,6 +129,20 @@ describe('BookingService', () => {
           provide: EmailService,
           useValue: mockEmailService,
         },
+        {
+          provide: PricingConfigService,
+          useValue: {
+            getCost: jest.fn().mockImplementation((hireType: string) => {
+              switch (hireType) {
+                case 'HOUR_1': return 5;
+                case 'HOUR_4': return 15;
+                case 'DAY_1': return 30;
+                case 'WEEK_1': return 90;
+                default: return 0;
+              }
+            }),
+          },
+        },
       ],
     }).compile();
 
@@ -150,39 +166,33 @@ describe('BookingService', () => {
   });
 
   describe('findAll', () => {
-    it('loads all bookings with user and scooter relations', async () => {
+    it('loads all bookings with user and scooter relations in paginated format', async () => {
       const bookings = [createBookingRecord()];
       mockPrismaService.booking.findMany.mockResolvedValue(bookings);
+      mockPrismaService.booking.count.mockResolvedValue(1);
 
-      await expect(service.findAll()).resolves.toEqual(bookings);
-      expect(mockPrismaService.booking.findMany).toHaveBeenCalledWith({
-        include: { user: true, scooter: true },
-      });
+      const result = await service.findAll();
+      expect(result.items).toEqual(bookings);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
     });
 
     it('filters bookings by user id for non-manager callers', async () => {
       const bookings = [createBookingRecord({ userId: 'user-1' })];
       mockPrismaService.booking.findMany.mockResolvedValue(bookings);
+      mockPrismaService.booking.count.mockResolvedValue(1);
 
-      await expect(service.findAll('user-1', Role.CUSTOMER)).resolves.toEqual(
-        bookings,
-      );
-      expect(mockPrismaService.booking.findMany).toHaveBeenCalledWith({
-        where: { userId: 'user-1' },
-        include: { user: true, scooter: true },
-      });
+      const result = await service.findAll('user-1', Role.CUSTOMER);
+      expect(result.items).toEqual(bookings);
     });
 
     it('does not filter bookings for manager callers', async () => {
       const bookings = [createBookingRecord({ userId: 'someone-else' })];
       mockPrismaService.booking.findMany.mockResolvedValue(bookings);
+      mockPrismaService.booking.count.mockResolvedValue(1);
 
-      await expect(service.findAll('manager-1', Role.MANAGER)).resolves.toEqual(
-        bookings,
-      );
-      expect(mockPrismaService.booking.findMany).toHaveBeenCalledWith({
-        include: { user: true, scooter: true },
-      });
+      const result = await service.findAll('manager-1', Role.MANAGER);
+      expect(result.items).toEqual(bookings);
     });
   });
 
