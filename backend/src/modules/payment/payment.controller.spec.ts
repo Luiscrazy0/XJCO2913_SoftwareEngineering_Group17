@@ -40,6 +40,7 @@ describe('PaymentController', () => {
       'booking-1',
       19.99,
       'user-1',
+      undefined,
     );
   });
 

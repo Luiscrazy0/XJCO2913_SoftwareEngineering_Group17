@@ -134,6 +134,8 @@ describe('BookingController', () => {
       expect(mockBookingService.findAll).toHaveBeenCalledWith(
         req.user.id,
         req.user.role,
+        NaN,
+        NaN,
       );
     });
 

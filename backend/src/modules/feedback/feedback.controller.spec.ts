@@ -77,7 +77,11 @@ describe('FeedbackController', () => {
 
     await controller.getMyFeedbacks(req);
 
-    expect(mockFeedbackService.getMyFeedbacks).toHaveBeenCalledWith('user-1');
+    expect(mockFeedbackService.getMyFeedbacks).toHaveBeenCalledWith(
+      'user-1',
+      NaN,
+      NaN,
+    );
   });
 
   it('passes id, user id, and role when fetching feedback by id', async () => {
@@ -139,6 +143,8 @@ describe('FeedbackController', () => {
         priority: 'HIGH',
         category: 'DAMAGE',
       },
+      NaN,
+      NaN,
     );
   });
 
@@ -152,6 +158,8 @@ describe('FeedbackController', () => {
 
     expect(mockFeedbackService.getHighPriorityFeedbacks).toHaveBeenCalledWith(
       'MANAGER',
+      NaN,
+      NaN,
     );
   });
 

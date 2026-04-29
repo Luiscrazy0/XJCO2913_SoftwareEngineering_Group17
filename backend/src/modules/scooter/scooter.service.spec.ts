@@ -21,6 +21,7 @@ type ScooterUpdateArgs = Parameters<PrismaService['scooter']['update']>[0];
 type ScooterDeleteArgs = Parameters<PrismaService['scooter']['delete']>[0];
 type BookingCountArgs = Parameters<PrismaService['booking']['count']>[0];
 
+const scooterCountMock = jest.fn<() => Promise<number>>();
 const scooterFindManyMock =
   jest.fn<(args?: ScooterFindManyArgs) => Promise<ScooterRecord[]>>();
 const scooterFindUniqueMock =
@@ -40,6 +41,7 @@ const mockPrismaService = {
     create: scooterCreateMock,
     update: scooterUpdateMock,
     delete: scooterDeleteMock,
+    count: scooterCountMock,
   },
   booking: {
     count: bookingCountMock,
@@ -81,26 +83,36 @@ describe('ScooterService', () => {
           status: ScooterStatus.RENTED,
         },
       ]);
+      scooterCountMock.mockResolvedValue(2);
 
       const result = await service.findAll();
 
       expect(scooterFindManyMock).toHaveBeenCalledWith({
+        skip: 0,
+        take: 20,
         include: { station: true },
+        orderBy: { updatedAt: 'desc' },
       });
-      expect(result).toEqual([
-        {
-          id: '1',
-          location: 'South Campus',
-          status: ScooterStatus.AVAILABLE,
-          amapAddress: null,
-        },
-        {
-          id: '2',
-          location: 'Library',
-          status: ScooterStatus.RENTED,
-          amapAddress: null,
-        },
-      ]);
+      expect(result).toEqual({
+        items: [
+          {
+            id: '1',
+            location: 'South Campus',
+            status: ScooterStatus.AVAILABLE,
+            amapAddress: null,
+          },
+          {
+            id: '2',
+            location: 'Library',
+            status: ScooterStatus.RENTED,
+            amapAddress: null,
+          },
+        ],
+        total: 2,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      });
     });
   });
 

@@ -13,6 +13,7 @@ describe('UserService', () => {
       findMany: jest.fn(),
       create: jest.fn(),
       findUnique: jest.fn(),
+      count: jest.fn(),
     },
   };
 
@@ -51,15 +52,25 @@ describe('UserService', () => {
       ];
       // 告诉假数据库：当调用 findMany 时，返回 mockUsers
       mockPrismaService.user.findMany.mockResolvedValue(mockUsers);
+      mockPrismaService.user.count.mockResolvedValue(2);
 
       const result = await userService.findAll();
 
       // 断言：检查是否传递了正确的 select 参数给 Prisma
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith({
+        skip: 0,
+        take: 20,
         select: { id: true, email: true, role: true },
+        orderBy: { email: 'asc' },
       });
       // 断言：检查返回值
-      expect(result).toEqual(mockUsers);
+      expect(result).toEqual({
+        items: mockUsers,
+        total: 2,
+        page: 1,
+        limit: 20,
+        totalPages: 1,
+      });
     });
   });
 
