@@ -8,6 +8,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, Role, ScooterStatus } from '@prisma/client';
 import { DiscountService } from './discount.service';
 import { EmailService } from './email.service';
+import { PricingConfigService } from '../config/pricing-config.service';
 import * as bcrypt from 'bcrypt';
 
 const DAMAGE_FEEDBACK_CATEGORY = 'DAMAGE';
@@ -20,6 +21,7 @@ export class BookingService {
     private readonly prisma: PrismaService,
     private readonly discountService: DiscountService,
     private readonly emailService: EmailService,
+    private readonly pricingConfigService: PricingConfigService,
   ) {}
 
   async findAll(userId?: string, role?: Role, page?: number, limit?: number) {
@@ -27,15 +29,19 @@ export class BookingService {
     const l = Math.min(100, Math.max(1, Number(limit) || 20));
     const skip = (p - 1) * l;
 
-    const where =
-      role === Role.MANAGER ? {} : userId ? { userId } : {};
+    const where = role === Role.MANAGER ? {} : userId ? { userId } : {};
 
     const [bookings, total] = await Promise.all([
       this.prisma.booking.findMany({
         where,
         skip,
         take: l,
-        include: { user: true, scooter: true, pickupStation: true, returnStation: true },
+        include: {
+          user: true,
+          scooter: true,
+          pickupStation: true,
+          returnStation: true,
+        },
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.booking.count({ where }),
@@ -424,7 +430,9 @@ export class BookingService {
   async estimatePrice(userId: string, hireType: HireType) {
     const baseCost = this.calculateCost(hireType);
     const discountResult = await this.discountService.calculateDiscountedPrice(
-      userId, baseCost, hireType,
+      userId,
+      baseCost,
+      hireType,
     );
     return {
       baseCost,
@@ -441,7 +449,8 @@ export class BookingService {
     });
 
     if (!booking) throw new NotFoundException('Booking not found');
-    if (booking.userId !== userId) throw new ForbiddenException('You do not have access to this booking');
+    if (booking.userId !== userId)
+      throw new ForbiddenException('You do not have access to this booking');
     if (booking.status !== BookingStatus.CONFIRMED) {
       throw new BadRequestException('Only confirmed bookings can start a ride');
     }
@@ -480,12 +489,20 @@ export class BookingService {
     });
 
     if (!booking) throw new NotFoundException('Booking not found');
-    if (booking.userId !== userId) throw new ForbiddenException('You do not have access to this booking');
-    if (booking.status !== BookingStatus.IN_PROGRESS && booking.status !== BookingStatus.EXTENDED) {
-      throw new BadRequestException('Only in-progress or extended bookings can end a ride');
+    if (booking.userId !== userId)
+      throw new ForbiddenException('You do not have access to this booking');
+    if (
+      booking.status !== BookingStatus.IN_PROGRESS &&
+      booking.status !== BookingStatus.EXTENDED
+    ) {
+      throw new BadRequestException(
+        'Only in-progress or extended bookings can end a ride',
+      );
     }
 
-    const station = await this.prisma.station.findUnique({ where: { id: returnStationId } });
+    const station = await this.prisma.station.findUnique({
+      where: { id: returnStationId },
+    });
     if (!station) throw new BadRequestException('Return station not found');
 
     const result = await this.prisma.$transaction(async (tx) => {
@@ -524,11 +541,18 @@ export class BookingService {
         damageReportCreated = true;
       }
 
-      return { booking: updated, scooter: updated.scooter, damageReportCreated };
+      return {
+        booking: updated,
+        scooter: updated.scooter,
+        damageReportCreated,
+      };
     });
 
     try {
-      await this.emailService.sendReturnConfirmation(result.booking, isScooterIntact);
+      await this.emailService.sendReturnConfirmation(
+        result.booking,
+        isScooterIntact,
+      );
     } catch (error) {
       console.error('Failed to send return confirmation email:', error);
     }
@@ -538,27 +562,21 @@ export class BookingService {
 
   private getDurationHours(hireType: HireType): number {
     switch (hireType) {
-      case HireType.HOUR_1: return 1;
-      case HireType.HOUR_4: return 4;
-      case HireType.DAY_1: return 24;
-      case HireType.WEEK_1: return 168;
-      default: return 0;
+      case HireType.HOUR_1:
+        return 1;
+      case HireType.HOUR_4:
+        return 4;
+      case HireType.DAY_1:
+        return 24;
+      case HireType.WEEK_1:
+        return 168;
+      default:
+        return 0;
     }
   }
 
   private calculateCost(hireType: HireType): number {
-    switch (hireType) {
-      case HireType.HOUR_1:
-        return 5;
-      case HireType.HOUR_4:
-        return 15;
-      case HireType.DAY_1:
-        return 30;
-      case HireType.WEEK_1:
-        return 90;
-      default:
-        return 0;
-    }
+    return this.pricingConfigService.getCost(hireType);
   }
 
   private calculateEndTime(startTime: Date, hireType: HireType): Date {

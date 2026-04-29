@@ -96,7 +96,12 @@ export class BookingController {
     const userId = req.user?.id;
     const role = req.user?.role;
     if (!userId) throw new UnauthorizedException('User information missing');
-    return this.bookingService.findAll(userId, role, Number(page), Number(limit));
+    return this.bookingService.findAll(
+      userId,
+      role,
+      Number(page),
+      Number(limit),
+    );
   }
 
   @Get(':id')
@@ -575,7 +580,10 @@ export class BookingController {
   @Post(':id/end-ride')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
-  @ApiOperation({ summary: '结束骑行', description: '还车到指定站点，结束骑行' })
+  @ApiOperation({
+    summary: '结束骑行',
+    description: '还车到指定站点，结束骑行',
+  })
   @ApiBody({
     schema: {
       type: 'object',
@@ -593,7 +601,12 @@ export class BookingController {
   ) {
     const userId = req.user?.id;
     if (!userId) throw new UnauthorizedException('User information missing');
-    return this.bookingService.endRide(id, userId, body.returnStationId, body.isScooterIntact ?? true);
+    return this.bookingService.endRide(
+      id,
+      userId,
+      body.returnStationId,
+      body.isScooterIntact ?? true,
+    );
   }
 
   // 银行卡管理API
@@ -684,7 +697,8 @@ export class BookingController {
   @ApiResponse({ status: 400, description: '请求参数错误' })
   createStaffBooking(@Request() req, @Body() bookingData: any) {
     const employeeId = req.user?.id;
-    if (!employeeId) throw new UnauthorizedException('User information missing');
+    if (!employeeId)
+      throw new UnauthorizedException('User information missing');
     return this.bookingService.createBookingForCustomer(
       employeeId,
       bookingData.customerEmail,

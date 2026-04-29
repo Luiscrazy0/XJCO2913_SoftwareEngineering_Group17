@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Body, Param, UseGuards, Req } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { Throttle } from '@nestjs/throttler';
 import { PaymentService } from './payment.service';
 import { CreatePaymentDto } from './dto/create-payment.dto';
@@ -96,7 +104,12 @@ export class PaymentController {
     @Req() req: any,
   ) {
     const user = req.user as { sub: string; id: string; role: string };
-    return this.paymentService.createPayment(body.bookingId, body.amount, user.id, body.idempotencyKey);
+    return this.paymentService.createPayment(
+      body.bookingId,
+      body.amount,
+      user.id,
+      body.idempotencyKey,
+    );
   }
 
   /**

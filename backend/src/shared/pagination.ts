@@ -13,10 +13,15 @@ export interface PaginatedResult<T> {
   totalPages: number;
 }
 
-export function parsePagination(params: PaginationParams, allowedSortFields: string[] = ['createdAt']) {
+export function parsePagination(
+  params: PaginationParams,
+  allowedSortFields: string[] = ['createdAt'],
+) {
   const page = Math.max(1, Number(params.page) || 1);
   const limit = Math.min(100, Math.max(1, Number(params.limit) || 20));
-  const sortBy = allowedSortFields.includes(params.sortBy || '') ? params.sortBy! : 'createdAt';
+  const sortBy = allowedSortFields.includes(params.sortBy || '')
+    ? params.sortBy!
+    : 'createdAt';
   const sortOrder = params.sortOrder === 'asc' ? 'asc' : 'desc';
 
   return {
@@ -28,7 +33,12 @@ export function parsePagination(params: PaginationParams, allowedSortFields: str
   };
 }
 
-export function paginatedResponse<T>(items: T[], total: number, page: number, limit: number): PaginatedResult<T> {
+export function paginatedResponse<T>(
+  items: T[],
+  total: number,
+  page: number,
+  limit: number,
+): PaginatedResult<T> {
   return {
     items,
     total,

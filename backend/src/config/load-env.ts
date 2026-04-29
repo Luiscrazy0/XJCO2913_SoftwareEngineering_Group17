@@ -13,4 +13,3 @@ const backendEnvPath = resolve(__dirname, '..', '..', '.env');
 
 dotenvConfig({ path: repoRootEnvPath });
 dotenvConfig({ path: backendEnvPath, override: true });
-

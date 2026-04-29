@@ -23,7 +23,9 @@ export class AmapCircuitBreaker {
       } else {
         this.logger.warn('Circuit breaker open, rejecting request');
         if (fallback) return fallback();
-        throw new Error('Service temporarily unavailable (circuit breaker open)');
+        throw new Error(
+          'Service temporarily unavailable (circuit breaker open)',
+        );
       }
     }
 
@@ -34,7 +36,9 @@ export class AmapCircuitBreaker {
     } catch (error) {
       this.onFailure();
       if (fallback) {
-        this.logger.warn(`Circuit breaker fallback used: ${(error as Error).message}`);
+        this.logger.warn(
+          `Circuit breaker fallback used: ${(error as Error).message}`,
+        );
         return fallback();
       }
       throw error;
@@ -51,16 +55,27 @@ export class AmapCircuitBreaker {
     this.lastFailureTime = Date.now();
     if (this.failureCount >= this.failureThreshold) {
       this.state = CircuitState.OPEN;
-      this.logger.error(`Circuit breaker opened after ${this.failureCount} failures`);
+      this.logger.error(
+        `Circuit breaker opened after ${this.failureCount} failures`,
+      );
     }
   }
 
   private withTimeout<T>(promise: Promise<T>): Promise<T> {
     return new Promise((resolve, reject) => {
-      const timer = setTimeout(() => reject(new Error('Request timeout')), this.timeout);
+      const timer = setTimeout(
+        () => reject(new Error('Request timeout')),
+        this.timeout,
+      );
       promise.then(
-        (result) => { clearTimeout(timer); resolve(result); },
-        (error) => { clearTimeout(timer); reject(error); },
+        (result) => {
+          clearTimeout(timer);
+          resolve(result);
+        },
+        (error) => {
+          clearTimeout(timer);
+          reject(error instanceof Error ? error : new Error(String(error)));
+        },
       );
     });
   }

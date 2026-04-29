@@ -76,7 +76,9 @@ describe('PaymentService', () => {
 
       await expect(
         paymentService.createPayment(targetBookingId, paymentAmount, userId),
-      ).rejects.toThrow(new ForbiddenException('You can only pay for your own bookings'));
+      ).rejects.toThrow(
+        new ForbiddenException('You can only pay for your own bookings'),
+      );
 
       expect(mockPrismaService.payment.create).not.toHaveBeenCalled();
       expect(mockPrismaService.booking.update).not.toHaveBeenCalled();
@@ -189,18 +191,23 @@ describe('PaymentService', () => {
         bookingId: bookingId,
         amount: 50,
         status: 'SUCCESS',
-        booking: { 
-          id: bookingId, 
+        booking: {
+          id: bookingId,
           status: BookingStatus.CONFIRMED,
           userId: userId,
-          user: { id: userId }
+          user: { id: userId },
         },
       };
 
       mockPrismaService.payment.findUnique.mockResolvedValue(mockPaymentDetail);
-      mockPrismaService.user.findUnique.mockResolvedValue({ role: Role.CUSTOMER });
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        role: Role.CUSTOMER,
+      });
 
-      const result = await paymentService.getPaymentByBooking(bookingId, userId);
+      const result = await paymentService.getPaymentByBooking(
+        bookingId,
+        userId,
+      );
 
       expect(mockPrismaService.payment.findUnique).toHaveBeenCalledWith({
         where: { bookingId: bookingId },
@@ -218,7 +225,10 @@ describe('PaymentService', () => {
     it('如果支付不存在，应该返回 null', async () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(null);
 
-      const result = await paymentService.getPaymentByBooking(bookingId, userId);
+      const result = await paymentService.getPaymentByBooking(
+        bookingId,
+        userId,
+      );
 
       expect(result).toBeNull();
     });
@@ -229,20 +239,26 @@ describe('PaymentService', () => {
         bookingId: bookingId,
         amount: 50,
         status: 'SUCCESS',
-        booking: { 
-          id: bookingId, 
+        booking: {
+          id: bookingId,
           status: BookingStatus.CONFIRMED,
           userId: 'different-user',
-          user: { id: 'different-user' }
+          user: { id: 'different-user' },
         },
       };
 
       mockPrismaService.payment.findUnique.mockResolvedValue(mockPaymentDetail);
-      mockPrismaService.user.findUnique.mockResolvedValue({ role: Role.CUSTOMER });
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        role: Role.CUSTOMER,
+      });
 
       await expect(
-        paymentService.getPaymentByBooking(bookingId, userId)
-      ).rejects.toThrow(new ForbiddenException('You can only view payments for your own bookings'));
+        paymentService.getPaymentByBooking(bookingId, userId),
+      ).rejects.toThrow(
+        new ForbiddenException(
+          'You can only view payments for your own bookings',
+        ),
+      );
     });
 
     it('管理员可以查看任何用户的支付', async () => {
@@ -251,18 +267,23 @@ describe('PaymentService', () => {
         bookingId: bookingId,
         amount: 50,
         status: 'SUCCESS',
-        booking: { 
-          id: bookingId, 
+        booking: {
+          id: bookingId,
           status: BookingStatus.CONFIRMED,
           userId: 'different-user',
-          user: { id: 'different-user' }
+          user: { id: 'different-user' },
         },
       };
 
       mockPrismaService.payment.findUnique.mockResolvedValue(mockPaymentDetail);
-      mockPrismaService.user.findUnique.mockResolvedValue({ role: Role.MANAGER });
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        role: Role.MANAGER,
+      });
 
-      const result = await paymentService.getPaymentByBooking(bookingId, 'manager-user');
+      const result = await paymentService.getPaymentByBooking(
+        bookingId,
+        'manager-user',
+      );
 
       expect(result).toEqual(mockPaymentDetail);
     });
