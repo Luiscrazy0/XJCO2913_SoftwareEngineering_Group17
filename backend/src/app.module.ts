@@ -13,6 +13,7 @@ import { StationModule } from './modules/station/station.module';
 import { StatisticsModule } from './modules/statistics/statistics.module';
 import { AmapModule } from './modules/amap/amap.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
+import { ConfigModule } from './modules/config/config.module';
 import { RequestIdMiddleware } from './middleware/request-id.middleware';
 import { LoggerMiddleware } from './middleware/logger.middleware';
 
@@ -30,6 +31,7 @@ import { LoggerMiddleware } from './middleware/logger.middleware';
     StatisticsModule,
     AmapModule,
     FeedbackModule,
+    ConfigModule,
   ],
   controllers: [AppController],
   providers: [AppService],

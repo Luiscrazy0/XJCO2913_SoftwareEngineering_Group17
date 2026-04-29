@@ -12,7 +12,9 @@ export class HealthController {
     try {
       await this.prisma.$queryRaw`SELECT 1`;
       dbStatus = 'ok';
-    } catch {}
+    } catch {
+      // Database check failed, dbStatus stays 'error'
+    }
 
     return {
       status: dbStatus === 'ok' ? 'healthy' : 'degraded',

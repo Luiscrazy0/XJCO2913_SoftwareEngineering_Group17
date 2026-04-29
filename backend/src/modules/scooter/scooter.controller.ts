@@ -37,7 +37,11 @@ export class ScooterController {
     description: '获取系统中所有电动车的列表（支持分页）',
   })
   @ApiQuery({ name: 'page', required: false, description: '页码，默认1' })
-  @ApiQuery({ name: 'limit', required: false, description: '每页数量，默认20，最大100' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    description: '每页数量，默认20，最大100',
+  })
   @ApiResponse({
     status: 200,
     description: '获取成功',

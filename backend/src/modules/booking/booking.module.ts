@@ -9,9 +9,15 @@ import { PaymentCardService } from './payment-card.service';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { EmailModule } from '../email/email.module';
+import { ConfigModule } from '../config/config.module';
 
 @Module({
-  imports: [PrismaModule, forwardRef(() => AuthModule), EmailModule],
+  imports: [
+    PrismaModule,
+    forwardRef(() => AuthModule),
+    EmailModule,
+    ConfigModule,
+  ],
   controllers: [BookingController, EmployeeBookingController],
   providers: [
     BookingService,

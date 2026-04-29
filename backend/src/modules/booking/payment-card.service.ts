@@ -12,7 +12,8 @@ export class PaymentCardService {
   private readonly key = crypto.scryptSync(
     (() => {
       const key = process.env.ENCRYPTION_KEY;
-      if (!key) throw new Error('ENCRYPTION_KEY environment variable is required');
+      if (!key)
+        throw new Error('ENCRYPTION_KEY environment variable is required');
       return key;
     })(),
     'salt',

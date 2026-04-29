@@ -142,9 +142,9 @@ describe('BookingController', () => {
       mockBookingService.findById.mockResolvedValue(booking);
 
       const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
-      await expect(controller.findOne(req as any, 'booking-1')).resolves.toEqual(
-        booking,
-      );
+      await expect(
+        controller.findOne(req as any, 'booking-1'),
+      ).resolves.toEqual(booking);
       expect(mockBookingService.findById).toHaveBeenCalledWith(
         'booking-1',
         req.user.id,
@@ -165,7 +165,9 @@ describe('BookingController', () => {
       };
       mockBookingService.createBooking.mockResolvedValue(booking);
 
-      await expect(controller.create(req as any, dto)).resolves.toEqual(booking);
+      await expect(controller.create(req as any, dto)).resolves.toEqual(
+        booking,
+      );
       expect(mockBookingService.createBooking).toHaveBeenCalledWith(
         req.user.id,
         dto.scooterId,
@@ -211,7 +213,9 @@ describe('BookingController', () => {
 
       const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
       await expect(
-        controller.complete(req as any, 'booking-1', { isScooterIntact: false }),
+        controller.complete(req as any, 'booking-1', {
+          isScooterIntact: false,
+        }),
       ).resolves.toEqual(booking);
       expect(mockBookingService.completeBooking).toHaveBeenCalledWith(
         'booking-1',
@@ -231,9 +235,9 @@ describe('BookingController', () => {
       mockPaymentCardService.savePaymentCard.mockResolvedValue(result);
 
       const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
-      await expect(controller.savePaymentCard(req as any, cardData)).resolves.toEqual(
-        result,
-      );
+      await expect(
+        controller.savePaymentCard(req as any, cardData),
+      ).resolves.toEqual(result);
       expect(mockPaymentCardService.savePaymentCard).toHaveBeenCalledWith(
         req.user.id,
         cardData,
@@ -245,7 +249,9 @@ describe('BookingController', () => {
       mockPaymentCardService.getPaymentCard.mockResolvedValue(result);
 
       const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
-      await expect(controller.getPaymentCard(req as any)).resolves.toEqual(result);
+      await expect(controller.getPaymentCard(req as any)).resolves.toEqual(
+        result,
+      );
       expect(mockPaymentCardService.getPaymentCard).toHaveBeenCalledWith(
         req.user.id,
       );
@@ -256,7 +262,9 @@ describe('BookingController', () => {
       mockPaymentCardService.deletePaymentCard.mockResolvedValue(result);
 
       const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
-      await expect(controller.deletePaymentCard(req as any)).resolves.toEqual(result);
+      await expect(controller.deletePaymentCard(req as any)).resolves.toEqual(
+        result,
+      );
       expect(mockPaymentCardService.deletePaymentCard).toHaveBeenCalledWith(
         req.user.id,
       );
@@ -273,9 +281,9 @@ describe('BookingController', () => {
       mockBookingService.createBookingForCustomer.mockResolvedValue(result);
 
       const req = { user: { id: 'employee-1', role: Role.MANAGER } };
-      await expect(controller.createStaffBooking(req as any, bookingData)).resolves.toEqual(
-        result,
-      );
+      await expect(
+        controller.createStaffBooking(req as any, bookingData),
+      ).resolves.toEqual(result);
       expect(mockBookingService.createBookingForCustomer).toHaveBeenCalledWith(
         req.user.id,
         bookingData.customerEmail,
@@ -297,7 +305,9 @@ describe('BookingController', () => {
       new BadRequestException('Scooter not available'),
     );
 
-    await expect(controller.create(req as any, dto)).rejects.toThrow(BadRequestException);
+    await expect(controller.create(req as any, dto)).rejects.toThrow(
+      BadRequestException,
+    );
     await expect(controller.create(req as any, dto)).rejects.toThrow(
       'Scooter not available',
     );

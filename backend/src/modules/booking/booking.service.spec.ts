@@ -345,7 +345,10 @@ describe('BookingService', () => {
 
     it('throws when a non-manager extends another user booking', async () => {
       mockPrismaService.booking.findUnique.mockResolvedValue(
-        createBookingRecord({ userId: 'user-1', status: BookingStatus.CONFIRMED }),
+        createBookingRecord({
+          userId: 'user-1',
+          status: BookingStatus.CONFIRMED,
+        }),
       );
 
       await expect(
@@ -449,7 +452,9 @@ describe('BookingService', () => {
     });
 
     it('throws when a non-manager cancels another user booking', async () => {
-      mockPrismaService.booking.findUnique.mockResolvedValue({ userId: 'user-1' });
+      mockPrismaService.booking.findUnique.mockResolvedValue({
+        userId: 'user-1',
+      });
 
       await expect(
         service.cancelBooking('booking-1', 'user-2', Role.CUSTOMER),

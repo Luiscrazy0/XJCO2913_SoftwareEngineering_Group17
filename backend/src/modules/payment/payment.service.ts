@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, Role, ScooterStatus } from '@prisma/client';
 import { EmailService } from '../booking/email.service';
@@ -34,7 +38,8 @@ export class PaymentService {
     });
 
     if (!booking) throw new BadRequestException('Booking not found');
-    if (booking.userId !== userId) throw new ForbiddenException('You can only pay for your own bookings');
+    if (booking.userId !== userId)
+      throw new ForbiddenException('You can only pay for your own bookings');
     if (booking.status !== BookingStatus.PENDING_PAYMENT) {
       throw new BadRequestException('Booking cannot be paid');
     }
@@ -99,7 +104,9 @@ export class PaymentService {
     });
 
     if (user?.role !== Role.MANAGER && payment.booking.userId !== userId) {
-      throw new ForbiddenException('You can only view payments for your own bookings');
+      throw new ForbiddenException(
+        'You can only view payments for your own bookings',
+      );
     }
 
     return payment;

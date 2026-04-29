@@ -223,9 +223,15 @@ export class FeedbackService {
     };
   }
 
-  async getHighPriorityFeedbacks(userRole: Role, page?: number, limit?: number) {
+  async getHighPriorityFeedbacks(
+    userRole: Role,
+    page?: number,
+    limit?: number,
+  ) {
     if (userRole !== FEEDBACK_MANAGER_ROLE) {
-      throw new ForbiddenException('Only managers can view high priority feedbacks');
+      throw new ForbiddenException(
+        'Only managers can view high priority feedbacks',
+      );
     }
 
     const p = Math.max(1, Number(page) || 1);

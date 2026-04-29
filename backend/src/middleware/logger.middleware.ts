@@ -1,11 +1,15 @@
 import { Injectable, NestMiddleware, Logger } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 
+interface RequestWithId extends Request {
+  requestId?: string;
+}
+
 @Injectable()
 export class LoggerMiddleware implements NestMiddleware {
   private readonly logger = new Logger('HTTP');
 
-  use(req: Request, res: Response, next: NextFunction) {
+  use(req: RequestWithId, res: Response, next: NextFunction) {
     const start = Date.now();
     const { method, originalUrl } = req;
     const requestId = req.requestId || '-';
@@ -15,7 +19,8 @@ export class LoggerMiddleware implements NestMiddleware {
       const { statusCode } = res;
       const logEntry = {
         timestamp: new Date().toISOString(),
-        level: statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info',
+        level:
+          statusCode >= 500 ? 'error' : statusCode >= 400 ? 'warn' : 'info',
         requestId,
         method,
         url: originalUrl,
