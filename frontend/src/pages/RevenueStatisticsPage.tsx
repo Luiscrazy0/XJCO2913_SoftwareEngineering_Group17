@@ -6,6 +6,10 @@ import type { WeeklyRevenueResponse, DailyRevenueResponse, ChartData } from '../
 import { formatCurrency } from '../utils/formatters';
 import { LoadingSpinner } from '../components/ui';
 import Navbar from '../components/Navbar';
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  LineChart, Line, PieChart, Pie, Cell, Legend,
+} from 'recharts';
 
 const RevenueStatisticsPage: React.FC = () => {
   const { user, isLoading: authLoading } = useAuth();
@@ -28,24 +32,34 @@ const RevenueStatisticsPage: React.FC = () => {
   });
   
   const [activeTab, setActiveTab] = useState<'weekly' | 'daily' | 'chart'>('weekly');
+  const [chartPeriod, setChartPeriod] = useState<'week' | 'month' | 'year'>('week');
+  const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar');
   
+  const loadChartData = async () => {
+    if (!user || user.role !== 'MANAGER') return;
+    try {
+      const chart = await getRevenueChartData(chartPeriod, chartType);
+      setChartData(chart);
+    } catch (error) {
+      console.error('加载图表数据失败:', error);
+    }
+  };
+
   const loadData = async () => {
     if (!user || user.role !== 'MANAGER') {
       showToast('只有管理员可以查看收入统计', 'warning');
       return;
     }
-    
+
     setLoading(true);
     try {
-      const [weeklyData, dailyData, chart] = await Promise.all([
+      const [weeklyData, dailyData] = await Promise.all([
         getWeeklyRevenue(startDate, endDate),
         getDailyRevenue(startDate, endDate),
-        getRevenueChartData('week', 'bar')
       ]);
-      
+
       setWeeklyRevenue(weeklyData);
       setDailyRevenue(dailyData);
-      setChartData(chart);
     } catch (error) {
       console.error('加载统计数据失败:', error);
       showToast('加载统计数据失败，请重试', 'error');
@@ -62,7 +76,13 @@ const RevenueStatisticsPage: React.FC = () => {
     
     loadData();
   }, [authLoading]);
-  
+
+  useEffect(() => {
+    if (!authLoading && user?.role === 'MANAGER') {
+      loadChartData();
+    }
+  }, [authLoading, chartPeriod, chartType]);
+
   const handleDateChange = () => {
     loadData();
   };
@@ -200,78 +220,74 @@ const RevenueStatisticsPage: React.FC = () => {
     );
   };
   
+  const MCLAREN_ORANGE = '#FF6A00';
+  const CHART_COLORS = ['#FF6A00', '#FF8C33', '#FFB366', '#FFD199', '#FFE8CC'];
+
+  const renderBarChart = () => (
+    <ResponsiveContainer width="100%" height={400}>
+      <BarChart data={chartData!.labels.map((label, i) => ({ name: label, revenue: chartData!.datasets[0].data[i] }))} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-line)" />
+        <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
+        <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
+        <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-line)', borderRadius: '8px', color: 'var(--text-main)' }} formatter={(value: number) => [formatCurrency(value), '收入']} />
+        <Bar dataKey="revenue" fill={MCLAREN_ORANGE} radius={[4, 4, 0, 0]} />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+
+  const renderLineChart = () => (
+    <ResponsiveContainer width="100%" height={400}>
+      <LineChart data={chartData!.labels.map((label, i) => ({ name: label, revenue: chartData!.datasets[0].data[i] }))} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+        <CartesianGrid strokeDasharray="3 3" stroke="var(--border-line)" />
+        <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
+        <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
+        <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-line)', borderRadius: '8px', color: 'var(--text-main)' }} formatter={(value: number) => [formatCurrency(value), '收入']} />
+        <Line type="monotone" dataKey="revenue" stroke={MCLAREN_ORANGE} strokeWidth={2} dot={{ fill: MCLAREN_ORANGE, r: 4 }} activeDot={{ r: 6 }} />
+      </LineChart>
+    </ResponsiveContainer>
+  );
+
+  const renderPieChart = () => {
+    const data = chartData!.labels.map((label, i) => ({ name: label, value: chartData!.datasets[0].data[i] }));
+    return (
+      <ResponsiveContainer width="100%" height={400}>
+        <PieChart>
+          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={140} innerRadius={60} paddingAngle={5} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+            {data.map((_, index) => (
+              <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+            ))}
+          </Pie>
+          <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-line)', borderRadius: '8px', color: 'var(--text-main)' }} formatter={(value: number) => [formatCurrency(value), '收入']} />
+          <Legend wrapperStyle={{ color: 'var(--text-main)' }} />
+        </PieChart>
+      </ResponsiveContainer>
+    );
+  };
+
   const renderChart = () => {
     if (!chartData) return null;
-    
+
     return (
       <div className="bg-[var(--bg-card)] rounded-lg shadow border border-[var(--border-line)] p-6">
-        <h3 className="text-lg font-semibold text-[var(--text-main)] mb-4">收入趋势图表</h3>
-        
-        <div className="mb-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <span className="text-sm text-[var(--text-secondary)]">图表类型：</span>
-              <span className="font-medium ml-2 text-[var(--text-main)]">{chartData.chartType === 'bar' ? '柱状图' : chartData.chartType === 'line' ? '折线图' : '饼图'}</span>
-            </div>
-            <div>
-              <span className="text-sm text-[var(--text-secondary)]">统计周期：</span>
-              <span className="font-medium ml-2 text-[var(--text-main)]">
-                {chartData.period === 'week' ? '最近一周' : chartData.period === 'month' ? '最近一月' : '最近一年'}
-              </span>
-            </div>
-          </div>
-          
-          {/* 简单的图表展示 - 使用表格形式 */}
-          <div className="border border-[var(--border-line)] rounded-lg overflow-hidden">
-            <table className="min-w-full divide-y divide-[var(--border-line)]">
-              <thead className="bg-[var(--bg-input)]">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-                    日期
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-                    收入金额
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
-                    可视化
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-[var(--bg-card)] divide-y divide-[var(--border-line)]">
-                {chartData.labels.map((label, index) => (
-                  <tr key={label} className={index % 2 === 0 ? 'bg-[var(--bg-card)]' : 'bg-[var(--bg-input)]'}>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-[var(--text-main)]">{label}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-[var(--mclaren-orange)]">
-                        {formatCurrency(chartData.datasets[0].data[index])}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="w-32">
-                        <div className="h-4 bg-[var(--bg-input)] rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-[var(--mclaren-orange)] rounded-full"
-                            style={{ 
-                              width: `${Math.min(100, (chartData.datasets[0].data[index] / Math.max(...chartData.datasets[0].data)) * 100)}%` 
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          
-          <div className="mt-6 p-4 bg-[var(--mclaren-orange)]/10 border border-[var(--mclaren-orange)]/20 rounded-lg">
-            <p className="text-sm text-[var(--mclaren-orange)]">
-              <span className="font-medium">提示：</span> 这里展示了收入趋势的可视化数据。实际项目中可以集成图表库（如 Recharts、Chart.js）来展示更丰富的图表。
-            </p>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <h3 className="text-lg font-semibold text-[var(--text-main)]">收入趋势图表</h3>
+          <div className="flex flex-wrap gap-2">
+            <select value={chartType} onChange={(e) => setChartType(e.target.value as 'bar' | 'line' | 'pie')} className="px-3 py-1.5 text-sm rounded-md border border-[var(--border-line)] bg-[var(--bg-input)] text-[var(--text-main)]">
+              <option value="bar">柱状图</option>
+              <option value="line">折线图</option>
+              <option value="pie">饼图</option>
+            </select>
+            <select value={chartPeriod} onChange={(e) => setChartPeriod(e.target.value as 'week' | 'month' | 'year')} className="px-3 py-1.5 text-sm rounded-md border border-[var(--border-line)] bg-[var(--bg-input)] text-[var(--text-main)]">
+              <option value="week">最近一周</option>
+              <option value="month">最近一月</option>
+              <option value="year">最近一年</option>
+            </select>
           </div>
         </div>
+
+        {chartType === 'bar' && renderBarChart()}
+        {chartType === 'line' && renderLineChart()}
+        {chartType === 'pie' && renderPieChart()}
       </div>
     );
   };
