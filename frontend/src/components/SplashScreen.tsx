@@ -65,7 +65,7 @@ export default function SplashScreen() {
 
   return (
     <div
-      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-400 ${
+      className={`fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm transition-opacity duration-300 ${
         exiting ? 'opacity-0' : 'opacity-100'
       }`}
       role="dialog"

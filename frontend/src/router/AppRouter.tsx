@@ -1,5 +1,5 @@
 //路由表 定义了应用程序中的不同页面和访问权限
-import { BrowserRouter, Routes, Route } from "react-router-dom"
+import { Routes, Route } from "react-router-dom"
 
 // Importing the pages
 import AuthPage from "../pages/AuthPage"
@@ -22,8 +22,7 @@ import ForbiddenPage from "../pages/ForbiddenPage"
 // Main App Router component
 export default function AppRouter() {
   return (
-    <BrowserRouter>
-      <Routes>
+    <Routes>
         {/* Public routes */}
         <Route path="/" element={<AuthPage />} />
         <Route path="/auth" element={<AuthPage />} />
@@ -106,6 +105,5 @@ export default function AppRouter() {
           </ProtectedRoute>
         } />
       </Routes>
-    </BrowserRouter>
   )
 }
