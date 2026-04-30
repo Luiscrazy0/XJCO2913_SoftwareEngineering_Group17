@@ -15,6 +15,7 @@ import AdminFeedbacksPage from "../pages/AdminFeedbacksPage"
 import FeedbackDetailPage from "../pages/FeedbackDetailPage"
 import HighPriorityPage from "../pages/HighPriorityPage"
 import RidePackagesPage from "../pages/RidePackagesPage"
+import AdminPricingPage from "../pages/AdminPricingPage"
 import ProtectedRoute from "../components/ProtectedRoute"
 import ForbiddenPage from "../pages/ForbiddenPage"
 
@@ -95,6 +96,13 @@ export default function AppRouter() {
         <Route path="/ride-packages" element={
           <ProtectedRoute>
             <RidePackagesPage />
+          </ProtectedRoute>
+        } />
+
+        {/* Admin Pricing */}
+        <Route path="/admin/pricing" element={
+          <ProtectedRoute requiredRole="MANAGER">
+            <AdminPricingPage />
           </ProtectedRoute>
         } />
       </Routes>
