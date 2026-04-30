@@ -1,11 +1,21 @@
 import { HTMLAttributes } from 'react'
 
-interface CardProps extends HTMLAttributes<HTMLDivElement> {}
+type CardVariant = 'default' | 'glass' | 'interactive'
 
-export default function Card({ className = '', ...props }: CardProps) {
+interface CardProps extends HTMLAttributes<HTMLDivElement> {
+  variant?: CardVariant
+}
+
+const variantClasses: Record<CardVariant, string> = {
+  default: 'surface-card',
+  glass: 'glass-card',
+  interactive: 'surface-card surface-lift cursor-pointer',
+}
+
+export default function Card({ variant = 'default', className = '', ...props }: CardProps) {
   return (
     <div
-      className={`surface-card ${className}`}
+      className={`${variantClasses[variant]} ${className}`}
       {...props}
     />
   )

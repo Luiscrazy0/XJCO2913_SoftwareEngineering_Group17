@@ -14,6 +14,7 @@ import MyFeedbacksPage from "../pages/MyFeedbacksPage"
 import AdminFeedbacksPage from "../pages/AdminFeedbacksPage"
 import FeedbackDetailPage from "../pages/FeedbackDetailPage"
 import HighPriorityPage from "../pages/HighPriorityPage"
+import RidePackagesPage from "../pages/RidePackagesPage"
 import ProtectedRoute from "../components/ProtectedRoute"
 import ForbiddenPage from "../pages/ForbiddenPage"
 
@@ -87,6 +88,13 @@ export default function AppRouter() {
         <Route path="/admin/high-priority" element={
           <ProtectedRoute requiredRole="MANAGER">
             <HighPriorityPage />
+          </ProtectedRoute>
+        } />
+
+        {/* Ride Packages */}
+        <Route path="/ride-packages" element={
+          <ProtectedRoute>
+            <RidePackagesPage />
           </ProtectedRoute>
         } />
       </Routes>

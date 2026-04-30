@@ -11,7 +11,7 @@ export { default as Input } from './Input'
 export { default as LoadingSpinner } from './LoadingSpinner'
 export { default as ErrorBoundary, withErrorBoundary, ErrorBoundaryProvider } from './ErrorBoundary'
 export { default as Modal, ConfirmModal, FormModal } from './Modal'
-export { default as Toast, ToastProvider, useToast, toast } from './Toast'
+export { ToastProvider, useToast } from '../ToastProvider'
 export { default as Skeleton, CardSkeleton, ListSkeleton, TableSkeleton, DetailSkeleton, FormSkeleton } from './Skeleton'
 
 // 类型导出

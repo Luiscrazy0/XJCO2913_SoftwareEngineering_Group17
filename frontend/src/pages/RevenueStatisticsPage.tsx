@@ -5,7 +5,7 @@ import { getWeeklyRevenue, getDailyRevenue, getRevenueChartData } from '../api/s
 import type { WeeklyRevenueResponse, DailyRevenueResponse, ChartData } from '../api/statistics';
 import { formatCurrency } from '../utils/formatters';
 import { LoadingSpinner } from '../components/ui';
-import Navbar from '../components/Navbar';
+import PageLayout from '../components/PageLayout';
 
 const RevenueStatisticsPage: React.FC = () => {
   const { user, isLoading: authLoading } = useAuth();
@@ -278,39 +278,27 @@ const RevenueStatisticsPage: React.FC = () => {
   
   if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-main)]">
-        <Navbar />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex justify-center items-center h-64">
-            <LoadingSpinner size="large" />
-          </div>
-        </main>
-      </div>
+      <PageLayout title="收入统计分析" subtitle="查看和管理系统收入统计数据">
+        <div className="flex justify-center items-center h-64">
+          <LoadingSpinner size="large" />
+        </div>
+      </PageLayout>
     );
   }
   
   if (user?.role !== 'MANAGER') {
     return (
-      <div className="min-h-screen bg-[var(--bg-main)]">
-        <Navbar />
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-[var(--bg-card)] rounded-lg shadow border border-[var(--border-line)] p-8 text-center">
-            <h2 className="text-2xl font-bold text-[var(--text-main)] mb-4">权限不足</h2>
-            <p className="text-[var(--text-secondary)] mb-6">只有管理员可以查看收入统计页面。</p>
-          </div>
-        </main>
-      </div>
+      <PageLayout title="收入统计分析" subtitle="权限不足">
+        <div className="bg-[var(--bg-card)] rounded-lg shadow border border-[var(--border-line)] p-8 text-center">
+          <h2 className="text-2xl font-bold text-[var(--text-main)] mb-4">权限不足</h2>
+          <p className="text-[var(--text-secondary)] mb-6">只有管理员可以查看收入统计页面。</p>
+        </div>
+      </PageLayout>
     );
   }
   
   return (
-    <div className="min-h-screen bg-[var(--bg-main)]">
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[var(--text-main)]">收入统计分析</h1>
-          <p className="text-[var(--text-secondary)] mt-2">查看和管理系统收入统计数据</p>
-        </div>
+    <PageLayout title="收入统计分析" subtitle="查看和管理系统收入统计数据">
         
         {/* 日期选择器 */}
         <div className="bg-[var(--bg-card)] rounded-lg shadow border border-[var(--border-line)] p-6 mb-6">
@@ -420,8 +408,7 @@ const RevenueStatisticsPage: React.FC = () => {
             </li>
           </ul>
         </div>
-      </main>
-    </div>
+    </PageLayout>
   );
 };
 

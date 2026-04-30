@@ -61,7 +61,7 @@ const BookingStats: React.FC<BookingStatsProps> = ({ bookings }) => {
   return (
     <div className="mb-8">
       <h2 className="text-2xl font-bold text-[var(--text-main)] mb-6">预约统计</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-stagger">
         {statCards.map((stat, index) => (
           <div key={index} className="surface-card surface-lift p-6">
             <div className="flex items-center justify-between mb-4">

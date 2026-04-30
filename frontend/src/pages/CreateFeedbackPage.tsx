@@ -4,6 +4,7 @@ import { feedbackApi, FeedbackCategory } from '../api/feedback'
 import { scootersApi } from '../api/scooters'
 import { bookingsApi } from '../api/bookings'
 import type { Booking, Scooter } from '../types'
+import Navbar from '../components/Navbar'
 
 export default function CreateFeedbackPage() {
   const navigate = useNavigate()
@@ -71,142 +72,152 @@ export default function CreateFeedbackPage() {
     setFormData(prev => ({ ...prev, [name]: value }))
   }
 
+  const inputClass = `w-full px-4 py-3 bg-[var(--bg-input)] border border-[var(--border-line)] text-[var(--text-main)] rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/20 focus:border-[var(--mclaren-orange)] placeholder-[var(--text-secondary)]/50 transition-all duration-200 touch-target`
+
   return (
-    <div className="max-w-2xl mx-auto p-6">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Submit Feedback</h1>
-        <p className="text-gray-600 mt-2">
-          Report a fault, damage, or suggestion about our scooters.
-        </p>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
-        <div>
-          <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-1">
-            Title *
-          </label>
-          <input
-            type="text"
-            id="title"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Brief summary of the issue"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
-            Description *
-          </label>
-          <textarea
-            id="description"
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            required
-            rows={4}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Detailed description of the issue..."
-          />
-        </div>
-
-        <div>
-          <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
-            Category *
-          </label>
-          <select
-            id="category"
-            name="category"
-            value={formData.category}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="FAULT">Fault / Technical Issue</option>
-            <option value="DAMAGE">Damage Report</option>
-            <option value="SUGGESTION">Suggestion</option>
-          </select>
-          <p className="text-sm text-gray-500 mt-1">
-            {formData.category === 'DAMAGE' && 'Damage reports are automatically marked as HIGH priority.'}
+    <div className="min-h-screen bg-[var(--bg-main)]">
+      <Navbar />
+      <main className="max-w-2xl mx-auto px-4 py-8 animate-fade-in-up">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-[var(--text-main)]">提交反馈</h1>
+          <p className="text-[var(--text-secondary)] mt-2">
+            报告故障、损坏或提供改进建议。
           </p>
         </div>
 
-        <div>
-          <label htmlFor="scooterId" className="block text-sm font-medium text-gray-700 mb-1">
-            Scooter *
-          </label>
-          <select
-            id="scooterId"
-            name="scooterId"
-            value={formData.scooterId}
-            onChange={handleChange}
-            required
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">Select a scooter</option>
-            {scooters.map(scooter => (
-              <option key={scooter.id} value={scooter.id}>
-                {scooter.location} ({scooter.status})
-              </option>
-            ))}
-          </select>
-        </div>
+        <form onSubmit={handleSubmit} className="glass-card p-6 md:p-8 space-y-6">
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="title" className="text-sm font-medium text-[var(--text-main)]">
+              标题 *
+            </label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              required
+              className={inputClass}
+              placeholder="问题的简要概括"
+            />
+          </div>
 
-        <div>
-          <label htmlFor="bookingId" className="block text-sm font-medium text-gray-700 mb-1">
-            Related Booking (Optional)
-          </label>
-          <select
-            id="bookingId"
-            name="bookingId"
-            value={formData.bookingId}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">No specific booking</option>
-            {bookings.map(booking => (
-              <option key={booking.id} value={booking.id}>
-                Booking #{booking.id.slice(0, 8)} - {new Date(booking.startTime).toLocaleDateString()}
-              </option>
-            ))}
-          </select>
-        </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="description" className="text-sm font-medium text-[var(--text-main)]">
+              详细描述 *
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              required
+              rows={4}
+              className={inputClass}
+              placeholder="请详细描述遇到的问题..."
+            />
+          </div>
 
-        <div>
-          <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-1">
-            Image URL (Optional)
-          </label>
-          <input
-            type="url"
-            id="imageUrl"
-            name="imageUrl"
-            value={formData.imageUrl}
-            onChange={handleChange}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="https://example.com/image.jpg"
-          />
-        </div>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="category" className="text-sm font-medium text-[var(--text-main)]">
+              类别 *
+            </label>
+            <select
+              id="category"
+              name="category"
+              value={formData.category}
+              onChange={handleChange}
+              required
+              className={inputClass}
+            >
+              <option value="FAULT" className="bg-[var(--bg-card)]">故障 / 技术问题</option>
+              <option value="DAMAGE" className="bg-[var(--bg-card)]">损坏报告</option>
+              <option value="SUGGESTION" className="bg-[var(--bg-card)]">改进建议</option>
+            </select>
+            {formData.category === 'DAMAGE' && (
+              <p className="text-xs text-amber-300/80 mt-1">
+                损坏报告会自动标记为高优先级。
+              </p>
+            )}
+          </div>
 
-        <div className="flex justify-end space-x-4 pt-4">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={loading}
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Submitting...' : 'Submit Feedback'}
-          </button>
-        </div>
-      </form>
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="scooterId" className="text-sm font-medium text-[var(--text-main)]">
+              滑板车 *
+            </label>
+            <select
+              id="scooterId"
+              name="scooterId"
+              value={formData.scooterId}
+              onChange={handleChange}
+              required
+              className={inputClass}
+            >
+              <option value="" className="bg-[var(--bg-card)]">选择一辆滑板车</option>
+              {scooters.map(scooter => (
+                <option key={scooter.id} value={scooter.id} className="bg-[var(--bg-card)]">
+                  {scooter.location} ({scooter.status})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="bookingId" className="text-sm font-medium text-[var(--text-main)]">
+              关联预约 <span className="text-[var(--text-secondary)]">（可选）</span>
+            </label>
+            <select
+              id="bookingId"
+              name="bookingId"
+              value={formData.bookingId}
+              onChange={handleChange}
+              className={inputClass}
+            >
+              <option value="" className="bg-[var(--bg-card)]">无特定预约</option>
+              {bookings.map(booking => (
+                <option key={booking.id} value={booking.id} className="bg-[var(--bg-card)]">
+                  预约 #{booking.id.slice(0, 8)} - {new Date(booking.startTime).toLocaleDateString()}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <label htmlFor="imageUrl" className="text-sm font-medium text-[var(--text-main)]">
+              图片链接 <span className="text-[var(--text-secondary)]">（可选）</span>
+            </label>
+            <input
+              type="url"
+              id="imageUrl"
+              name="imageUrl"
+              value={formData.imageUrl}
+              onChange={handleChange}
+              className={inputClass}
+              placeholder="https://example.com/image.jpg"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4">
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="px-4 py-2.5 border border-[var(--border-line)] text-[var(--text-main)] rounded-lg font-medium hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/20 transition-colors"
+            >
+              取消
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="px-5 py-2.5 bg-[var(--mclaren-orange)] text-white rounded-lg font-medium hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/20 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+            >
+              {loading && (
+                <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" aria-hidden="true" />
+              )}
+              {loading ? '提交中...' : '提交反馈'}
+            </button>
+          </div>
+        </form>
+      </main>
     </div>
   )
 }
