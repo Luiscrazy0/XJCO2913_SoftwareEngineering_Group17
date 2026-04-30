@@ -9,6 +9,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { DiscountService } from './discount.service';
 import { EmailService } from './email.service';
 import { PricingConfigService } from '../config/pricing-config.service';
+import { EventsService } from '../events/events.service';
 import { BookingService } from './booking.service';
 
 const createUser = (
@@ -99,6 +100,7 @@ describe('BookingService', () => {
     scooter: {
       findUnique: jest.fn(),
       update: jest.fn(),
+      updateMany: jest.fn(),
     },
     user: {
       findUnique: jest.fn(),
@@ -141,6 +143,12 @@ describe('BookingService', () => {
                 default: return 0;
               }
             }),
+          },
+        },
+        {
+          provide: EventsService,
+          useValue: {
+            emitScooterStatusChange: jest.fn(),
           },
         },
       ],
@@ -221,8 +229,8 @@ describe('BookingService', () => {
   describe('createBooking', () => {
     const startTime = new Date('2026-04-01T10:00:00Z');
 
-    it('throws when the scooter does not exist', async () => {
-      mockPrismaService.scooter.findUnique.mockResolvedValue(null);
+    it('throws when the scooter cannot be locked (already taken or missing)', async () => {
+      mockPrismaService.scooter.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(
         service.createBooking(
@@ -231,33 +239,17 @@ describe('BookingService', () => {
           HireType.HOUR_1,
           startTime,
         ),
-      ).rejects.toThrow(new BadRequestException('Scooter not found'));
+      ).rejects.toThrow(new BadRequestException('车辆不可用或已被他人预订'));
     });
 
-    it('throws when the scooter is unavailable', async () => {
-      mockPrismaService.scooter.findUnique.mockResolvedValue(
-        createScooter({ status: ScooterStatus.RENTED }),
-      );
-
-      await expect(
-        service.createBooking(
-          'user-1',
-          'scooter-1',
-          HireType.HOUR_1,
-          startTime,
-        ),
-      ).rejects.toThrow(new BadRequestException('Scooter not available'));
-    });
-
-    it('creates a booking, updates the scooter, and sends a confirmation email', async () => {
-      const scooter = createScooter();
+    it('creates a booking, atomically locks the scooter, and sends a confirmation email', async () => {
+      mockPrismaService.scooter.updateMany.mockResolvedValue({ count: 1 });
       const expectedEndTime = new Date(startTime.getTime());
       expectedEndTime.setHours(expectedEndTime.getHours() + 4);
       const createdBooking = createBookingRecord({
         status: BookingStatus.PENDING_PAYMENT,
         totalCost: 12,
       });
-      mockPrismaService.scooter.findUnique.mockResolvedValue(scooter);
       mockPrismaService.booking.create.mockResolvedValue(createdBooking);
       mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
         discountedPrice: 12,
@@ -295,8 +287,8 @@ describe('BookingService', () => {
           scooter: true,
         },
       });
-      expect(mockPrismaService.scooter.update).toHaveBeenCalledWith({
-        where: { id: 'scooter-1' },
+      expect(mockPrismaService.scooter.updateMany).toHaveBeenCalledWith({
+        where: { id: 'scooter-1', status: ScooterStatus.AVAILABLE },
         data: { status: ScooterStatus.RENTED },
       });
       expect(mockEmailService.sendBookingConfirmation).toHaveBeenCalledWith(
@@ -311,7 +303,7 @@ describe('BookingService', () => {
         status: BookingStatus.PENDING_PAYMENT,
       });
 
-      mockPrismaService.scooter.findUnique.mockResolvedValue(createScooter());
+      mockPrismaService.scooter.updateMany.mockResolvedValue({ count: 1 });
       mockPrismaService.booking.create.mockResolvedValue(createdBooking);
       mockEmailService.sendBookingConfirmation.mockRejectedValue(
         new Error('SMTP unavailable'),
@@ -331,7 +323,7 @@ describe('BookingService', () => {
     });
 
     it('throws for an unknown hire type', async () => {
-      mockPrismaService.scooter.findUnique.mockResolvedValue(createScooter());
+      mockPrismaService.scooter.updateMany.mockResolvedValue({ count: 1 });
       await expect(
         service.createBooking(
           'user-1',

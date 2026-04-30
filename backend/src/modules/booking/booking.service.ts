@@ -9,6 +9,7 @@ import { BookingStatus, HireType, Role, ScooterStatus } from '@prisma/client';
 import { DiscountService } from './discount.service';
 import { EmailService } from './email.service';
 import { PricingConfigService } from '../config/pricing-config.service';
+import { EventsService } from '../events/events.service';
 import * as bcrypt from 'bcrypt';
 
 const DAMAGE_FEEDBACK_CATEGORY = 'DAMAGE';
@@ -22,6 +23,7 @@ export class BookingService {
     private readonly discountService: DiscountService,
     private readonly emailService: EmailService,
     private readonly pricingConfigService: PricingConfigService,
+    private readonly eventsService: EventsService,
   ) {}
 
   async findAll(userId?: string, role?: Role, page?: number, limit?: number) {
@@ -88,18 +90,6 @@ export class BookingService {
       throw new BadRequestException('Invalid start time');
     }
 
-    const scooter = await this.prisma.scooter.findUnique({
-      where: { id: scooterId },
-    });
-
-    if (!scooter) {
-      throw new BadRequestException('Scooter not found');
-    }
-
-    if (scooter.status !== ScooterStatus.AVAILABLE) {
-      throw new BadRequestException('Scooter not available');
-    }
-
     const totalCost = this.calculateCost(hireType);
     const discountResult = await this.discountService.calculateDiscountedPrice(
       userId,
@@ -110,6 +100,16 @@ export class BookingService {
     const endTime = this.calculateEndTime(startTime, hireType);
 
     const booking = await this.prisma.$transaction(async (tx) => {
+      // 乐观并发控制：原子检查并锁定车辆状态，防止重复预订
+      const lockResult = await tx.scooter.updateMany({
+        where: { id: scooterId, status: ScooterStatus.AVAILABLE },
+        data: { status: ScooterStatus.RENTED },
+      });
+
+      if (lockResult.count === 0) {
+        throw new BadRequestException('车辆不可用或已被他人预订');
+      }
+
       const createdBooking = await tx.booking.create({
         data: {
           userId,
@@ -127,13 +127,11 @@ export class BookingService {
         },
       });
 
-      await tx.scooter.update({
-        where: { id: scooterId },
-        data: { status: ScooterStatus.RENTED },
-      });
-
       return createdBooking;
     });
+
+    // 通知所有连接的客户端车辆状态已变更
+    this.eventsService.emitScooterStatusChange(scooterId, ScooterStatus.RENTED);
 
     try {
       await this.emailService.sendBookingConfirmation(booking, finalCost);
