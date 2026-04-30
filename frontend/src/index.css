@@ -533,7 +533,7 @@ h6 { font-size: 1rem; line-height: 1.5; }
 }
 
 .page-transition {
-  animation: page-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: page-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 /* 8.3 全局加载进度条（NProgress 风格） */
