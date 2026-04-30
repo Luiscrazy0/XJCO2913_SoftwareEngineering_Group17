@@ -14,9 +14,6 @@ const Navbar: React.FC = () => {
     { name: '我的预约', href: '/bookings' },
     { name: '我的反馈', href: '/my-feedbacks' },
     { name: '管理后台', href: '/admin', role: 'MANAGER' as const },
-    { name: '收入统计', href: '/statistics', role: 'MANAGER' as const },
-    { name: '反馈管理', href: '/admin/feedbacks', role: 'MANAGER' as const },
-    { name: '高优先级', href: '/admin/high-priority', role: 'MANAGER' as const },
   ]
 
   const filteredNavigation = navigation.filter(item => {
