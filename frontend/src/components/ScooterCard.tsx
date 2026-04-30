@@ -104,8 +104,24 @@ const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
 
         </div>
 
+        {/* 价格信息 */}
+        <div className="mt-3 border-t border-[var(--border-line)] pt-3">
+          <div className="flex justify-between text-xs text-[var(--text-secondary)]">
+            <span>1小时</span>
+            <span>4小时</span>
+            <span>1天</span>
+            <span>1周</span>
+          </div>
+          <div className="flex justify-between text-sm font-semibold text-[var(--mclaren-orange)] mt-1">
+            <span>¥5</span>
+            <span>¥15</span>
+            <span>¥30</span>
+            <span>¥90</span>
+          </div>
+        </div>
+
         {/* 操作按钮 */}
-        <div className="mt-6">
+        <div className="mt-4">
           <button
             onClick={handleBookClick}
             disabled={scooter.status !== 'AVAILABLE'}

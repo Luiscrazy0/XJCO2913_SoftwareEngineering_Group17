@@ -120,7 +120,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
       return '正在创建预约...'
     }
     if (isSuccess) {
-      return '预约成功！即将跳转到我的预约'
+      return `预约成功！确认邮件已发送至 ${user?.email ?? '您的邮箱'}`
     }
     if (formError) {
       return formError
