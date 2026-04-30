@@ -21,20 +21,29 @@ export const priceApi = {
   },
 
   getPricing: async (): Promise<PricingConfig> => {
-    const response = await axiosClient.get<PricingConfig>('/config/pricing')
-    return response.data
+    const response = await axiosClient.get<ApiResponse<PricingConfig>>('/config/pricing')
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to load pricing')
+    }
+    return response.data.data!
   },
 
   updatePricing: async (hireType: string, price: number): Promise<PricingConfig> => {
-    const response = await axiosClient.put<PricingConfig>(
+    const response = await axiosClient.put<ApiResponse<PricingConfig>>(
       `/config/pricing/${hireType}`,
       { price },
     )
-    return response.data
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to update pricing')
+    }
+    return response.data.data!
   },
 
   resetPricing: async (): Promise<PricingConfig> => {
-    const response = await axiosClient.put<PricingConfig>('/config/pricing/reset')
-    return response.data
+    const response = await axiosClient.put<ApiResponse<PricingConfig>>('/config/pricing/reset')
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'Failed to reset pricing')
+    }
+    return response.data.data!
   },
 }

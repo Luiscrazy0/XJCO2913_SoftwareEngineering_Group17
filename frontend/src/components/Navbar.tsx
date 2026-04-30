@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
@@ -6,37 +6,44 @@ const Navbar: React.FC = () => {
   const { user, logout } = useAuth()
   const location = useLocation()
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [adminMenuOpen, setAdminMenuOpen] = useState(false)
+  const adminMenuRef = useRef<HTMLDivElement>(null)
 
-  const navigation = [
+  const userNavigation = [
     { name: '发现车辆', href: '/scooters' },
     { name: '站点地图', href: '/map' },
     { name: '我的预约', href: '/bookings' },
     { name: '我的反馈', href: '/my-feedbacks' },
     { name: '骑行套餐', href: '/ride-packages' },
-    { name: '管理后台', href: '/admin', role: 'MANAGER' as const },
-    { name: '价格配置', href: '/admin/pricing', role: 'MANAGER' as const },
-    { name: '收入统计', href: '/statistics', role: 'MANAGER' as const },
-    { name: '反馈管理', href: '/admin/feedbacks', role: 'MANAGER' as const },
-    { name: '高优先级', href: '/admin/high-priority', role: 'MANAGER' as const },
   ]
 
-  const filteredNavigation = navigation.filter(item => {
-    if (item.role) return user?.role === item.role
-    return true
-  })
+  const adminNavigation = [
+    { name: '管理后台', href: '/admin' },
+    { name: '价格配置', href: '/admin/pricing' },
+    { name: '收入统计', href: '/statistics' },
+    { name: '反馈管理', href: '/admin/feedbacks' },
+    { name: '高优先级', href: '/admin/high-priority' },
+  ]
 
   const isActive = (path: string) => location.pathname === path
+  const isAdminArea = adminNavigation.some(item => location.pathname.startsWith(item.href))
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (adminMenuRef.current && !adminMenuRef.current.contains(e.target as Node)) {
+        setAdminMenuOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   return (
     <>
-      <a href="#main-content" className="skip-to-content">
-        跳转到主要内容
-      </a>
-
       <nav className="sticky top-0 z-30 bg-[var(--bg-card)]/80 backdrop-blur-xl border-b border-[var(--border-line)] safe-top">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-14 md:h-16 items-center">
-            <div className="flex items-center">
+            <div className="flex items-center shrink-0">
               <Link to="/" className="flex items-center" aria-label="电动车租赁 - 返回首页">
                 <svg className="w-7 h-7 md:w-8 md:h-8 text-[var(--mclaren-orange)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
@@ -65,12 +72,12 @@ const Navbar: React.FC = () => {
               </button>
             </div>
 
-            <div className="hidden md:flex items-center space-x-6">
-              {filteredNavigation.map((item) => (
+            <div className="hidden md:flex flex-row flex-nowrap items-center space-x-1">
+              {userNavigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`px-3 py-2 text-sm font-medium rounded-md transition-colors duration-200 ${
+                  className={`px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 whitespace-nowrap ${
                     isActive(item.href)
                       ? 'text-[var(--mclaren-orange)] bg-white/5'
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-main)] hover:bg-white/5'
@@ -79,9 +86,48 @@ const Navbar: React.FC = () => {
                   {item.name}
                 </Link>
               ))}
+
+              {user?.role === 'MANAGER' && (
+                <div className="relative" ref={adminMenuRef}>
+                  <button
+                    onClick={() => setAdminMenuOpen(!adminMenuOpen)}
+                    className={`px-2 py-2 text-sm font-medium rounded-md transition-colors duration-200 whitespace-nowrap flex items-center gap-1 ${
+                      isAdminArea
+                        ? 'text-[var(--mclaren-orange)] bg-white/5'
+                        : 'text-[var(--text-secondary)] hover:text-[var(--text-main)] hover:bg-white/5'
+                    }`}
+                    aria-expanded={adminMenuOpen}
+                    aria-haspopup="true"
+                  >
+                    管理
+                    <svg className={`w-3 h-3 transition-transform duration-200 ${adminMenuOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+
+                  {adminMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-36 bg-[var(--bg-card)] border border-[var(--border-line)] rounded-lg shadow-xl py-1 z-40 animate-fade-in">
+                      {adminNavigation.map((item) => (
+                        <Link
+                          key={item.name}
+                          to={item.href}
+                          onClick={() => setAdminMenuOpen(false)}
+                          className={`block px-4 py-2 text-sm transition-colors duration-150 whitespace-nowrap ${
+                            isActive(item.href)
+                              ? 'text-[var(--mclaren-orange)] bg-white/10'
+                              : 'text-[var(--text-secondary)] hover:text-[var(--text-main)] hover:bg-white/5'
+                          }`}
+                        >
+                          {item.name}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
-            <div className="hidden md:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4 shrink-0">
               {user ? (
                 <>
                   <div className="flex items-center">
@@ -134,7 +180,7 @@ const Navbar: React.FC = () => {
         >
           <div className="px-4 pb-6 space-y-4">
             <div className="flex flex-col space-y-3 pt-4">
-              {filteredNavigation.map((item) => (
+              {userNavigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
@@ -148,6 +194,28 @@ const Navbar: React.FC = () => {
                   {item.name}
                 </Link>
               ))}
+
+              {user?.role === 'MANAGER' && (
+                <>
+                  <div className="pt-2 border-t border-[var(--border-line)]">
+                    <p className="px-4 py-2 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">管理功能</p>
+                  </div>
+                  {adminNavigation.map((item) => (
+                    <Link
+                      key={item.name}
+                      to={item.href}
+                      className={`px-4 py-3 text-base font-medium rounded-lg transition-colors duration-200 touch-target ${
+                        isActive(item.href)
+                          ? 'text-[var(--mclaren-orange)] bg-white/10 border-l-4 border-[var(--mclaren-orange)]'
+                          : 'text-[var(--text-secondary)] hover:text-[var(--text-main)] hover:bg-white/5 active:bg-white/10'
+                      }`}
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      {item.name}
+                    </Link>
+                  ))}
+                </>
+              )}
             </div>
 
             <div className="pt-4 border-t border-[var(--border-line)]">
