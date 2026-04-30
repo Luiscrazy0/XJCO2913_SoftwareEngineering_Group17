@@ -8,6 +8,11 @@ export interface PricingConfig {
   WEEK_1: number
 }
 
+export interface DiscountItem {
+  userType: string
+  rate: number
+}
+
 export const priceApi = {
   estimate: async (hireType: HireType): Promise<PriceEstimateResponse> => {
     const response = await axiosClient.get<ApiResponse<PriceEstimateResponse>>(
@@ -40,10 +45,21 @@ export const priceApi = {
   },
 
   resetPricing: async (): Promise<PricingConfig> => {
-    const response = await axiosClient.put<ApiResponse<PricingConfig>>('/config/pricing/reset')
+    const response = await axiosClient.put<ApiResponse<PricingConfig>>('/config/pricing/reset', {})
     if (!response.data.success) {
       throw new Error(response.data.message || 'Failed to reset pricing')
     }
     return response.data.data!
+  },
+
+  getDiscounts: async (): Promise<DiscountItem[]> => {
+    const response = await axiosClient.get<ApiResponse<DiscountItem[]>>('/config/discounts')
+    if (!response.data.success) throw new Error(response.data.message || '获取折扣率失败')
+    return response.data.data ?? []
+  },
+
+  updateDiscount: async (userType: string, rate: number): Promise<void> => {
+    const response = await axiosClient.put<ApiResponse<null>>(`/config/discounts/${userType}`, { rate })
+    if (!response.data.success) throw new Error(response.data.message || '更新折扣率失败')
   },
 }

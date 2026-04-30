@@ -7,7 +7,7 @@ import RideTimer from './booking/RideTimer'
 interface BookingCardProps {
   booking: Booking
   onCancel?: (bookingId: string) => void
-  onPay?: (bookingId: string) => void
+  onPay?: (bookingId: string, amount: number) => void
   onExtend?: (booking: Booking) => void
   onStartRide?: (booking: Booking) => void
   onEndRide?: (booking: Booking) => void

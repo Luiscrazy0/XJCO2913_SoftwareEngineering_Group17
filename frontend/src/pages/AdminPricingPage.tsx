@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { priceApi, PricingConfig } from '../api/price'
+import { priceApi, PricingConfig, DiscountItem } from '../api/price'
 import PageLayout from '../components/PageLayout'
 import { useToast } from '../components/ToastProvider'
 
@@ -71,6 +71,43 @@ export default function AdminPricingPage() {
     setEditingType(null)
     setEditValue('')
   }
+
+  // Discount config
+  const [discountInputs, setDiscountInputs] = useState<Record<string, string>>({})
+  const [discountDirty, setDiscountDirty] = useState(false)
+
+  const discountsQuery = useQuery({
+    queryKey: ['config', 'discounts'],
+    queryFn: priceApi.getDiscounts,
+  })
+
+  useEffect(() => {
+    if (discountsQuery.data) {
+      const map: Record<string, string> = {}
+      discountsQuery.data.forEach((item: DiscountItem) => (map[item.userType] = String(Math.round(item.rate * 100))))
+      setDiscountInputs(map)
+      setDiscountDirty(false)
+    }
+  }, [discountsQuery.data])
+
+  const saveDiscountsMutation = useMutation({
+    mutationFn: async () => {
+      await Promise.all(Object.entries(discountInputs).map(([userType, rateStr]) =>
+        priceApi.updateDiscount(userType, Number(rateStr) / 100)))
+    },
+    onSuccess: () => { showToast('折扣已更新', 'success'); queryClient.invalidateQueries({ queryKey: ['config', 'discounts'] }); setDiscountDirty(false) },
+    onError: () => showToast('折扣更新失败', 'error'),
+  })
+
+  const handleDiscountChange = (userType: string, value: string) => {
+    setDiscountInputs((prev) => ({ ...prev, [userType]: value }))
+    setDiscountDirty(true)
+  }
+
+  const DISCOUNT_LABELS: Record<string, string> = {
+    STUDENT: '学生', SENIOR: '老年人', FREQUENT_50H: '高频用户 (50h+)', FREQUENT_20H: '活跃用户 (20h+)',
+  }
+  const DISCOUNT_ORDER = ['STUDENT', 'SENIOR', 'FREQUENT_50H', 'FREQUENT_20H']
 
   const currentPricing = pricing ?? DEFAULT_PRICES
 
@@ -226,6 +263,51 @@ export default function AdminPricingPage() {
           >
             刷新
           </button>
+        </div>
+
+        {/* Discount Section */}
+        <div className="surface-card p-6">
+          <div className="mb-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Discounts</p>
+              <h3 className="text-lg font-semibold text-[var(--text-main)]">用户折扣率</h3>
+            </div>
+            <button
+              onClick={() => saveDiscountsMutation.mutate()}
+              disabled={!discountDirty || saveDiscountsMutation.isPending}
+              className="rounded-lg bg-[var(--mclaren-orange)] px-4 py-2 text-sm font-semibold text-white hover:brightness-110 disabled:opacity-60"
+            >
+              {saveDiscountsMutation.isPending ? '保存中...' : '保存折扣'}
+            </button>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-[var(--text-secondary)] border-b border-[var(--border-line)]">
+                  <th className="text-left py-3 px-4 font-medium">用户类型</th>
+                  <th className="text-right py-3 px-4 font-medium">折扣率</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-[var(--border-line)]">
+                {DISCOUNT_ORDER.map((userType) => (
+                  <tr key={userType} className="hover:bg-white/5 transition-colors">
+                    <td className="py-3 px-4 text-[var(--text-main)] font-medium">{DISCOUNT_LABELS[userType] || userType}</td>
+                    <td className="py-3 px-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <input
+                          type="number" min="0" max="100" step="1"
+                          value={discountInputs[userType] ?? ''}
+                          onChange={(e) => handleDiscountChange(userType, e.target.value)}
+                          className="w-20 rounded-lg border border-[var(--border-line)] bg-[var(--bg-input)] px-3 py-1.5 text-sm text-[var(--text-main)] focus:border-[var(--mclaren-orange)] focus:outline-none text-right"
+                        />
+                        <span className="text-[var(--text-secondary)]">%</span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </PageLayout>

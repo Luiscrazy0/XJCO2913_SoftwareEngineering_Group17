@@ -48,11 +48,12 @@ export class PaymentCardService {
     const encryptedCardNumber = this.encrypt(cardData.cardNumber);
     const lastFourDigits = cardData.cardNumber.slice(-4);
 
-    // 保存到数据库 - 使用PaymentCard模型
+    // 保存到数据库 - 使用PaymentCard模型（加密存储完整卡号）
     const paymentCard = await this.prisma.paymentCard.create({
       data: {
         userId,
         lastFourDigits,
+        encryptedCardNumber,
         expiryDate: cardData.cardExpiry,
         cardHolder: cardData.cardHolder,
         isDefault: false,
@@ -108,10 +109,14 @@ export class PaymentCardService {
       return null;
     }
 
-    // 注意：这里需要存储加密的卡号在数据库中才能解密
-    // 由于我们只存储了最后4位，无法返回完整卡号
-    // 在实际项目中，应该存储加密的完整卡号
-    throw new BadRequestException('完整银行卡信息不可用，只存储了最后4位数字');
+    if (!paymentCard.encryptedCardNumber) {
+      throw new BadRequestException('完整银行卡信息不可用');
+    }
+    return {
+      cardNumber: this.decrypt(paymentCard.encryptedCardNumber!),
+      cardExpiry: paymentCard.expiryDate,
+      cardHolder: paymentCard.cardHolder,
+    };
   }
 
   /**
