@@ -6,7 +6,7 @@ import Badge from './ui/Badge'
 interface BookingCardProps {
   booking: Booking
   onCancel?: (bookingId: string) => void
-  onPay?: (bookingId: string) => void
+  onPay?: (bookingId: string, amount: number) => void
   onExtend?: (booking: Booking) => void
 }
 
@@ -24,6 +24,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay, onE
         return {
           label: '已确认',
           variant: 'success' as const,
+          showEmailIcon: true,
         }
       case 'CANCELLED':
         return {
@@ -76,7 +77,12 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay, onE
       <div className="px-6 py-4 border-b border-[var(--border-line)]">
         <div className="flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+              {statusMeta.showEmailIcon && (
+                <span title="确认邮件已发送" className="text-lg cursor-help">📧</span>
+              )}
+            </div>
             <span className="text-sm text-[var(--text-secondary)] font-mono">
               ID: {booking.id.substring(0, 8)}...
             </span>
@@ -176,7 +182,7 @@ const BookingCard: React.FC<BookingCardProps> = ({ booking, onCancel, onPay, onE
           )}
           {canPay && onPay && (
             <button
-              onClick={() => onPay(booking.id)}
+              onClick={() => onPay(booking.id, booking.totalCost)}
               className="flex-1 min-w-[120px] py-3 px-4 bg-[var(--mclaren-orange)] text-white rounded-lg font-medium hover:brightness-110 focus:ring-2 focus:ring-[var(--mclaren-orange)]/40 transition-colors duration-200"
             >
               立即支付

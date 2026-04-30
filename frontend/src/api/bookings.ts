@@ -37,6 +37,15 @@ export const bookingsApi = {
     return response.data.data!
   },
 
+  // Pay for a booking
+  pay: async (bookingId: string, amount: number): Promise<Booking> => {
+    const response = await axiosClient.post<ApiResponse<Booking>>('/payments', { bookingId, amount })
+    if (!response.data.success) {
+      throw new Error(response.data.message || '支付失败')
+    }
+    return response.data.data!
+  },
+
   // Cancel booking
   cancel: async (id: string): Promise<Booking> => {
     const response = await axiosClient.patch<ApiResponse<Booking>>(`/bookings/${id}/cancel`)
