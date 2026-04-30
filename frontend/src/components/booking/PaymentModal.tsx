@@ -60,7 +60,7 @@ export default function PaymentModal({ isOpen, booking, onClose, onSuccess }: Pr
         <h2 className="text-xl font-bold text-[var(--text-main)]">确认支付</h2>
 
         <div className="mt-4 rounded-2xl border border-[var(--border-line)] bg-[var(--bg-input)] p-4">
-          <p className="text-xs uppercase text-[var(--text-secondary)]">订单摘要</p>
+          <p className="text-xs font-medium text-[var(--text-secondary)]">订单摘要</p>
           <div className="mt-2 space-y-1 text-sm text-[var(--text-main)]">
             <p>车辆: {booking.scooterId?.substring(0, 8)}...</p>
             <p>租赁: {booking.hireType === 'HOUR_1' ? '1小时' : booking.hireType === 'HOUR_4' ? '4小时' : booking.hireType === 'DAY_1' ? '1天' : '1周'}</p>

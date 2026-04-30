@@ -48,23 +48,30 @@
   --auth-link: var(--mclaren-orange);
   --auth-error: #ef4444;
 
-  /* 字体配置 */
-  --sans: "Inter", system-ui, -apple-system, sans-serif;
-  --mono: "Maple Mono NF CN", "JetBrains Mono", ui-monospace, monospace;
+  /* 字体配置 — 中文优先：PingFang/Noto Sans SC 为 CJK 优化字体 */
+  --sans: "PingFang SC", "Noto Sans SC", "Microsoft YaHei", "Hiragino Sans GB", "Source Han Sans SC", "Inter", system-ui, -apple-system, sans-serif;
+  --mono: "Maple Mono NF CN", "JetBrains Mono", "Source Code Pro", ui-monospace, monospace;
 
   /* 默认基础配置 */
   background: var(--bg-main);
   color: var(--text-main);
   font-family: var(--sans);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.7;
   color-scheme: dark; /* 强制声明为深色模式 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* 2. 清理 P0 提到的模板遗留布局 */
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   margin: 0;
   background-color: var(--bg-main);
+  overflow-x: hidden;
 }
 
 #root {
@@ -105,11 +112,11 @@ body {
   transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease;
 }
 
-/* 3. 迈凯伦风排版 */
+/* 3. 中文排版优化：标题不使用负字母间距（会导致汉字重叠） */
 h1, h2, h3 {
   color: var(--text-main);
   font-weight: 700;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
 }
 
 code, .counter, .data-value {
@@ -477,13 +484,13 @@ img[alt=""] {
   --mclaren-orange: #FF8A00;
 }
 
-/* 7.13 语义化标题层次 */
-h1 { font-size: 2.5rem; }
-h2 { font-size: 2rem; }
-h3 { font-size: 1.75rem; }
-h4 { font-size: 1.5rem; }
-h5 { font-size: 1.25rem; }
-h6 { font-size: 1rem; }
+/* 7.13 语义化标题层次 — 中文排版适当增大行高 */
+h1 { font-size: 2.25rem; line-height: 1.3; }
+h2 { font-size: 1.75rem; line-height: 1.35; }
+h3 { font-size: 1.5rem; line-height: 1.4; }
+h4 { font-size: 1.25rem; line-height: 1.45; }
+h5 { font-size: 1.1rem; line-height: 1.5; }
+h6 { font-size: 1rem; line-height: 1.5; }
 
 /* 7.14 阅读模式支持 */
 @media (prefers-color-scheme: light) {
@@ -506,14 +513,12 @@ h6 { font-size: 1rem; }
   text-align: left;
 }
 
-/* 8. 页面过渡动画 */
-@keyframes fade-in-up {
-  from { opacity: 0; transform: translateY(12px); }
-  to   { opacity: 1; transform: translateY(0); }
-}
+/* 8. 页面过渡与交互动画 */
 
-.animate-fade-in-up {
-  animation: fade-in-up 0.35s ease-out both;
+/* 8.1 基础入场动画 */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes fade-in {
@@ -521,8 +526,114 @@ h6 { font-size: 1rem; }
   to   { opacity: 1; }
 }
 
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(20px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
 .animate-fade-in {
-  animation: fade-in 0.25s ease-out both;
+  animation: fade-in 0.3s ease-out both;
+}
+
+.animate-slide-in-right {
+  animation: slide-in-right 0.3s ease-out both;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 8.2 页面路由切换动画 */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-transition {
+  animation: page-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 8.3 全局加载进度条（NProgress 风格） */
+@keyframes loading-bar {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(400%); }
+}
+
+.loading-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  pointer-events: none;
+  background: transparent;
+}
+
+.loading-progress-bar::after {
+  content: '';
+  display: block;
+  width: 25%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--mclaren-orange), var(--mclaren-orange-hover));
+  border-radius: 0 2px 2px 0;
+  animation: loading-bar 1.5s ease-in-out infinite;
+}
+
+/* 8.4 加载指示器变体 */
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%      { opacity: 1; transform: scale(1.2); }
+}
+
+.loading-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.loading-dots span {
+  width: 8px;
+  height: 8px;
+  background: var(--mclaren-orange);
+  border-radius: 50%;
+  animation: pulse-dot 1.2s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* 8.5 内容加载闪烁优化 — 防止页面加载时的布局偏移和闪烁 */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--bg-input) 25%,
+    rgba(255, 255, 255, 0.03) 50%,
+    var(--bg-input) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s ease-in-out infinite;
 }
 
 @keyframes shrink {
@@ -533,17 +644,17 @@ h6 { font-size: 1rem; }
 /* 子元素交错入场 */
 .animate-stagger > * {
   opacity: 0;
-  animation: fade-in-up 0.35s ease-out forwards;
+  animation: fade-in-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-.animate-stagger > *:nth-child(1) { animation-delay: 0.02s; }
-.animate-stagger > *:nth-child(2) { animation-delay: 0.06s; }
-.animate-stagger > *:nth-child(3) { animation-delay: 0.10s; }
-.animate-stagger > *:nth-child(4) { animation-delay: 0.14s; }
-.animate-stagger > *:nth-child(5) { animation-delay: 0.18s; }
-.animate-stagger > *:nth-child(6) { animation-delay: 0.22s; }
-.animate-stagger > *:nth-child(7) { animation-delay: 0.26s; }
-.animate-stagger > *:nth-child(8) { animation-delay: 0.30s; }
+.animate-stagger > *:nth-child(1) { animation-delay: 0.03s; }
+.animate-stagger > *:nth-child(2) { animation-delay: 0.08s; }
+.animate-stagger > *:nth-child(3) { animation-delay: 0.13s; }
+.animate-stagger > *:nth-child(4) { animation-delay: 0.18s; }
+.animate-stagger > *:nth-child(5) { animation-delay: 0.23s; }
+.animate-stagger > *:nth-child(6) { animation-delay: 0.28s; }
+.animate-stagger > *:nth-child(7) { animation-delay: 0.33s; }
+.animate-stagger > *:nth-child(8) { animation-delay: 0.38s; }
 
 /* 9. 玻璃拟态卡片 */
 .glass-card {

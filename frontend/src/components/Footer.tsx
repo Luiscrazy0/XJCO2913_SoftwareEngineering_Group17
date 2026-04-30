@@ -20,7 +20,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-[var(--text-main)] uppercase tracking-wider mb-3">快速链接</h4>
+            <h4 className="text-sm font-semibold text-[var(--text-main)] mb-3">快速链接</h4>
             <ul className="space-y-2 text-sm">
               <li><Link to="/scooters" className="text-[var(--text-secondary)] hover:text-[var(--mclaren-orange)] transition-colors">发现车辆</Link></li>
               <li><Link to="/map" className="text-[var(--text-secondary)] hover:text-[var(--mclaren-orange)] transition-colors">站点地图</Link></li>
@@ -29,7 +29,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-sm font-semibold text-[var(--text-main)] uppercase tracking-wider mb-3">联系我们</h4>
+            <h4 className="text-sm font-semibold text-[var(--text-main)] mb-3">联系我们</h4>
             <ul className="space-y-2 text-sm text-[var(--text-secondary)]">
               <li className="flex items-center gap-2">
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,7 +47,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-6 border-t border-[var(--border-line)] text-center text-xs text-[var(--text-secondary)]">
-          <p>&copy; {year} 电动车租赁系统. All rights reserved.</p>
+          <p>&copy; {year} 电动车租赁系统，保留所有权利。</p>
         </div>
       </div>
     </footer>

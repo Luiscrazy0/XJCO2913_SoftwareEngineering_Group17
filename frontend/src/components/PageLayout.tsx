@@ -23,7 +23,7 @@ export default function PageLayout({
   return (
     <div className="min-h-screen bg-[var(--bg-main)] flex flex-col">
       <Navbar />
-      <main id="main-content" className={`flex-1 animate-fade-in-up ${className}`}>
+      <main id="main-content" className={`flex-1 page-transition ${className}`}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pb-24 md:pb-8">
           {title && (
             <div className="mb-8">

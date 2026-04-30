@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { User } from '../types'
 import { authApi } from '../api/auth'
 import { useToast } from '../components/ToastProvider'
@@ -69,6 +70,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const { showToast } = useToast()
+  const navigate = useNavigate()
 
   // Initialize auth state from localStorage
   useEffect(() => {
@@ -123,14 +125,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       localStorage.removeItem('redirect_path')
 
       if (redirectPath) {
-        window.location.href = redirectPath
+        navigate(redirectPath, { replace: true })
         return
       }
 
       if (user.role === 'MANAGER') {
-        window.location.href = '/admin'
+        navigate('/admin', { replace: true })
       } else {
-        window.location.href = '/scooters'
+        navigate('/scooters', { replace: true })
       }
     } catch (error) {
       console.error('Login failed:', error)
@@ -173,9 +175,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
 
     if (redirect) {
-      window.location.href = '/'
+      navigate('/', { replace: true })
     }
-  }, [showToast])
+  }, [showToast, navigate])
 
   // 监听跨标签页登出 & session 过期事件
   useEffect(() => {

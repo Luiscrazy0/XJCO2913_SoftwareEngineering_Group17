@@ -1,5 +1,5 @@
 //路由表 定义了应用程序中的不同页面和访问权限
-import { Routes, Route } from "react-router-dom"
+import { Routes, Route, Navigate } from "react-router-dom"
 
 // Importing the pages
 import AuthPage from "../pages/AuthPage"
@@ -18,14 +18,24 @@ import RidePackagesPage from "../pages/RidePackagesPage"
 import AdminPricingPage from "../pages/AdminPricingPage"
 import ProtectedRoute from "../components/ProtectedRoute"
 import ForbiddenPage from "../pages/ForbiddenPage"
+import { useAuth } from "../context/AuthContext"
+
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, user } = useAuth()
+  if (isAuthenticated) {
+    const target = user?.role === 'MANAGER' ? '/admin' : '/scooters'
+    return <Navigate to={target} replace />
+  }
+  return <>{children}</>
+}
 
 // Main App Router component
 export default function AppRouter() {
   return (
     <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<AuthPage />} />
-        <Route path="/auth" element={<AuthPage />} />
+        {/* Public routes — 已登录用户自动重定向 */}
+        <Route path="/" element={<PublicRoute><AuthPage /></PublicRoute>} />
+        <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
         <Route path="/test-scooters" element={<TestScooterPage />} />
         <Route path="/403" element={<ForbiddenPage />} />
         

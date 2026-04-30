@@ -159,7 +159,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
         <p className="mt-1 text-sm text-[var(--text-secondary)]">确认信息后提交预约请求</p>
 
         <section className="mt-6 rounded-2xl border border-[var(--border-line)] bg-[var(--bg-input)] p-4">
-          <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)]">车辆信息</p>
+          <p className="text-xs font-medium text-[var(--text-secondary)]">车辆信息</p>
           <div className="mt-2 space-y-1">
             <p className="text-sm text-[var(--text-main)]">🛴 Scooter #{scooter.id.substring(0, 8)}...</p>
             {scooter.station && (
