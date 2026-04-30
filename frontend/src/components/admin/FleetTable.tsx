@@ -15,7 +15,7 @@ export function FleetTable({ scooters, onToggleStatus, onDelete, updatingId, del
     <div className="surface-card overflow-hidden">
       <table className="min-w-full divide-y divide-[var(--border-line)]">
         <thead className="bg-[var(--bg-input)]">
-          <tr className="text-left text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-secondary)]">
+          <tr className="text-left text-xs font-semibold text-[var(--text-secondary)]">
             <th className="px-6 py-4">位置</th>
             <th className="px-6 py-4">状态</th>
             <th className="px-6 py-4 text-right">操作</th>

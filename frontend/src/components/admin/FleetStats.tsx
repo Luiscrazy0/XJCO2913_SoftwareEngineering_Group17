@@ -59,7 +59,7 @@ export function FleetStats({ scooters }: FleetStatsProps) {
           <div className={`absolute inset-0 opacity-80 bg-gradient-to-br ${card.accent}`} />
           <div className="relative flex items-center justify-between px-5 py-4">
             <div className="space-y-1">
-              <p className="text-xs uppercase tracking-[0.15em] text-white/80">{card.title}</p>
+              <p className="text-xs font-semibold text-white/80">{card.title}</p>
               <p className="text-3xl font-semibold text-white drop-shadow-sm">{card.value}</p>
               <p className="text-sm text-white/80">{card.sub}</p>
             </div>

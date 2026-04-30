@@ -22,7 +22,7 @@ export function DeleteConfirmationModal({
       <div className="w-full max-w-md rounded-2xl surface-card">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-line)]">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-secondary)]">删除确认</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)]">删除确认</p>
             <h3 className="text-lg font-semibold text-[var(--text-main)]">确认删除车辆</h3>
           </div>
           <button

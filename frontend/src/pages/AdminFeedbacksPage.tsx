@@ -135,7 +135,7 @@ export default function AdminFeedbacksPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">待处理</p>
+                <p className="text-xs font-semibold text-[var(--text-secondary)]">待处理</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">{pendingCount}</h2>
               </div>
               <div className="h-10 w-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
@@ -148,7 +148,7 @@ export default function AdminFeedbacksPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">损坏报告</p>
+                <p className="text-xs font-semibold text-[var(--text-secondary)]">损坏报告</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">
                   {feedbacks.filter(f => f.category === 'DAMAGE').length}
                 </h2>
@@ -163,7 +163,7 @@ export default function AdminFeedbacksPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">已解决</p>
+                <p className="text-xs font-semibold text-[var(--text-secondary)]">已解决</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">
                   {feedbacks.filter(f => f.status === 'RESOLVED').length}
                 </h2>
@@ -178,7 +178,7 @@ export default function AdminFeedbacksPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">需要收费</p>
+                <p className="text-xs font-semibold text-[var(--text-secondary)]">需要收费</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">
                   {feedbacks.filter(f => f.status === 'CHARGEABLE').length}
                 </h2>
@@ -195,7 +195,7 @@ export default function AdminFeedbacksPage() {
         <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex-1">
-              <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">过滤器</p>
+              <p className="text-xs font-semibold text-[var(--text-secondary)]">过滤器</p>
               <h2 className="text-xl font-semibold text-[var(--text-main)]">筛选反馈</h2>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -249,7 +249,7 @@ export default function AdminFeedbacksPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between pb-3">
               <div>
-<p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">反馈列表</p>
+<p className="text-xs font-semibold text-[var(--text-secondary)]">反馈列表</p>
                <h2 className="text-xl font-semibold text-[var(--text-main)]">所有反馈报告</h2>
               </div>
               <div className="text-sm text-[var(--text-secondary)]">

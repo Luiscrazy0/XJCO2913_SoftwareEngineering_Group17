@@ -104,16 +104,16 @@ const RevenueStatisticsPage: React.FC = () => {
             <table className="min-w-full divide-y divide-[var(--border-line)]">
               <thead className="bg-[var(--bg-input)]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)]">
                     租赁类型
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)]">
                     预订数量
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)]">
                     总收入
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)]">
                     平均收入
                   </th>
                 </tr>
@@ -226,13 +226,13 @@ const RevenueStatisticsPage: React.FC = () => {
             <table className="min-w-full divide-y divide-[var(--border-line)]">
               <thead className="bg-[var(--bg-input)]">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)]">
                     日期
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)]">
                     收入金额
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-[var(--text-secondary)] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-[var(--text-secondary)]">
                     可视化
                   </th>
                 </tr>

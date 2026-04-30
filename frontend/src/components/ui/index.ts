@@ -9,6 +9,7 @@ export { default as Input } from './Input'
 
 // 新增组件
 export { default as LoadingSpinner } from './LoadingSpinner'
+export { default as GlobalLoadingBar } from './GlobalLoadingBar'
 export { default as ErrorBoundary, withErrorBoundary, ErrorBoundaryProvider } from './ErrorBoundary'
 export { default as Modal, ConfirmModal, FormModal } from './Modal'
 export { ToastProvider, useToast } from '../ToastProvider'

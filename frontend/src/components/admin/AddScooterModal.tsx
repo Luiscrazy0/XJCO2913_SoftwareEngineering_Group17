@@ -34,7 +34,7 @@ export function AddScooterModal({ isOpen, onClose, onSubmit, isSubmitting }: Add
       <div className="w-full max-w-lg rounded-2xl surface-card">
         <div className="flex items-center justify-between px-6 py-4 border-b border-[var(--border-line)]">
           <div>
-            <p className="text-xs uppercase tracking-[0.18em] text-[var(--text-secondary)]">新增车辆</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)]">新增车辆</p>
             <h3 className="text-lg font-semibold text-[var(--text-main)]">录入车队位置</h3>
           </div>
           <button

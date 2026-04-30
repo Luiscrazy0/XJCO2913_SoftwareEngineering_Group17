@@ -148,7 +148,7 @@ export default function HighPriorityPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">损坏报告</p>
+                <p className="text-xs font-semibold text-[var(--text-secondary)]">损坏报告</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">{damageCount}</h2>
               </div>
               <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center">
@@ -161,7 +161,7 @@ export default function HighPriorityPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">紧急优先级</p>
+                <p className="text-xs font-semibold text-[var(--text-secondary)]">紧急优先级</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">{urgentCount}</h2>
               </div>
               <div className="h-10 w-10 rounded-full bg-red-500/20 flex items-center justify-center">
@@ -174,7 +174,7 @@ export default function HighPriorityPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">待处理</p>
+                <p className="text-xs font-semibold text-[var(--text-secondary)]">待处理</p>
                 <h2 className="text-2xl font-bold text-[var(--text-main)]">{pendingCount}</h2>
               </div>
               <div className="h-10 w-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
@@ -188,7 +188,7 @@ export default function HighPriorityPage() {
         <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-5 shadow-[var(--shadow-card)]">
           <div className="flex flex-col md:flex-row md:items-center gap-4">
             <div className="flex-1">
-              <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">筛选</p>
+              <p className="text-xs font-semibold text-[var(--text-secondary)]">筛选</p>
               <h2 className="text-xl font-semibold text-[var(--text-main)]">按类别筛选</h2>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -236,29 +236,29 @@ export default function HighPriorityPage() {
                     <p className="text-[var(--text-secondary)] mb-4 whitespace-pre-wrap">{feedback.description}</p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">提交者</p>
+                        <p className="text-xs font-semibold text-[var(--text-secondary)]">提交者</p>
                         <p className="text-[var(--text-main)] font-medium">{feedback.createdByEmail}</p>
                       </div>
                       <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">滑板车</p>
+                        <p className="text-xs font-semibold text-[var(--text-secondary)]">滑板车</p>
                         <p className="text-[var(--text-main)] font-medium">ID: {feedback.scooterId}</p>
                         <p className="text-[var(--text-secondary)]">位置: {feedback.scooterLocation}</p>
                       </div>
                       <div>
-                        <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">提交时间</p>
+                        <p className="text-xs font-semibold text-[var(--text-secondary)]">提交时间</p>
                         <p className="text-[var(--text-main)] font-medium">{new Date(feedback.createdAt).toLocaleDateString()}</p>
                         <p className="text-[var(--text-secondary)]">{new Date(feedback.createdAt).toLocaleTimeString()}</p>
                       </div>
                     </div>
                     {feedback.managerNotes && (
                       <div className="mt-4 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
-                        <p className="text-xs uppercase tracking-[0.2em] text-blue-300 mb-1">管理员备注</p>
+                        <p className="text-xs font-semibold text-blue-300 mb-1">管理员备注</p>
                         <p className="text-sm text-blue-200">{feedback.managerNotes}</p>
                       </div>
                     )}
                     {feedback.resolutionCost && feedback.resolutionCost > 0 && (
                       <div className="mt-4 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
-                        <p className="text-xs uppercase tracking-[0.2em] text-red-300 mb-1">处理费用</p>
+                        <p className="text-xs font-semibold text-red-300 mb-1">处理费用</p>
                         <p className="text-lg font-bold text-red-200">${feedback.resolutionCost.toFixed(2)}</p>
                       </div>
                     )}
@@ -267,7 +267,7 @@ export default function HighPriorityPage() {
                     <Link to={`/admin/feedbacks/${feedback.id}`} className="w-full rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white text-center hover:bg-blue-700">查看详情</Link>
                     {feedback.imageUrl && (
                       <div className="mt-2">
-                        <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)] mb-2">图片</p>
+                        <p className="text-xs font-semibold text-[var(--text-secondary)] mb-2">图片</p>
                         <img src={feedback.imageUrl} alt="Feedback" className="rounded-lg w-full h-32 object-cover border border-[var(--border-line)]" />
                       </div>
                     )}
@@ -299,7 +299,7 @@ export default function HighPriorityPage() {
           <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
             <div className="flex flex-col md:flex-row md:items-center gap-4">
               <div className="flex-1">
-                <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">导出</p>
+                <p className="text-xs font-semibold text-[var(--text-secondary)]">导出</p>
                 <h2 className="text-xl font-semibold text-[var(--text-main)]">导出数据</h2>
                 <p className="mt-1 text-sm text-[var(--text-secondary)]">导出当前筛选的列表用于报告目的。</p>
               </div>

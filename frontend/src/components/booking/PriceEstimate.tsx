@@ -34,7 +34,7 @@ export default function PriceEstimate({ hireType }: Props) {
 
   return (
     <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-input)] p-4">
-      <p className="text-xs uppercase tracking-wide text-[var(--text-secondary)] mb-3">费用明细</p>
+      <p className="text-xs font-medium text-[var(--text-secondary)] mb-3">费用明细</p>
       <div className="space-y-2">
         <div className="flex justify-between text-sm">
           <span className="text-[var(--text-secondary)]">
