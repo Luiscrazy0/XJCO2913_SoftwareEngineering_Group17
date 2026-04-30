@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { bookingsApi } from '../api/bookings'
 import { useAuth } from '../context/AuthContext'
@@ -99,9 +99,20 @@ const MyBookingsPage: React.FC = () => {
     await extendMutation.mutateAsync({ id: bookingId, additionalHours })
   }
 
-  // 处理支付（暂未实现）
-  const handlePayBooking = (bookingId: string) => {
-    alert(`支付功能将在下一阶段实现 - Booking ID: ${bookingId}`)
+  const payMutation = useMutation({
+    mutationFn: ({ bookingId, amount }: { bookingId: string; amount: number }) => bookingsApi.pay(bookingId, amount),
+    onSuccess: () => {
+      showToast('支付成功！确认邮件已发送', 'success')
+      queryClient.invalidateQueries({ queryKey: bookingsKey })
+    },
+    onError: (err: unknown) => {
+      const msg = err instanceof Error ? err.message : '支付失败，请重试'
+      showToast(msg, 'error')
+    },
+  })
+
+  const handlePayBooking = (bookingId: string, amount: number) => {
+    payMutation.mutate({ bookingId, amount })
   }
 
   // 处理浏览车辆
@@ -242,11 +253,16 @@ const MyBookingsPage: React.FC = () => {
       {/* 主内容 */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 页面标题 */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[var(--text-main)]">我的预约</h1>
-          <p className="text-[var(--text-secondary)] mt-2">
-            查看和管理您的所有电动车租赁预约
-          </p>
+        <div className="mb-8 flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-[var(--text-main)]">我的预约</h1>
+            <p className="text-[var(--text-secondary)] mt-2">
+              查看和管理您的所有电动车租赁预约
+            </p>
+          </div>
+          <Link to="/payment-methods" className="px-4 py-2 text-sm font-medium text-[var(--mclaren-orange)] hover:text-[var(--mclaren-orange-hover)] hover:bg-white/5 rounded-lg transition-colors">
+            支付方式 →
+          </Link>
         </div>
 
         {/* 页面内容 */}
