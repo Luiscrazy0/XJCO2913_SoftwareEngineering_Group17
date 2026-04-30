@@ -306,18 +306,6 @@ textarea:focus-visible {
     outline-offset: 2px !important;
   }
   
-  /* 跳过链接高对比度 */
-  .skip-to-content {
-    background: #FF8A00;
-    color: #000000;
-    font-weight: bold;
-    border: 2px solid #FFFFFF;
-  }
-  
-  .skip-to-content:focus {
-    outline: 3px solid #FFFFFF;
-    outline-offset: 2px;
-  }
 }
 
 /* 7.3 减少动画偏好 */
@@ -362,27 +350,7 @@ textarea:focus-visible {
   white-space: normal;
 }
 
-/* 7.5 键盘导航改进 */
-.skip-to-content {
-  position: absolute;
-  top: -40px;
-  left: 0;
-  background: var(--mclaren-orange);
-  color: white;
-  padding: 12px 20px;
-  text-decoration: none;
-  z-index: 9999;
-  font-weight: bold;
-  border-radius: 0 0 4px 0;
-}
-
-.skip-to-content:focus {
-  top: 0;
-  outline: 3px solid white;
-  outline-offset: 2px;
-}
-
-/* 7.6 表单可访问性 */
+/* 7.5 表单可访问性 (原 7.6) */ 表单可访问性 */
 input:invalid,
 select:invalid,
 textarea:invalid {
