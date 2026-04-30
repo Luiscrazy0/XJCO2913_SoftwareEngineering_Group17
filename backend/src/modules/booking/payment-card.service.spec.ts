@@ -105,6 +105,7 @@ describe('Booking PaymentCardService', () => {
       data: {
         userId: 'user-1',
         lastFourDigits: '1111',
+        encryptedCardNumber: expect.any(String) as string,
         expiryDate: futureExpiry,
         cardHolder: 'Test User',
         isDefault: false,
