@@ -107,6 +107,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault()
       if (!user) { setFormError('用户信息缺失，请重新登录'); return }
+      if (scooter.status !== 'AVAILABLE') { setFormError('该车辆已被他人预约，请选择其他车辆'); return }
       const parsedStart = new Date(startTime)
       if (isNaN(parsedStart.getTime())) { setFormError('请选择有效的开始时间'); return }
       if (parsedStart < new Date()) { setFormError('开始时间不能早于当前时间'); return }

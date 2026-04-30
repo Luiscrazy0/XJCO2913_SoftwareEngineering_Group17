@@ -81,7 +81,14 @@ export default function AppRouter() {
             <MyFeedbacksPage />
           </ProtectedRoute>
         } />
-        
+
+        {/* Feedback detail — any authenticated user (owner views, admin edits) */}
+        <Route path="/feedbacks/:id" element={
+          <ProtectedRoute>
+            <FeedbackDetailPage />
+          </ProtectedRoute>
+        } />
+
         {/* Admin Feedback Management Routes */}
         <Route path="/admin/feedbacks" element={
           <ProtectedRoute requiredRole="MANAGER">

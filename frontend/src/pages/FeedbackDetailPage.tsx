@@ -184,19 +184,20 @@ export default function FeedbackDetailPage() {
           </div>
           <div className="flex gap-3">
             <Link
-              to="/admin/feedbacks"
+              to={role === 'MANAGER' ? '/admin/feedbacks' : '/my-feedbacks'}
               className="rounded-lg border border-[var(--border-line)] px-4 py-2 text-sm font-semibold text-[var(--text-main)] hover:border-[var(--mclaren-orange)] hover:bg-white/5 shadow-sm"
             >
               Back to List
             </Link>
-            {!isEditing ? (
-              <button
-                onClick={() => setIsEditing(true)}
-                className="rounded-lg bg-[var(--mclaren-orange)] px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
-              >
-                Edit Feedback
-              </button>
-            ) : (
+            {role === 'MANAGER' && (
+              !isEditing ? (
+                <button
+                  onClick={() => setIsEditing(true)}
+                  className="rounded-lg bg-[var(--mclaren-orange)] px-4 py-2 text-sm font-semibold text-white shadow hover:brightness-110"
+                >
+                  Edit Feedback
+                </button>
+              ) : (
               <div className="flex gap-2">
                 <button
                   onClick={handleCancel}
@@ -212,7 +213,7 @@ export default function FeedbackDetailPage() {
                   {updateMutation.isPending ? 'Saving...' : 'Save Changes'}
                 </button>
               </div>
-            )}
+            ))}
           </div>
         </header>
 
@@ -320,10 +321,11 @@ export default function FeedbackDetailPage() {
 
           {/* Right Column: Management & Related Info */}
           <div className="space-y-6">
-            {/* Management Actions Card */}
+            {/* Management Actions Card — admin only */}
+            {role === 'MANAGER' && (
             <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
               <h2 className="text-xl font-semibold text-[var(--text-main)] mb-4">Management Actions</h2>
-              
+
               <div className="space-y-4">
                 <div>
                   <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)] mb-2">Damage Type</p>
@@ -346,7 +348,7 @@ export default function FeedbackDetailPage() {
                         </button>
                       </div>
                       <p className="text-xs text-[var(--text-secondary)]">
-                        {formData.damageType === 'NATURAL' 
+                        {formData.damageType === 'NATURAL'
                           ? 'No charge will be applied. Status will be set to RESOLVED.'
                           : formData.damageType === 'INTENTIONAL'
                           ? 'Status will be set to CHARGEABLE. Please set resolution cost below.'
@@ -393,6 +395,7 @@ export default function FeedbackDetailPage() {
                 )}
               </div>
             </div>
+            )}
 
             {/* Related Information Card */}
             <div className="rounded-2xl border border-[var(--border-line)] bg-[var(--bg-card)] p-6 shadow-[var(--shadow-card)]">
