@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { feedbackApi, Feedback } from '../api/feedback'
-import Navbar from '../components/Navbar'
+import PageLayout from '../components/PageLayout'
 
 export default function MyFeedbacksPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([])
@@ -28,21 +28,21 @@ export default function MyFeedbacksPage() {
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'URGENT': return { className: 'bg-red-100 text-red-800', label: '紧急' }
-      case 'HIGH': return { className: 'bg-orange-100 text-orange-800', label: '高' }
-      case 'MEDIUM': return { className: 'bg-yellow-100 text-yellow-800', label: '中' }
-      case 'LOW': return { className: 'bg-green-100 text-green-800', label: '低' }
-      default: return { className: 'bg-gray-100 text-gray-800', label: priority }
+      case 'URGENT': return { className: 'bg-red-500/20 text-red-200', label: '紧急' }
+      case 'HIGH': return { className: 'bg-orange-500/20 text-orange-200', label: '高' }
+      case 'MEDIUM': return { className: 'bg-yellow-500/20 text-yellow-200', label: '中' }
+      case 'LOW': return { className: 'bg-green-500/20 text-green-200', label: '低' }
+      default: return { className: 'bg-gray-500/20 text-gray-200', label: priority }
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'PENDING': return { className: 'bg-yellow-100 text-yellow-800', label: '待处理' }
-      case 'RESOLVED': return { className: 'bg-green-100 text-green-800', label: '已解决' }
-      case 'ESCALATED': return { className: 'bg-purple-100 text-purple-800', label: '已升级' }
-      case 'CHARGEABLE': return { className: 'bg-red-100 text-red-800', label: '可收费' }
-      default: return { className: 'bg-gray-100 text-gray-800', label: status }
+      case 'PENDING': return { className: 'bg-yellow-500/20 text-yellow-200', label: '待处理' }
+      case 'RESOLVED': return { className: 'bg-green-500/20 text-green-200', label: '已解决' }
+      case 'ESCALATED': return { className: 'bg-purple-500/20 text-purple-200', label: '已升级' }
+      case 'CHARGEABLE': return { className: 'bg-red-500/20 text-red-200', label: '可收费' }
+      default: return { className: 'bg-gray-500/20 text-gray-200', label: status }
     }
   }
 
@@ -55,47 +55,25 @@ export default function MyFeedbacksPage() {
     }
   }
 
-if (loading) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-main)]">
-        <Navbar />
-        <div className="flex items-center justify-center h-[calc(100vh-64px)]">
+      <PageLayout title="我的反馈" subtitle="查看和跟踪您提交的所有反馈。">
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-[var(--mclaren-orange)] border-t-transparent"></div>
             <p className="mt-4 text-[var(--text-secondary)]">正在加载您的反馈...</p>
           </div>
         </div>
-      </div>
+      </PageLayout>
     )
   }
 
-return (
-    <div className="min-h-screen bg-[var(--bg-main)]">
-      <Navbar />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 返回导航 */}
-        <div className="mb-4">
-          <a 
-            href="/" 
-            className="inline-flex items-center text-[var(--text-secondary)] hover:text-[var(--mclaren-orange)] transition-colors"
-          >
-            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-            </svg>
-            返回首页
-          </a>
-        </div>
-        
-        <div className="mb-8 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-[var(--text-main)]">我的反馈</h1>
-            <p className="text-[var(--text-secondary)] mt-2">
-              查看和跟踪您提交的所有反馈。
-            </p>
-          </div>
+  return (
+    <PageLayout title="我的反馈" subtitle="查看和跟踪您提交的所有反馈。">
+      <div className="flex justify-end mb-6">
         <Link
           to="/feedback/new"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-4 py-2 bg-[var(--mclaren-orange)] text-white rounded-lg hover:brightness-110 font-medium transition-colors"
         >
           提交新反馈
         </Link>
@@ -124,7 +102,7 @@ return (
           <p className="text-[var(--text-secondary)] mb-6">您尚未提交任何反馈。</p>
           <Link
             to="/feedback/new"
-className="px-4 py-2 bg-[var(--mclaren-orange)] text-white rounded-lg hover:brightness-110 font-medium transition-colors"
+            className="px-4 py-2 bg-[var(--mclaren-orange)] text-white rounded-lg hover:brightness-110 font-medium transition-colors"
           >
             提交您的第一条反馈
           </Link>
@@ -188,7 +166,6 @@ className="px-4 py-2 bg-[var(--mclaren-orange)] text-white rounded-lg hover:brig
           </ul>
         </div>
       )}
-      </div>
-    </div>
+    </PageLayout>
   )
 }

@@ -9,7 +9,7 @@ import BookingStats from '../components/BookingStats'
 import BookingSkeleton from '../components/BookingSkeleton'
 import EmptyState from '../components/EmptyState'
 import ErrorState from '../components/ErrorState'
-import Navbar from '../components/Navbar'
+import PageLayout from '../components/PageLayout'
 import ExtendBookingModal from '../components/ExtendBookingModal'
 import PaymentModal from '../components/booking/PaymentModal'
 import StartRideModal from '../components/booking/StartRideModal'
@@ -219,15 +219,8 @@ const MyBookingsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)]">
-      <Navbar />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[var(--text-main)]">我的预约</h1>
-          <p className="text-[var(--text-secondary)] mt-2">查看和管理您的所有电动车租赁预约</p>
-        </div>
-
-        {renderContent()}
+    <PageLayout title="我的预约" subtitle="查看和管理您的所有电动车租赁预约">
+      {renderContent()}
 
         {selectedBooking && (
           <ExtendBookingModal
@@ -275,8 +268,7 @@ const MyBookingsPage: React.FC = () => {
             </div>
           </div>
         )}
-      </main>
-    </div>
+    </PageLayout>
   )
 }
 

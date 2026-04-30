@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { stationsApi } from '../api/stations'
 import { scootersApi } from '../api/scooters'
-import Navbar from '../components/Navbar'
+import PageLayout from '../components/PageLayout'
 import AmapMap from '../components/map/AmapMap'
 import BookingModal from '../components/BookingModal'
 import { useToast } from '../components/ToastProvider'
@@ -147,52 +147,39 @@ const MapPage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-main)]">
-        <Navbar />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="animate-pulse space-y-6">
-            <div className="h-12 w-64 rounded-lg bg-[var(--bg-input)]" />
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-              <div className="h-[500px] rounded-xl bg-[var(--bg-input)]" />
-              <div className="lg:col-span-2 h-[600px] rounded-xl bg-[var(--bg-input)]" />
-            </div>
+      <PageLayout title="滑板车站点地图" subtitle="查看附近的滑板车站点及可用车辆信息" showBottomNav={false}>
+        <div className="animate-pulse space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="h-[500px] rounded-xl bg-[var(--bg-input)]" />
+            <div className="lg:col-span-2 h-[600px] rounded-xl bg-[var(--bg-input)]" />
           </div>
         </div>
-      </div>
+      </PageLayout>
     )
   }
 
   if (isError) {
     return (
-      <div className="min-h-screen bg-[var(--bg-main)]">
-        <Navbar />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-6">
-            <h3 className="text-lg font-medium text-red-800">加载失败</h3>
-            <p className="mt-2 text-red-700">
-              {stationsError?.message || scootersError?.message || '无法加载地图数据'}
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
-            >
-              重新加载
-            </button>
-          </div>
+      <PageLayout title="滑板车站点地图" subtitle="数据加载失败" showBottomNav={false}>
+        <div className="bg-rose-500/15 border border-rose-500/30 rounded-lg p-6">
+          <h3 className="text-lg font-medium text-rose-200">加载失败</h3>
+          <p className="mt-2 text-rose-200/80">
+            {stationsError?.message || scootersError?.message || '无法加载地图数据'}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+          >
+            重新加载
+          </button>
         </div>
-      </div>
+      </PageLayout>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)]">
-      <Navbar />
-
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-[var(--text-main)]">滑板车站点地图</h1>
-          <p className="text-[var(--text-secondary)] mt-2">查看附近的滑板车站点及可用车辆信息</p>
-        </div>
+    <>
+      <PageLayout title="滑板车站点地图" subtitle="查看附近的滑板车站点及可用车辆信息" showBottomNav={false}>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left: Station list */}
@@ -345,7 +332,7 @@ const MapPage: React.FC = () => {
             </div>
           </div>
         </div>
-      </main>
+    </PageLayout>
 
       {/* BookingModal inline - no page jump */}
       {bookingScooter && (
@@ -355,7 +342,7 @@ const MapPage: React.FC = () => {
           onClose={() => setBookingScooter(null)}
         />
       )}
-    </div>
+    </>
   )
 }
 

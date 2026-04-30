@@ -44,7 +44,12 @@ export default function Button({
       disabled={disabled || isLoading}
       {...props}
     >
-      {isLoading ? '处理中...' : children}
+      {isLoading ? (
+        <span className="flex items-center justify-center gap-2">
+          <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" aria-hidden="true" />
+          <span>{children}</span>
+        </span>
+      ) : children}
     </button>
   )
 }

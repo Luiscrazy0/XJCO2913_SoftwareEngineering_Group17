@@ -57,12 +57,21 @@ const BookingCard: React.FC<BookingCardProps> = ({
 
   const statusMeta = getStatusMeta(booking.status)
 
+  const actionButton = (label: string, color: string, onClick: () => void) => (
+    <button
+      onClick={onClick}
+      className={`flex-1 min-w-[100px] py-3 px-4 rounded-lg font-medium transition-colors duration-200 text-sm md:text-base ${color}`}
+    >
+      {label}
+    </button>
+  )
+
   return (
     <div className="surface-card surface-lift overflow-hidden">
-      <div className="px-6 py-4 border-b border-[var(--border-line)]">
-        <div className="flex justify-between items-center">
+      <div className="px-4 md:px-6 py-4 border-b border-[var(--border-line)]">
+        <div className="flex justify-between items-center flex-wrap gap-2">
           <div className="flex items-center space-x-3">
-            <Badge variant={statusMeta.variant}>{statusMeta.label}</Badge>
+            <Badge variant={statusMeta.variant} dot>{statusMeta.label}</Badge>
             <span className="text-sm text-[var(--text-secondary)] font-mono">
               ID: {booking.id.substring(0, 8)}...
             </span>
@@ -70,20 +79,24 @@ const BookingCard: React.FC<BookingCardProps> = ({
           <div className="text-sm text-[var(--text-secondary)]">
             租赁类型: <span className="font-medium text-[var(--text-main)]">{formatHireType(booking.hireType)}</span>
             {booking.extensionCount > 0 && (
-              <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-                已续租 {booking.extensionCount} 次
-              </span>
+              <Badge variant="info" className="ml-2">{booking.extensionCount}次续租</Badge>
             )}
           </div>
         </div>
       </div>
 
-      <div className="p-6">
-        {/* Riding timer for IN_PROGRESS */}
+      <div className="p-4 md:p-6">
+        {/* Riding timer */}
         {booking.status === 'IN_PROGRESS' && booking.actualStartTime && (
-          <div className="mb-4 rounded-2xl border border-[var(--mclaren-orange)] bg-[rgba(255,106,0,0.08)] p-4">
+          <div className="mb-4 rounded-2xl border border-[var(--mclaren-orange)]/40 bg-[rgba(255,106,0,0.08)] p-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-[var(--text-secondary)]">🔴 骑行中</span>
+              <span className="text-sm text-[var(--text-secondary)] flex items-center gap-2">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--mclaren-orange)] opacity-60" />
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[var(--mclaren-orange)]" />
+                </span>
+                骑行中
+              </span>
               <RideTimer startTime={booking.actualStartTime} className="text-2xl font-bold text-[var(--mclaren-orange)]" />
             </div>
             <p className="text-xs text-[var(--text-secondary)] mt-1">
@@ -148,63 +161,24 @@ const BookingCard: React.FC<BookingCardProps> = ({
 
         {/* Price */}
         <div className="mb-4">
-          <div className="bg-[rgba(255,106,0,0.12)] rounded-lg p-4 flex justify-between items-center">
-            <span className="text-[var(--text-main)]">费用</span>
+          <div className="bg-[rgba(255,106,0,0.08)] rounded-xl p-4 flex justify-between items-center border border-[var(--mclaren-orange)]/20">
+            <span className="text-[var(--text-main)] font-medium">费用</span>
             <span className="text-2xl font-bold text-[var(--mclaren-orange)]">¥{booking.totalCost.toFixed(2)}</span>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-wrap gap-3">
-          {canCancel && onCancel && (
-            <button
-              onClick={() => onCancel(booking.id)}
-              className="flex-1 min-w-[120px] py-3 px-4 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700"
-            >
-              取消预约
-            </button>
-          )}
-          {canPay && onPay && (
-            <button
-              onClick={() => onPay(booking.id)}
-              className="flex-1 min-w-[120px] py-3 px-4 bg-[var(--mclaren-orange)] text-white rounded-lg font-medium hover:brightness-110"
-            >
-              立即支付
-            </button>
-          )}
-          {canStartRide && onStartRide && (
-            <button
-              onClick={() => onStartRide(booking)}
-              className="flex-1 min-w-[120px] py-3 px-4 bg-emerald-600 text-white rounded-lg font-medium hover:bg-emerald-700"
-            >
-              开始骑行
-            </button>
-          )}
-          {canEndRide && onEndRide && (
-            <button
-              onClick={() => onEndRide(booking)}
-              className="flex-1 min-w-[120px] py-3 px-4 bg-[var(--mclaren-orange)] text-white rounded-lg font-medium hover:brightness-110"
-            >
-              结束骑行
-            </button>
-          )}
-          {canExtend && (
-            <button
-              onClick={() => onExtend(booking)}
-              className="flex-1 min-w-[120px] py-3 px-4 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700"
-            >
-              续租 +1h
-            </button>
-          )}
+        <div className="grid grid-cols-2 md:flex md:flex-wrap gap-3">
+          {canCancel && onCancel && actionButton('取消预约', 'bg-red-600 text-white hover:bg-red-700', () => onCancel(booking.id))}
+          {canPay && onPay && actionButton('立即支付', 'bg-[var(--mclaren-orange)] text-white hover:brightness-110', () => onPay(booking.id))}
+          {canStartRide && onStartRide && actionButton('开始骑行', 'bg-emerald-600 text-white hover:bg-emerald-700', () => onStartRide(booking))}
+          {canEndRide && onEndRide && actionButton('结束骑行', 'bg-[var(--mclaren-orange)] text-white hover:brightness-110', () => onEndRide(booking))}
+          {canExtend && actionButton('续租 +1h', 'bg-blue-600 text-white hover:bg-blue-700', () => onExtend(booking))}
           {booking.status === 'COMPLETED' && (
-            <span className="flex-1 py-3 px-4 text-center text-[var(--text-secondary)] text-sm">
-              行程已结束，感谢使用！
-            </span>
+            <span className="col-span-2 py-3 text-center text-[var(--text-secondary)] text-sm">行程已结束，感谢使用！</span>
           )}
           {booking.status === 'CANCELLED' && (
-            <span className="flex-1 py-3 px-4 text-center text-[var(--text-secondary)] text-sm">
-              此订单已取消
-            </span>
+            <span className="col-span-2 py-3 text-center text-[var(--text-secondary)] text-sm">此订单已取消</span>
           )}
         </div>
       </div>

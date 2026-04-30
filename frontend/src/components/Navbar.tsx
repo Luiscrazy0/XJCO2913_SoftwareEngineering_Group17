@@ -12,6 +12,7 @@ const Navbar: React.FC = () => {
     { name: '站点地图', href: '/map' },
     { name: '我的预约', href: '/bookings' },
     { name: '我的反馈', href: '/my-feedbacks' },
+    { name: '骑行套餐', href: '/ride-packages' },
     { name: '管理后台', href: '/admin', role: 'MANAGER' as const },
     { name: '收入统计', href: '/statistics', role: 'MANAGER' as const },
     { name: '反馈管理', href: '/admin/feedbacks', role: 'MANAGER' as const },
@@ -19,38 +20,31 @@ const Navbar: React.FC = () => {
   ]
 
   const filteredNavigation = navigation.filter(item => {
-    if (item.role) {
-      return user?.role === item.role
-    }
+    if (item.role) return user?.role === item.role
     return true
   })
 
-  const isActive = (path: string) => {
-    return location.pathname === path
-  }
+  const isActive = (path: string) => location.pathname === path
 
   return (
     <>
-      {/* 跳过导航链接 - 无障碍设计 */}
-      <a href="#main-content" className="skip-to-content sr-only focus:not-sr-only">
+      <a href="#main-content" className="skip-to-content">
         跳转到主要内容
       </a>
-      
-      <nav className="bg-[var(--bg-card)] shadow-sm border-b border-[var(--border-line)]">
+
+      <nav className="sticky top-0 z-30 bg-[var(--bg-card)]/80 backdrop-blur-xl border-b border-[var(--border-line)] safe-top">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16 items-center">
-            {/* Logo */}
+          <div className="flex justify-between h-14 md:h-16 items-center">
             <div className="flex items-center">
               <Link to="/" className="flex items-center" aria-label="电动车租赁 - 返回首页">
-                <svg className="w-8 h-8 text-[var(--mclaren-orange)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <svg className="w-7 h-7 md:w-8 md:h-8 text-[var(--mclaren-orange)]" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                 </svg>
-                <span className="ml-2 text-xl font-bold text-[var(--text-main)]">电动车租赁</span>
+                <span className="ml-2 text-base md:text-xl font-bold text-[var(--text-main)] whitespace-nowrap">电动车租赁</span>
               </Link>
             </div>
 
-            {/* Mobile toggle - 优化触屏体验 */}
-            <div className="flex lg:hidden">
+            <div className="flex md:hidden">
               <button
                 type="button"
                 className="inline-flex items-center justify-center p-3 rounded-md text-[var(--text-secondary)] hover:bg-white/5 touch-target"
@@ -59,7 +53,7 @@ const Navbar: React.FC = () => {
                 aria-expanded={mobileOpen}
                 aria-controls="mobile-navigation"
               >
-                <svg className="h-7 w-7" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                   {mobileOpen ? (
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12" />
                   ) : (
@@ -70,8 +64,7 @@ const Navbar: React.FC = () => {
               </button>
             </div>
 
-            {/* 导航链接 - Desktop */}
-            <div className="hidden lg:flex items-center space-x-8">
+            <div className="hidden md:flex items-center space-x-6">
               {filteredNavigation.map((item) => (
                 <Link
                   key={item.name}
@@ -87,8 +80,7 @@ const Navbar: React.FC = () => {
               ))}
             </div>
 
-            {/* 用户信息 */}
-            <div className="hidden lg:flex items-center space-x-4">
+            <div className="hidden md:flex items-center space-x-4">
               {user ? (
                 <>
                   <div className="flex items-center">
@@ -128,14 +120,18 @@ const Navbar: React.FC = () => {
           </div>
         </div>
 
-        {/* Mobile drawer - 优化触屏体验 */}
-        {mobileOpen && (
-          <div 
-            id="mobile-navigation"
-            className="lg:hidden border-t border-[var(--border-line)] bg-[var(--bg-card)] px-4 pb-6 space-y-4"
-            role="dialog"
-            aria-label="移动导航菜单"
-          >
+        <div
+          id="mobile-navigation"
+          className={`md:hidden border-t border-[var(--border-line)] bg-[var(--bg-card)] overflow-hidden transition-all duration-300 ease-out ${
+            mobileOpen
+              ? 'max-h-[600px] opacity-100'
+              : 'max-h-0 opacity-0 border-transparent'
+          }`}
+          role="dialog"
+          aria-label="移动导航菜单"
+          aria-hidden={!mobileOpen}
+        >
+          <div className="px-4 pb-6 space-y-4">
             <div className="flex flex-col space-y-3 pt-4">
               {filteredNavigation.map((item) => (
                 <Link
@@ -147,11 +143,6 @@ const Navbar: React.FC = () => {
                       : 'text-[var(--text-secondary)] hover:text-[var(--text-main)] hover:bg-white/5 active:bg-white/10'
                   }`}
                   onClick={() => setMobileOpen(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      setMobileOpen(false)
-                    }
-                  }}
                 >
                   {item.name}
                 </Link>
@@ -163,7 +154,7 @@ const Navbar: React.FC = () => {
                 <div className="flex flex-col space-y-4">
                   <div className="flex items-center">
                     <div className="w-10 h-10 bg-white/10 rounded-full flex items-center justify-center touch-target">
-                      <span className="text-[var(--mclaren-orange)] font-medium text-base" aria-label="用户头像">
+                      <span className="text-[var(--mclaren-orange)] font-medium text-base">
                         {user.email.charAt(0).toUpperCase()}
                       </span>
                     </div>
@@ -171,9 +162,7 @@ const Navbar: React.FC = () => {
                       <div className="text-base font-medium text-[var(--text-main)] flex items-center gap-2">
                         <span className="truncate" title={user.email}>{user.email}</span>
                         {user.role === 'MANAGER' && (
-                          <span className="px-2 py-1 text-xs font-semibold rounded-full border border-[var(--border-line)] bg-white/10 text-[var(--mclaren-orange)]" aria-label="管理员">
-                            ADMIN
-                          </span>
+                          <span className="px-2 py-1 text-xs font-semibold rounded-full border border-[var(--border-line)] bg-white/10 text-[var(--mclaren-orange)]">ADMIN</span>
                         )}
                       </div>
                       <div className="text-sm text-[var(--text-secondary)] mt-1">
@@ -187,7 +176,6 @@ const Navbar: React.FC = () => {
                       logout()
                     }}
                     className="w-full px-4 py-3 text-base font-medium text-white bg-red-600 hover:bg-red-700 active:bg-red-800 rounded-lg transition-colors duration-200 touch-target"
-                    aria-label="退出登录"
                   >
                     退出登录
                   </button>
@@ -197,18 +185,12 @@ const Navbar: React.FC = () => {
                   to="/auth"
                   className="block w-full text-center px-4 py-3 text-base font-medium text-white bg-[var(--mclaren-orange)] hover:bg-[var(--mclaren-orange-hover)] active:bg-[var(--mclaren-orange-depth)] rounded-lg transition-colors duration-200 touch-target"
                   onClick={() => setMobileOpen(false)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      setMobileOpen(false)
-                    }
-                  }}
                 >
                   登录/注册
                 </Link>
               )}
             </div>
-            
-            {/* 关闭按钮 - 移动端易访问 */}
+
             <div className="pt-2">
               <button
                 onClick={() => setMobileOpen(false)}
@@ -219,7 +201,7 @@ const Navbar: React.FC = () => {
               </button>
             </div>
           </div>
-        )}
+        </div>
       </nav>
     </>
   )

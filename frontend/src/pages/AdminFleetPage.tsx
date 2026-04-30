@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { scootersApi } from '../api/scooters'
-import Navbar from '../components/Navbar'
+import PageLayout from '../components/PageLayout'
 import { FleetTable } from '../components/admin/FleetTable'
 import { AddScooterModal } from '../components/admin/AddScooterModal'
 import { FleetStats } from '../components/admin/FleetStats'
@@ -95,13 +95,10 @@ export default function AdminFleetPage() {
   // Loading
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[var(--bg-main)]">
-        <Navbar />
-        <div className="max-w-6xl mx-auto px-4 py-16 text-center">
-          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[var(--mclaren-orange)] border-t-transparent" />
-          <p className="mt-4 text-[var(--text-secondary)]">正在加载车队数据…</p>
-        </div>
-      </div>
+      <PageLayout title="车队管理后台" subtitle="查看车辆、添加新车、切换可用性，并保持前后端权限一致。">
+        <div className="mx-auto h-12 w-12 animate-spin rounded-full border-4 border-[var(--mclaren-orange)] border-t-transparent" />
+        <p className="mt-4 text-[var(--text-secondary)] text-center">正在加载车队数据…</p>
+      </PageLayout>
     )
   }
 
@@ -109,39 +106,25 @@ export default function AdminFleetPage() {
   if (isError) {
     const message = error instanceof Error ? error.message : '未知错误'
     return (
-      <div className="min-h-screen bg-[var(--bg-main)]">
-        <Navbar />
-        <div className="max-w-4xl mx-auto px-4 py-16">
-          <div className="rounded-2xl border border-rose-500/40 bg-rose-500/15 p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-rose-200">加载失败</h2>
-            <p className="mt-2 text-rose-200/80">{message}</p>
-            <div className="mt-4 flex gap-3">
-              <button
-                onClick={() => refetch()}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700"
-              >
-                重试
-              </button>
-              <button
-                onClick={() => setIsModalOpen(true)}
-                className="px-4 py-2 rounded-lg border border-rose-500/40 text-rose-200 hover:bg-rose-500/10"
-              >
-                直接添加车辆
-              </button>
-            </div>
+      <PageLayout title="车队管理后台" subtitle="数据加载失败">
+        <div className="rounded-2xl border border-rose-500/40 bg-rose-500/15 p-6 shadow-sm">
+          <h2 className="text-lg font-semibold text-rose-200">加载失败</h2>
+          <p className="mt-2 text-rose-200/80">{message}</p>
+          <div className="mt-4 flex gap-3">
+            <button onClick={() => refetch()} className="px-4 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700">重试</button>
+            <button onClick={() => setIsModalOpen(true)} className="px-4 py-2 rounded-lg border border-rose-500/40 text-rose-200 hover:bg-rose-500/10">直接添加车辆</button>
           </div>
         </div>
-      </div>
+      </PageLayout>
     )
   }
 
   const hasData = scooters.length > 0
 
   return (
-    <div className="min-h-screen bg-[var(--bg-main)]">
-      <Navbar />
+    <PageLayout title="车队管理后台" subtitle="查看车辆、添加新车、切换可用性，并保持前后端权限一致。">
 
-      <div className="max-w-7xl mx-auto px-4 lg:px-6 py-10 space-y-8">
+      <div className="max-w-7xl mx-auto space-y-8">
         <header className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs uppercase tracking-[0.25em] text-[var(--text-secondary)]">Admin · Fleet</p>
@@ -223,6 +206,6 @@ export default function AdminFleetPage() {
         scooter={selectedScooter}
         isDeleting={deleteMutation.isPending}
       />
-    </div>
+    </PageLayout>
   )
 }
