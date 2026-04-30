@@ -13,6 +13,7 @@ import { StationModule } from './modules/station/station.module'; // <- 新增St
 import { StatisticsModule } from './modules/statistics/statistics.module'; // <- 新增StatisticsModule
 import { AmapModule } from './modules/amap/amap.module'; // <- 新增AmapModule
 import { FeedbackModule } from './modules/feedback/feedback.module'; // <- 新增FeedbackModule
+import { DiscountConfigModule } from './modules/config/discount-config.module'; // <- 新增折扣配置
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { FeedbackModule } from './modules/feedback/feedback.module'; // <- 新�
     StatisticsModule, // <- 新增StatisticsModule
     AmapModule, // <- 新增AmapModule
     FeedbackModule, // <- 新增FeedbackModule
+    DiscountConfigModule, // <- 新增折扣配置
   ],
   controllers: [AppController],
   providers: [AppService],
