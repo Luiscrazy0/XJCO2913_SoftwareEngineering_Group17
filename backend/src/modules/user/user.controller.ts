@@ -6,6 +6,8 @@ import {
   Body,
   Query,
   UseGuards,
+  Request,
+  ForbiddenException,
 } from '@nestjs/common';
 import { UserService } from './user.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -53,7 +55,12 @@ export class UserController {
    * 获取用户折扣信息
    */
   @Get(':id/discount-info')
-  async getUserDiscountInfo(@Param('id') userId: string) {
+  async getUserDiscountInfo(@Param('id') userId: string, @Request() req) {
+    const requesterId = req.user?.id;
+    const requesterRole = req.user?.role;
+    if (requesterId !== userId && requesterRole !== Role.MANAGER) {
+      throw new ForbiddenException('只能查看自己的折扣信息');
+    }
     return this.discountService.getUserDiscountInfo(userId);
   }
 }

@@ -9,7 +9,7 @@ export { priceApi } from './price'
 
 export type { PaymentCard, SaveCardPayload } from './paymentCards'
 export type { AdminUser } from './users'
-export type { PricingItem, DiscountItem } from './price'
+export type { PricingConfig, DiscountItem } from './price'
 
 export type {
   LoginRequest,

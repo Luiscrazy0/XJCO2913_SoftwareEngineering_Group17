@@ -4,6 +4,7 @@ import { scootersApi } from "../api/scooters";
 import PageLayout from "../components/PageLayout";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import EmptyState from "../components/EmptyState";
+import ErrorState from "../components/ErrorState";
 import { FleetTable } from "../components/admin/FleetTable";
 import { AddScooterModal } from "../components/admin/AddScooterModal";
 import { FleetStats } from "../components/admin/FleetStats";

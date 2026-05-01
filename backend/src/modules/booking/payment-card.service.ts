@@ -8,9 +8,8 @@ import * as crypto from 'crypto';
 
 @Injectable()
 export class PaymentCardService {
-  private readonly algorithm = 'aes-256-cbc';
+  private readonly algorithm = 'aes-256-gcm';
   private _key?: Buffer;
-  private readonly iv = crypto.randomBytes(16);
 
   private get key(): Buffer {
     if (!this._key) {
@@ -177,22 +176,37 @@ export class PaymentCardService {
   }
 
   /**
-   * 加密数据
+   * 加密数据 (AES-256-GCM with per-record random IV)
    */
   private encrypt(text: string): string {
-    const cipher = crypto.createCipheriv(this.algorithm, this.key, this.iv);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(this.algorithm, this.key, iv);
     let encrypted = cipher.update(text, 'utf8', 'hex');
     encrypted += cipher.final('hex');
-    return `${this.iv.toString('hex')}:${encrypted}`;
+    const authTag = cipher.getAuthTag();
+    return `${iv.toString('hex')}:${authTag.toString('hex')}:${encrypted}`;
   }
 
   /**
    * 解密数据
    */
   private decrypt(encryptedText: string): string {
-    const [ivHex, encrypted] = encryptedText.split(':');
+    const parts = encryptedText.split(':');
+    if (parts.length === 2) {
+      // Legacy AES-256-CBC format (iv:encrypted) — no auth tag
+      const [ivHex, encrypted] = parts;
+      const iv = Buffer.from(ivHex, 'hex');
+      const decipher = crypto.createDecipheriv('aes-256-cbc', this.key, iv);
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    }
+    // Current AES-256-GCM format (iv:authTag:encrypted)
+    const [ivHex, authTagHex, encrypted] = parts;
     const iv = Buffer.from(ivHex, 'hex');
+    const authTag = Buffer.from(authTagHex, 'hex');
     const decipher = crypto.createDecipheriv(this.algorithm, this.key, iv);
+    decipher.setAuthTag(authTag);
     let decrypted = decipher.update(encrypted, 'hex', 'utf8');
     decrypted += decipher.final('utf8');
     return decrypted;

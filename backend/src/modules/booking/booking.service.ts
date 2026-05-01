@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, Role, ScooterStatus } from '@prisma/client';
+import * as crypto from 'crypto';
 import { DiscountService } from './discount.service';
 import { EmailService } from './email.service';
 import { PricingConfigService } from '../config/pricing-config.service';
@@ -332,7 +333,7 @@ export class BookingService {
 
     if (!customer) {
       // 为新客户创建账户，使用临时密码
-      const tempPassword = Math.random().toString(36).slice(-8);
+      const tempPassword = crypto.randomBytes(8).toString('hex');
       const tempPasswordHash = await bcrypt.hash(tempPassword, 10);
 
       customer = await this.prisma.user.create({
