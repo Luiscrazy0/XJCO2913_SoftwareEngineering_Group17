@@ -3,12 +3,6 @@ import { useQueryClient } from '@tanstack/react-query'
 import { scooterKeys } from '../utils/queryKeys'
 import { API_BASE_URL } from '../utils/axiosClient'
 
-interface ScooterStatusEvent {
-  scooterId: string
-  status: string
-  timestamp: string
-}
-
 export function useScooterEvents() {
   const queryClient = useQueryClient()
   const eventSourceRef = useRef<EventSource | null>(null)
@@ -21,7 +15,7 @@ export function useScooterEvents() {
 
     es.onmessage = (event) => {
       try {
-        const data: ScooterStatusEvent = JSON.parse(event.data)
+        JSON.parse(event.data);
         // Invalidate scooter queries to trigger UI refresh
         queryClient.invalidateQueries({ queryKey: scooterKeys.all })
         queryClient.invalidateQueries({ queryKey: ['employee-bookings'] })

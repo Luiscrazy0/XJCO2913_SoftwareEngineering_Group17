@@ -54,3 +54,4 @@ axiosClient.interceptors.response.use(
 )
 
 export default axiosClient
+export const API_BASE_URL = BASE_URL

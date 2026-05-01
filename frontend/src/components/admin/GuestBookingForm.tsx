@@ -44,7 +44,7 @@ export default function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const { data: scooters = [], isLoading: isScootersLoading, isError: isScootersError } = useQuery({
+  const { data: scooters = [], isLoading: isScootersLoading } = useQuery({
     queryKey: ['employee-bookings', 'available-scooters'],
     queryFn: employeeBookingsApi.getAvailableScooters,
     staleTime: 60_000,

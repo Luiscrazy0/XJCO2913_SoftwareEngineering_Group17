@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import {
   feedbackApi,
   UpdateFeedbackRequest,
@@ -14,7 +14,6 @@ import { feedbackKeys } from "../utils/queryKeys";
 
 export default function FeedbackDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const { user } = useAuth();

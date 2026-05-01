@@ -5,6 +5,21 @@ import { getWeeklyRevenue, getDailyRevenue, getRevenueChartData } from '../api/s
 import type { WeeklyRevenueResponse, DailyRevenueResponse, ChartData } from '../api/statistics';
 import { formatCurrency } from '../utils/formatters';
 import { LoadingSpinner } from '../components/ui';
+import {
+  ResponsiveContainer,
+  BarChart,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+} from 'recharts';
 import PageLayout from '../components/PageLayout';
 
 const RevenueStatisticsPage: React.FC = () => {
@@ -28,8 +43,8 @@ const RevenueStatisticsPage: React.FC = () => {
   });
   
   const [activeTab, setActiveTab] = useState<'weekly' | 'daily' | 'chart'>('weekly');
-  const [chartPeriod, setChartPeriod] = useState<'week' | 'month' | 'year'>('week');
-  const [chartType, setChartType] = useState<'bar' | 'line' | 'pie'>('bar');
+  const [chartPeriod] = useState<'week' | 'month' | 'year'>('week');
+  const [chartType] = useState<'bar' | 'line' | 'pie'>('bar');
   
   const loadChartData = async () => {
     if (!user || user.role !== 'MANAGER') return;
@@ -225,7 +240,7 @@ const RevenueStatisticsPage: React.FC = () => {
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-line)" />
         <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
         <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
-        <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-line)', borderRadius: '8px', color: 'var(--text-main)' }} formatter={(value: number) => [formatCurrency(value), '收入']} />
+        <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-line)', borderRadius: '8px', color: 'var(--text-main)' }} formatter={(value) => [formatCurrency(value as number), '收入']} />
         <Bar dataKey="revenue" fill={MCLAREN_ORANGE} radius={[4, 4, 0, 0]} />
       </BarChart>
     </ResponsiveContainer>
@@ -237,7 +252,7 @@ const RevenueStatisticsPage: React.FC = () => {
         <CartesianGrid strokeDasharray="3 3" stroke="var(--border-line)" />
         <XAxis dataKey="name" stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
         <YAxis stroke="var(--text-secondary)" tick={{ fontSize: 12 }} />
-        <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-line)', borderRadius: '8px', color: 'var(--text-main)' }} formatter={(value: number) => [formatCurrency(value), '收入']} />
+        <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-line)', borderRadius: '8px', color: 'var(--text-main)' }} formatter={(value) => [formatCurrency(value as number), '收入']} />
         <Line type="monotone" dataKey="revenue" stroke={MCLAREN_ORANGE} strokeWidth={2} dot={{ fill: MCLAREN_ORANGE, r: 4 }} activeDot={{ r: 6 }} />
       </LineChart>
     </ResponsiveContainer>
@@ -248,12 +263,12 @@ const RevenueStatisticsPage: React.FC = () => {
     return (
       <ResponsiveContainer width="100%" height={400}>
         <PieChart>
-          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={140} innerRadius={60} paddingAngle={5} label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+          <Pie data={data} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={140} innerRadius={60} paddingAngle={5} label={({ name, percent }: any) => `${name} ${(percent * 100).toFixed(0)}%`}>
             {data.map((_, index) => (
               <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
             ))}
           </Pie>
-          <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-line)', borderRadius: '8px', color: 'var(--text-main)' }} formatter={(value: number) => [formatCurrency(value), '收入']} />
+          <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-line)', borderRadius: '8px', color: 'var(--text-main)' }} formatter={(value) => [formatCurrency(value as number), '收入']} />
           <Legend wrapperStyle={{ color: 'var(--text-main)' }} />
         </PieChart>
       </ResponsiveContainer>

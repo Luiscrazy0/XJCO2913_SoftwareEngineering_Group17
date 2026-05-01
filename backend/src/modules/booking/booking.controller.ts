@@ -16,6 +16,9 @@ import { PaymentCardService } from './payment-card.service';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ExtendBookingDto } from './dto/extend-booking.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/roles.decorator';
+import { Role } from '@prisma/client';
 import {
   ApiTags,
   ApiOperation,
@@ -666,7 +669,8 @@ export class BookingController {
 
   // 员工代订API
   @Post('staff-booking')
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MANAGER)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: '员工代订',
