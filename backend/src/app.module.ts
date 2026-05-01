@@ -14,6 +14,7 @@ import { StatisticsModule } from './modules/statistics/statistics.module';
 import { AmapModule } from './modules/amap/amap.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
 import { ConfigModule } from './modules/config/config.module';
+import { EventsModule } from './modules/events/events.module';
 import { RequestIdMiddleware } from './middleware/request-id.middleware';
 import { LoggerMiddleware } from './middleware/logger.middleware';
 
@@ -32,6 +33,7 @@ import { LoggerMiddleware } from './middleware/logger.middleware';
     AmapModule,
     FeedbackModule,
     ConfigModule,
+    EventsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
