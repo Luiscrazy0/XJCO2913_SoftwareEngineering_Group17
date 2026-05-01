@@ -6,6 +6,7 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingService } from './booking.service';
 import { Role, ScooterStatus } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class EmployeeBookingService {
@@ -55,7 +56,7 @@ export class EmployeeBookingService {
       guestUser = await this.prisma.user.create({
         data: {
           email: guestEmail,
-          passwordHash: 'temp_password_for_guest', // 临时密码，访客可以稍后注册
+          passwordHash: await bcrypt.hash('guest_' + guestEmail, 10),
           role: Role.CUSTOMER,
         },
       });

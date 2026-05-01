@@ -14,7 +14,7 @@ const Navbar: React.FC = () => {
     { name: '站点地图', href: '/map' },
     { name: '我的预约', href: '/bookings' },
     { name: '我的反馈', href: '/my-feedbacks' },
-    { name: '骑行套餐', href: '/ride-packages' },
+    { name: '常见问题', href: '/faq' },
   ]
 
   const adminNavigation = [
@@ -25,7 +25,7 @@ const Navbar: React.FC = () => {
     { name: '高优先级', href: '/admin/high-priority' },
   ]
 
-  const isActive = (path: string) => location.pathname === path
+  const isActive = (path: string) => location.pathname === path || (path !== '/' && path !== '/faq' && location.pathname.startsWith(path + '/'))
   const isAdminArea = adminNavigation.some(item => location.pathname.startsWith(item.href))
 
   useEffect(() => {

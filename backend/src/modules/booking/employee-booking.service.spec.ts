@@ -200,7 +200,7 @@ describe('EmployeeBookingService', () => {
     expect(userCreateMock).toHaveBeenCalledWith({
       data: {
         email: 'guest@example.com',
-        passwordHash: 'temp_password_for_guest',
+        passwordHash: expect.any(String) as string,
         role: Role.CUSTOMER,
       },
     });

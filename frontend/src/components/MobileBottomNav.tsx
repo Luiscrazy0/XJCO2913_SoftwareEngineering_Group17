@@ -44,16 +44,6 @@ const tabs = [
     show: (authenticated: boolean) => authenticated,
   },
   {
-    name: '骑行套餐',
-    href: '/ride-packages',
-    icon: (active: boolean) => (
-      <svg className="w-6 h-6" fill={active ? 'currentColor' : 'none'} stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={active ? 0 : 2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
-    show: (authenticated: boolean) => authenticated,
-  },
-  {
     name: '管理后台',
     href: '/admin',
     icon: (active: boolean) => (
