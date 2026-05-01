@@ -10,6 +10,7 @@ import { PrismaModule } from '../../prisma/prisma.module';
 import { AuthModule } from '../auth/auth.module';
 import { EmailModule } from '../email/email.module';
 import { ConfigModule } from '../config/config.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { ConfigModule } from '../config/config.module';
     forwardRef(() => AuthModule),
     EmailModule,
     ConfigModule,
+    EventsModule,
   ],
   controllers: [BookingController, EmployeeBookingController],
   providers: [
