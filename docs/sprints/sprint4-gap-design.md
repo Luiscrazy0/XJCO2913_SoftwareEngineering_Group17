@@ -1,7 +1,7 @@
 # Sprint 4 补充：缺口修复与商业优化设计
 
+> ✅ **所有任务已完成** — 详见 [Sprint 4 完成报告](./Sprint4_FINAL_COMPLETION_REPORT.md)
 > 基于 [Backlog 审计报告](./project-backlog.md) 发现 5 个实现缺口 + 过度设计清理。
-> 本文档供开发者参考实现，请配合 [Sprint 4 Plan](./sprints/sprint4-plan.md) 阅读。
 
 ---
 
