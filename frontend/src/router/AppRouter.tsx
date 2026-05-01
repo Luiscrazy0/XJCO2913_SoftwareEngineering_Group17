@@ -20,6 +20,7 @@ import StaffBookingPage from "../pages/StaffBookingPage"
 import UserManagementPage from "../pages/UserManagementPage"
 import ProtectedRoute from "../components/ProtectedRoute"
 import ForbiddenPage from "../pages/ForbiddenPage"
+import NotFoundPage from "../pages/NotFoundPage"
 import { useAuth } from "../context/AuthContext"
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -63,6 +64,7 @@ export default function AppRouter() {
         <Route path="/admin/feedbacks/:id" element={<ProtectedRoute requiredRole="MANAGER"><FeedbackDetailPage /></ProtectedRoute>} />
         <Route path="/admin/high-priority" element={<ProtectedRoute requiredRole="MANAGER"><HighPriorityPage /></ProtectedRoute>} />
         <Route path="/statistics" element={<ProtectedRoute requiredRole="MANAGER"><RevenueStatisticsPage /></ProtectedRoute>} />
+        <Route path="*" element={<NotFoundPage />} />
       </Routes>
   )
 }

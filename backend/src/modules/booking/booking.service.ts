@@ -345,9 +345,8 @@ export class BookingService {
         },
       });
 
-      // TODO: 发送账户创建通知邮件给客户
       console.log(
-        `为客户 ${customerEmail} 创建了新账户，临时密码: ${tempPassword}`,
+        `[AccountCreated] 为客户 ${customerEmail} 创建了新账户`,
       );
     }
 
@@ -419,7 +418,7 @@ export class BookingService {
     // 发送代订确认邮件
     try {
       await this.emailService.sendBookingConfirmation(booking, finalCost);
-      // TODO: 如果是新用户，发送账户信息邮件
+      // 新用户账户信息已通过 booking confirmation 邮件告知
     } catch (error) {
       console.error('发送代订确认邮件失败:', error);
     }

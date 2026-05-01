@@ -6,6 +6,7 @@ import AppRouter from "./router/AppRouter"
 import { ToastProvider } from './components/ToastProvider'
 import SplashScreen from './components/SplashScreen'
 import GlobalLoadingBar from './components/ui/GlobalLoadingBar'
+import ErrorBoundary from './components/ui/ErrorBoundary'
 
 function App() {
   return (
@@ -21,7 +22,9 @@ function App() {
               <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-[var(--mclaren-orange)]/[0.02] blur-3xl" />
             </div>
             <GlobalLoadingBar />
-            <AppRouter />
+            <ErrorBoundary showRetry onRetry={() => window.location.reload()}>
+              <AppRouter />
+            </ErrorBoundary>
             <SplashScreen />
           </AuthProvider>
         </ToastProvider>
