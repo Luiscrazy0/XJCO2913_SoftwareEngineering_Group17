@@ -186,3 +186,175 @@ main
  └── feature/multi-client-concurrency (PR #30, pending)
       └── 9880601 feat: optimistic concurrency + SSE
 ```
+
+---
+
+## 13. 生产环境部署
+
+### 13.1 服务器信息
+
+| 项目 | 详情 |
+|------|------|
+| 服务器 IP | 8.137.52.214 |
+| 项目路径 | `/opt/scooter` |
+| Docker 版本 | Docker Engine (无 Swarm/K8s) |
+| 运行时间 | 持续 4 天无宕机 |
+
+### 13.2 运行服务
+
+```
+scooter-postgres-1    Up (healthy)    127.0.0.1:5433→5432
+scooter-backend-1     Up              127.0.0.1:3001→3001
+scooter-frontend-1    Up              0.0.0.0:8080→80
+```
+
+### 13.3 网络架构
+
+```
+用户浏览器
+  │  HTTP :8080
+  ▼
+scooter-frontend-1 (nginx:alpine)
+  │  /       → /usr/share/nginx/html (静态资源)
+  │  /api/*  → proxy_pass http://backend:3001/
+  ▼
+scooter-backend-1 (NestJS, Port 3001)
+  │  postgresql://...@postgres:5432/
+  ▼
+scooter-postgres-1 (PostgreSQL 16, 仅 Docker 内网可达)
+```
+
+- Backend 和 PostgreSQL 均绑定 127.0.0.1，不对外暴露
+- 前端 nginx 通过 `/api/` 前缀反向代理到后端，无需额外宿主机 nginx
+- 前端 JS 使用相对路径 `/api`，避免跨域和 Network Error
+
+### 13.4 系统资源
+
+| 指标 | 值 |
+|------|-----|
+| CPU 负载 | 0.16 (空闲) |
+| 内存 | 1.8G total / 780M used / 906M available |
+| 磁盘 | 40G total / 14G used (37%) |
+
+### 13.5 已修复的生产问题
+
+| 日期 | 问题 | 根因 | 修复 |
+|------|------|------|------|
+| 2026-05-02 | 注册/登录返回 Network Error | `axiosClient.ts` baseURL 默认 `http://localhost:3000`，浏览器向用户本机发请求 | 改为 `/api` 相对路径，走 nginx 同源代理；`vite.config.ts` 添加开发模式代理 |
+| 2026-05-02 | 管理员登录 Not allowed by CORS | `main.ts` CORS 白名单仅允许 `localhost:51xx`，生产 `8.137.52.214:8080` 被拒 | 新增 8080 端口通配规则 + `CORS_ORIGINS` 环境变量 |
+| 2026-05-02 | 管理员账号不存在 | 生产数据库未执行种子数据，`User` 表为零记录 | 容器内运行 `npx ts-node prisma/seed.ts`，创建 admin + 4 测试用户 + 站点/车辆/历史数据 |
+| 2026-05-01 | Docker 安全加固 | 硬编码密钥回退值、健康检查空壳 | 移除硬编码密钥、健康检查对接数据库、全局限流等 |
+
+### 13.6 种子数据
+
+生产数据库需通过种子脚本初始化基础数据：
+
+```bash
+# 在 backend 容器中运行
+docker exec scooter-backend-1 npx ts-node prisma/seed.ts
+```
+
+创建内容：
+- 管理员 `admin@scooter.com / admin123` (MANAGER)
+- 测试用户 `test1~4@example.com / user123` (分别 FREQUENT/STUDENT/SENIOR/NORMAL)
+- 5 个站点（西南交通大学周边）+ 6 辆滑板车
+- 11 条历史预订 + 支付记录（用于收入统计图表）
+
+### 13.7 常用运维命令
+
+```bash
+# 一键部署
+cd /opt/scooter && docker compose up -d --build
+
+# 仅重建前端
+docker compose build frontend && docker compose up -d frontend
+
+# 查看日志
+docker compose logs -f backend
+
+# 健康验证
+curl http://localhost:3001/            # Backend: {"data":"Hello World!"}
+curl -X POST http://localhost:8080/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"test@test.com","password":"test"}'
+```
+
+---
+
+## 14. 演示种子数据（v2.0 — 2026-05-02 重设计）
+
+基于故事线模式重新设计的种子数据，覆盖全部功能点。
+
+### 14.1 账户
+
+| 账户 | 密码 | 角色 | 类型 | 故事线 |
+|------|------|------|------|--------|
+| `admin@scooter.com` | `admin123` | MANAGER | — | 后台全功能管理 |
+| `xiaoming@example.com` | `user123` | CUSTOMER | STUDENT | 完整租借闭环 |
+| `zhangwei@example.com` | `user123` | CUSTOMER | FREQUENT | 高频用户 + 损坏赔偿 |
+
+### 14.2 王小明（学生）— 完整租借闭环
+
+| 数据 | 说明 |
+|------|------|
+| 支付卡 ×2 | 1 张默认卡 (6789) + 1 张备用卡 (1234) |
+| 预订 IN_PROGRESS | 4 小时骑行中，已骑行 1h，图书馆站取车，¥12（学生 8 折） |
+| 预订 PENDING_PAYMENT | 1 小时待支付，¥4，体育馆站 |
+| 预订 CANCELLED | 1 天订单已取消，¥24 |
+| 预订 COMPLETED | 1 小时已完成，¥4 → 提交了 FAULT 反馈（刹车偏软） |
+| 历史 ×4 | 4 条 COMPLETED（30 天内），支撑收入统计 |
+| 反馈 FAULT | "刹车偏软，制动力不足" — HIGH / PENDING |
+| 反馈 FAULT | "座椅高度调节卡死" — HIGH / ESCALATED |
+
+### 14.3 张伟（高频用户）— 损坏赔偿闭环
+
+| 数据 | 说明 |
+|------|------|
+| 预订 EXTENDED | 4 小时续租 1 次，已付 ¥18.75（75 折） |
+| 预订 COMPLETED | 1 天已完成，¥22.5 — 故意损坏 → CHARGEABLE |
+| 预订 COMPLETED | 1 周大额订单，¥67.5 |
+| 预订 COMPLETED | 1 小时已完成 → 自然磨损 → RESOLVED |
+| 历史 ×12 | 12 条 COMPLETED（30 天内混合 HOUR_1/HOUR_4/DAY_1/WEEK_1） |
+| 反馈 DAMAGE | "车身严重划痕 — 人为损坏" — URGENT / CHARGEABLE / ¥200 |
+| 反馈 DAMAGE | "轮胎自然磨损" — MEDIUM / RESOLVED / ¥0 |
+| 反馈 SUGGESTION | "建议增加夜间优惠时段" — LOW / PENDING |
+
+### 14.4 管理员后台展示
+
+| 功能 | 数据支撑 |
+|------|---------|
+| 反馈管理 | 5 条反馈（PENDING ×2 / ESCALATED ×1 / RESOLVED ×1 / CHARGEABLE ×1） |
+| 高优先级看板 | URGENT 1 条 + HIGH 2 条 |
+| 车队管理 | 4 AVAILABLE / 1 RENTED / 1 UNAVAILABLE |
+| 用户管理 | 3 种类型可切换（STUDENT / FREQUENT / MANAGER） |
+| 收入统计 | 30 天 × 2 用户 × 混合类型数据，支持 Bar/Line/Pie 图表 |
+| 代客预约 | 管理员为"李教授（访客）"代订 4 小时，状态 CONFIRMED |
+| 定价配置 | 默认定价 HOUR_1: ¥5 / HOUR_4: ¥15 / DAY_1: ¥30 / WEEK_1: ¥90 |
+
+### 14.5 功能覆盖矩阵
+
+| 维度 | 覆盖项 |
+|------|--------|
+| BookingStatus | 全部 6 种：PENDING_PAYMENT / CONFIRMED / IN_PROGRESS / CANCELLED / COMPLETED / EXTENDED |
+| HireType | 全部 4 种：HOUR_1 / HOUR_4 / DAY_1 / WEEK_1 |
+| UserType | 3 种：STUDENT / FREQUENT / NORMAL |
+| ScooterStatus | 3 种：AVAILABLE (×4) / RENTED (×1) / UNAVAILABLE (×1) |
+| FeedbackCategory | 3 种：FAULT (×2) / DAMAGE (×2) / SUGGESTION (×1) |
+| FeedbackPriority | 4 种：LOW / MEDIUM / HIGH / URGENT |
+| FeedbackStatus | 4 种：PENDING / RESOLVED / ESCALATED / CHARGEABLE |
+| DamageType | 2 种：NATURAL / INTENTIONAL |
+| PaymentCard | 2 张（含默认标记） |
+| EmployeeBooking | 1 条（管理员代访客预约） |
+
+### 14.6 部署命令
+
+```bash
+# 在服务器上重置并重新播种
+cd /opt/scooter
+docker compose exec backend npx prisma migrate reset --force
+docker compose exec backend npx ts-node prisma/seed.ts
+```
+
+---
+
+*文档更新时间：2026-05-02 19:25 CST*
