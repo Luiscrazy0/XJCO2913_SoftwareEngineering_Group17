@@ -1,13 +1,22 @@
 import 'dotenv/config';
 import * as bcrypt from 'bcrypt';
 import { PrismaPg } from '@prisma/adapter-pg';
-import { PrismaClient, BookingStatus, HireType, Role, ScooterStatus, UserType } from '@prisma/client';
+import {
+  PrismaClient,
+  BookingStatus,
+  HireType,
+  Role,
+  ScooterStatus,
+  UserType,
+  FeedbackCategory,
+  FeedbackPriority,
+  FeedbackStatus,
+  DamageType,
+} from '@prisma/client';
 
 function requireEnv(name: string): string {
   const value = process.env[name];
-  if (!value) {
-    throw new Error(`Missing environment variable: ${name}`);
-  }
+  if (!value) throw new Error(`Missing environment variable: ${name}`);
   return value;
 }
 
@@ -17,352 +26,498 @@ async function main() {
   const prisma = new PrismaClient({ adapter });
 
   try {
-    console.log('🌱 Seeding database with UUIDs...');
+    console.log('🌱 Seeding demo data — 3 storylines: 学生王小明, 老用户张伟, 管理员...\n');
 
-    const adminPasswordHash = await bcrypt.hash('admin123', 10);
-    const userPasswordHash = await bcrypt.hash('user123', 10);
+    // ── Passwords ──────────────────────────────────────────────
+    const adminHash = await bcrypt.hash('admin123', 10);
+    const userHash = await bcrypt.hash('user123', 10);
 
-    await prisma.user.upsert({
+    // ── Users ──────────────────────────────────────────────────
+    const admin = await prisma.user.upsert({
       where: { email: 'admin@scooter.com' },
       update: { role: Role.MANAGER },
       create: {
         email: 'admin@scooter.com',
-        passwordHash: adminPasswordHash,
+        passwordHash: adminHash,
         role: Role.MANAGER,
+        insuranceAcknowledged: true,
+        emergencyContact: '13800000000',
       },
     });
 
-    const user1 = await prisma.user.upsert({
-      where: { email: 'test1@example.com' },
-      update: { role: Role.CUSTOMER, userType: 'FREQUENT' },
+    // 用户A: 学生 王小明
+    const xiaoming = await prisma.user.upsert({
+      where: { email: 'xiaoming@example.com' },
+      update: { role: Role.CUSTOMER, userType: UserType.STUDENT },
       create: {
-        email: 'test1@example.com',
-        passwordHash: userPasswordHash,
+        email: 'xiaoming@example.com',
+        passwordHash: userHash,
         role: Role.CUSTOMER,
-        userType: 'FREQUENT', // 高频用户
+        userType: UserType.STUDENT,
+        insuranceAcknowledged: true,
+        emergencyContact: '13911112222',
       },
     });
 
-    const user2 = await prisma.user.upsert({
-      where: { email: 'test2@example.com' },
-      update: { role: Role.CUSTOMER, userType: 'STUDENT' },
+    // 用户B: 老用户 张伟
+    const zhangwei = await prisma.user.upsert({
+      where: { email: 'zhangwei@example.com' },
+      update: { role: Role.CUSTOMER, userType: UserType.FREQUENT },
       create: {
-        email: 'test2@example.com',
-        passwordHash: userPasswordHash,
+        email: 'zhangwei@example.com',
+        passwordHash: userHash,
         role: Role.CUSTOMER,
-        userType: 'STUDENT', // 学生用户
+        userType: UserType.FREQUENT,
+        insuranceAcknowledged: true,
+        emergencyContact: '13933334444',
       },
     });
 
-    const user3 = await prisma.user.upsert({
-      where: { email: 'test3@example.com' },
-      update: { role: Role.CUSTOMER, userType: 'SENIOR' },
-      create: {
-        email: 'test3@example.com',
-        passwordHash: userPasswordHash,
-        role: Role.CUSTOMER,
-        userType: 'SENIOR', // 老年人用户
-      },
-    });
+    console.log('✅ Users: admin / xiaoming (STUDENT) / zhangwei (FREQUENT)');
 
-    const user4 = await prisma.user.upsert({
-      where: { email: 'test4@example.com' },
-      update: { role: Role.CUSTOMER, userType: 'NORMAL' },
-      create: {
-        email: 'test4@example.com',
-        passwordHash: userPasswordHash,
-        role: Role.CUSTOMER,
-        userType: 'NORMAL', // 普通用户
-      },
+    // ── Payment Cards (王小明) ─────────────────────────────────
+    await prisma.paymentCard.deleteMany({ where: { userId: xiaoming.id } });
+    await prisma.paymentCard.createMany({
+      data: [
+        {
+          userId: xiaoming.id,
+          lastFourDigits: '6789',
+          encryptedCardNumber: 'enc:4532xxxxxx6789',
+          expiryDate: '2027-06',
+          cardHolder: 'WANG XIAOMING',
+          isDefault: true,
+        },
+        {
+          userId: xiaoming.id,
+          lastFourDigits: '1234',
+          encryptedCardNumber: 'enc:5408xxxxxx1234',
+          expiryDate: '2028-03',
+          cardHolder: 'WANG XIAOMING',
+          isDefault: false,
+        },
+      ],
     });
+    console.log('✅ Xiaoming: 2 payment cards (1 default)');
 
-    // 创建5个取车点（站点）- 使用西南交通大学周边真实坐标
-    const stations = [
-      { 
-        name: '西南交通大学校区中心点', 
-        address: '西南交通大学（犀浦校区）校区中心点',
-        latitude: 30.763613, 
-        longitude: 103.989265 
-      },
-      { 
-        name: '西南交通大学体育馆', 
-        address: '西南交通大学犀浦校区体育馆',
-        latitude: 30.764496, 
-        longitude: 103.983393 
-      },
-      { 
-        name: '犀浦站', 
-        address: '犀浦站（火车站/地铁站）',
-        latitude: 30.76, 
-        longitude: 103.97 
-      },
-      { 
-        name: '双铁广场', 
-        address: '双铁广场',
-        latitude: 30.76, 
-        longitude: 103.98 
-      },
-      { 
-        name: '犀浦商业区', 
-        address: '犀浦商业区',
-        latitude: 30.765, 
-        longitude: 103.985 
-      },
+    // ── Stations (5 real SWJTU-area locations) ─────────────────
+    await prisma.station.deleteMany();
+    const stationData = [
+      { name: '图书馆站', address: '西南交通大学犀浦校区图书馆正门', latitude: 30.763613, longitude: 103.989265 },
+      { name: '体育馆站', address: '西南交通大学犀浦校区体育馆东侧', latitude: 30.764496, longitude: 103.983393 },
+      { name: '犀浦地铁站', address: '犀浦地铁站B出口停车场', latitude: 30.7600, longitude: 103.9700 },
+      { name: '双铁广场站', address: '双铁广场地下停车场入口旁', latitude: 30.7600, longitude: 103.9800 },
+      { name: '犀浦商业街站', address: '犀浦商业街南侧公共停车区', latitude: 30.7650, longitude: 103.9850 },
     ];
-
-    const createdStations: any[] = [];
-    for (const stationData of stations) {
-      const station = await prisma.station.create({
-        data: stationData,
-      });
-      createdStations.push(station);
-      console.log(`Created station: ${station.name} with ID: ${station.id}`);
+    const stations: any[] = [];
+    for (const s of stationData) {
+      const st = await prisma.station.create({ data: s });
+      stations.push(st);
+      console.log(`  📍 ${st.name}`);
     }
 
-    // 创建滑板车数据，使用西南交通大学周边真实坐标
-    const scooters = [
-      { 
-        location: '西南交通大学校区中心点附近', 
-        status: ScooterStatus.AVAILABLE,
-        latitude: 30.7637,
-        longitude: 103.9893,
-        stationId: createdStations[0].id
-      },
-      { 
-        location: '西南交通大学体育馆附近', 
-        status: ScooterStatus.AVAILABLE,
-        latitude: 30.7645,
-        longitude: 103.9834,
-        stationId: createdStations[1].id
-      },
-      { 
-        location: '犀浦站附近', 
-        status: ScooterStatus.AVAILABLE,
-        latitude: 30.7602,
-        longitude: 103.9701,
-        stationId: createdStations[2].id
-      },
-      { 
-        location: '双铁广场附近', 
-        status: ScooterStatus.AVAILABLE,
-        latitude: 30.7605,
-        longitude: 103.9802,
-        stationId: createdStations[3].id
-      },
-      { 
-        location: '犀浦商业区附近', 
-        status: ScooterStatus.AVAILABLE,
-        latitude: 30.7652,
-        longitude: 103.9851,
-        stationId: createdStations[4].id
-      },
-      { 
-        location: '西南交通大学北门附近', 
-        status: ScooterStatus.UNAVAILABLE,
-        latitude: 30.7660,
-        longitude: 103.9880,
-        stationId: createdStations[0].id
-      },
+    // ── Scooters (6 scooters across stations) ──────────────────
+    await prisma.scooter.deleteMany();
+    const scooterData = [
+      { location: '图书馆站A区', status: ScooterStatus.AVAILABLE, latitude: 30.7637, longitude: 103.9893, stationId: stations[0].id },
+      { location: '图书馆站B区', status: ScooterStatus.RENTED,    latitude: 30.7635, longitude: 103.9891, stationId: stations[0].id },
+      { location: '体育馆站A区', status: ScooterStatus.AVAILABLE, latitude: 30.7645, longitude: 103.9834, stationId: stations[1].id },
+      { location: '犀浦地铁站A区', status: ScooterStatus.AVAILABLE, latitude: 30.7602, longitude: 103.9701, stationId: stations[2].id },
+      { location: '双铁广场A区', status: ScooterStatus.UNAVAILABLE, latitude: 30.7605, longitude: 103.9802, stationId: stations[3].id },
+      { location: '犀浦商业街A区', status: ScooterStatus.AVAILABLE, latitude: 30.7652, longitude: 103.9851, stationId: stations[4].id },
     ];
-
-    const createdScooters: any[] = [];
-    for (const scooterData of scooters) {
-      const scooter = await prisma.scooter.create({
-        data: scooterData,
-      });
-      createdScooters.push(scooter);
-      console.log(`Created scooter: ${scooter.location} with ID: ${scooter.id}`);
+    const scooters: any[] = [];
+    for (const sc of scooterData) {
+      const s = await prisma.scooter.create({ data: sc });
+      scooters.push(s);
+      console.log(`  🛴 ${s.location} [${s.status}]`);
     }
 
+    // ── Helper: relative dates ─────────────────────────────────
     const now = new Date();
-    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const h = (n: number) => new Date(now.getTime() + n * 3600_000);
+    const d = (n: number) => new Date(now.getTime() + n * 86_400_000);
+    const ago = {
+      h: (n: number) => new Date(now.getTime() - n * 3600_000),
+      d: (n: number) => new Date(now.getTime() - n * 86_400_000),
+    };
 
-    // 创建历史预订数据（过去7天）- 使用实际的scooter UUIDs
-    const historicalBookings = [
-      // 第1天：各种租赁类型
-      {
-        userId: user1.id,
-        scooterId: createdScooters[0].id,
-        hireType: HireType.HOUR_1,
-        startTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000),
-        endTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
-        status: BookingStatus.COMPLETED,
-        totalCost: 5,
-      },
-      {
-        userId: user2.id,
-        scooterId: createdScooters[1].id,
+    // ══════════════════════════════════════════════════════════════
+    // 王小明故事线 — 完整租借闭环
+    // ══════════════════════════════════════════════════════════════
+
+    // Booking XM-1: IN_PROGRESS (正在骑行)
+    const xm1 = await prisma.booking.create({
+      data: {
+        userId: xiaoming.id,
+        scooterId: scooters[0].id,
+        pickupStationId: stations[0].id,
         hireType: HireType.HOUR_4,
-        startTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
-        endTime: new Date(oneWeekAgo.getTime() + 1 * 24 * 60 * 60 * 1000 + 6 * 60 * 60 * 1000),
-        status: BookingStatus.COMPLETED,
-        totalCost: 12, // 学生折扣8折: 15 * 0.8 = 12
+        startTime: ago.h(1),
+        endTime: h(3),
+        actualStartTime: ago.h(1),
+        status: BookingStatus.IN_PROGRESS,
+        totalCost: 12, // 15 * 0.8 (student discount)
       },
-      // 第2天：更多预订
-      {
-        userId: user1.id,
-        scooterId: createdScooters[2].id,
-        hireType: HireType.DAY_1,
-        startTime: new Date(oneWeekAgo.getTime() + 2 * 24 * 60 * 60 * 1000),
-        endTime: new Date(oneWeekAgo.getTime() + 3 * 24 * 60 * 60 * 1000),
-        status: BookingStatus.COMPLETED,
-        totalCost: 30,
-      },
-      {
-        userId: user2.id,
-        scooterId: createdScooters[3].id,
+    });
+    await prisma.payment.create({
+      data: { bookingId: xm1.id, amount: 12, status: 'SUCCESS' },
+    });
+
+    // Booking XM-2: PENDING_PAYMENT (待支付)
+    const xm2 = await prisma.booking.create({
+      data: {
+        userId: xiaoming.id,
+        scooterId: scooters[2].id,
+        pickupStationId: stations[1].id,
         hireType: HireType.HOUR_1,
-        startTime: new Date(oneWeekAgo.getTime() + 2 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
-        endTime: new Date(oneWeekAgo.getTime() + 2 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
-        status: BookingStatus.COMPLETED,
-        totalCost: 5,
+        startTime: h(2),
+        endTime: h(3),
+        status: BookingStatus.PENDING_PAYMENT,
+        totalCost: 4, // 5 * 0.8
       },
-      // 第3天：周租赁
-      {
-        userId: user1.id,
-        scooterId: createdScooters[4].id,
+    });
+
+    // Booking XM-3: CANCELLED
+    const xm3 = await prisma.booking.create({
+      data: {
+        userId: xiaoming.id,
+        scooterId: scooters[3].id,
+        pickupStationId: stations[2].id,
+        hireType: HireType.DAY_1,
+        startTime: ago.d(2),
+        endTime: ago.d(1),
+        status: BookingStatus.CANCELLED,
+        totalCost: 24, // 30 * 0.8
+      },
+    });
+
+    // Booking XM-4: COMPLETED (已完成 — 用于提交反馈)
+    const xm4 = await prisma.booking.create({
+      data: {
+        userId: xiaoming.id,
+        scooterId: scooters[3].id,
+        pickupStationId: stations[2].id,
+        returnStationId: stations[2].id,
+        hireType: HireType.HOUR_1,
+        startTime: ago.d(5),
+        endTime: ago.d(5) + 3600_000,
+        actualStartTime: ago.d(5),
+        actualEndTime: ago.d(5) + 3400_000,
+        status: BookingStatus.COMPLETED,
+        totalCost: 4,
+      },
+    });
+    await prisma.payment.create({
+      data: { bookingId: xm4.id, amount: 4, status: 'SUCCESS' },
+    });
+
+    // XM-4 feedback: FAULT report
+    await prisma.feedback.create({
+      data: {
+        title: '刹车偏软，制动力不足',
+        description: '骑行过程中发现后刹车需要捏到底才能有效制动，存在安全隐患。建议检查刹车片或刹车线。',
+        category: FeedbackCategory.FAULT,
+        priority: FeedbackPriority.HIGH,
+        status: FeedbackStatus.PENDING,
+        scooterId: scooters[3].id,
+        bookingId: xm4.id,
+        createdById: xiaoming.id,
+      },
+    });
+
+    console.log('✅ Xiaoming: 4 bookings (IN_PROGRESS / PENDING_PAYMENT / CANCELLED / COMPLETED) + 1 FAULT feedback');
+
+    // ══════════════════════════════════════════════════════════════
+    // 张伟故事线 — 高频用户 + 损坏赔偿
+    // ══════════════════════════════════════════════════════════════
+
+    // Booking ZW-1: EXTENDED (续租)
+    const zw1 = await prisma.booking.create({
+      data: {
+        userId: zhangwei.id,
+        scooterId: scooters[1].id,
+        pickupStationId: stations[0].id,
+        hireType: HireType.HOUR_4,
+        startTime: ago.h(3),
+        endTime: h(2),
+        originalEndTime: ago.h(1),
+        actualStartTime: ago.h(3),
+        status: BookingStatus.EXTENDED,
+        totalCost: 18.75, // (15 + 5 extension) * 0.75 = 15
+        extensionCount: 1,
+      },
+    });
+    await prisma.payment.create({
+      data: { bookingId: zw1.id, amount: 18.75, status: 'SUCCESS' },
+    });
+
+    // Booking ZW-2: COMPLETED — INTENTIONAL 损坏 → CHARGEABLE
+    const zw2 = await prisma.booking.create({
+      data: {
+        userId: zhangwei.id,
+        scooterId: scooters[4].id,
+        pickupStationId: stations[3].id,
+        returnStationId: stations[3].id,
+        hireType: HireType.DAY_1,
+        startTime: ago.d(3),
+        endTime: ago.d(2),
+        actualStartTime: ago.d(3),
+        actualEndTime: ago.d(2),
+        status: BookingStatus.COMPLETED,
+        totalCost: 22.5, // 30 * 0.75
+      },
+    });
+    await prisma.payment.create({
+      data: { bookingId: zw2.id, amount: 22.5, status: 'SUCCESS' },
+    });
+
+    // ZW-2 feedback: INTENTIONAL DAMAGE → CHARGEABLE
+    await prisma.feedback.create({
+      data: {
+        title: '车身严重划痕 — 人为损坏',
+        description: '还车时发现车身右侧有长约 30cm 的深度划痕，疑似人为用硬物刮擦。现场照片已留存。根据损坏类型评估为故意损坏，需收取赔偿。',
+        category: FeedbackCategory.DAMAGE,
+        priority: FeedbackPriority.URGENT,
+        status: FeedbackStatus.CHARGEABLE,
+        scooterId: scooters[4].id,
+        bookingId: zw2.id,
+        createdById: zhangwei.id,
+        damageType: DamageType.INTENTIONAL,
+        resolutionCost: 200,
+        managerNotes: '已确认故意损坏，划痕深度已超出正常使用范围。已联系张伟沟通赔偿事宜，暂未回复。',
+      },
+    });
+
+    // Booking ZW-3: COMPLETED — WEEK_1 大额订单
+    const zw3 = await prisma.booking.create({
+      data: {
+        userId: zhangwei.id,
+        scooterId: scooters[5].id,
+        pickupStationId: stations[4].id,
+        returnStationId: stations[4].id,
         hireType: HireType.WEEK_1,
-        startTime: new Date(oneWeekAgo.getTime() + 3 * 24 * 60 * 60 * 1000),
-        endTime: new Date(oneWeekAgo.getTime() + 10 * 24 * 60 * 60 * 1000),
-        status: BookingStatus.CONFIRMED,
-        totalCost: 150,
-      },
-      // 第4天：混合类型
-      {
-        userId: user2.id,
-        scooterId: createdScooters[0].id,
-        hireType: HireType.HOUR_4,
-        startTime: new Date(oneWeekAgo.getTime() + 4 * 24 * 60 * 60 * 1000),
-        endTime: new Date(oneWeekAgo.getTime() + 4 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
+        startTime: ago.d(14),
+        endTime: ago.d(7),
+        actualStartTime: ago.d(14),
+        actualEndTime: ago.d(7),
         status: BookingStatus.COMPLETED,
-        totalCost: 15,
+        totalCost: 67.5, // 90 * 0.75
       },
-      {
-        userId: user1.id,
-        scooterId: createdScooters[1].id,
-        hireType: HireType.DAY_1,
-        startTime: new Date(oneWeekAgo.getTime() + 4 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000),
-        endTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 5 * 60 * 60 * 1000),
-        status: BookingStatus.COMPLETED,
-        totalCost: 30,
-      },
-      // 第5天：更多1小时租赁
-      {
-        userId: user2.id,
-        scooterId: createdScooters[2].id,
+    });
+    await prisma.payment.create({
+      data: { bookingId: zw3.id, amount: 67.5, status: 'SUCCESS' },
+    });
+
+    // Booking ZW-4: COMPLETED — NATURAL DAMAGE (no charge)
+    const zw4 = await prisma.booking.create({
+      data: {
+        userId: zhangwei.id,
+        scooterId: scooters[2].id,
+        pickupStationId: stations[1].id,
+        returnStationId: stations[1].id,
         hireType: HireType.HOUR_1,
-        startTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000),
-        endTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000),
+        startTime: ago.d(8),
+        endTime: ago.d(8) + 3600_000,
+        actualStartTime: ago.d(8),
+        actualEndTime: ago.d(8) + 3500_000,
         status: BookingStatus.COMPLETED,
-        totalCost: 5,
+        totalCost: 3.75,
       },
-      {
-        userId: user1.id,
-        scooterId: createdScooters[3].id,
-        hireType: HireType.HOUR_1,
-        startTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 2 * 60 * 60 * 1000),
-        endTime: new Date(oneWeekAgo.getTime() + 5 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000),
-        status: BookingStatus.COMPLETED,
-        totalCost: 5,
+    });
+    await prisma.payment.create({
+      data: { bookingId: zw4.id, amount: 3.75, status: 'SUCCESS' },
+    });
+
+    await prisma.feedback.create({
+      data: {
+        title: '轮胎自然磨损',
+        description: '右前轮轮胎花纹已磨平，属于正常使用损耗。建议定期更换轮胎以保证行驶安全。',
+        category: FeedbackCategory.DAMAGE,
+        priority: FeedbackPriority.MEDIUM,
+        status: FeedbackStatus.RESOLVED,
+        scooterId: scooters[2].id,
+        bookingId: zw4.id,
+        createdById: zhangwei.id,
+        damageType: DamageType.NATURAL,
+        resolutionCost: 0,
+        managerNotes: '自然磨损，已安排轮胎更换。无需向用户收取费用。',
       },
-      // 第6天：4小时租赁
-      {
-        userId: user2.id,
-        scooterId: createdScooters[4].id,
-        hireType: HireType.HOUR_4,
-        startTime: new Date(oneWeekAgo.getTime() + 6 * 24 * 60 * 60 * 1000),
-        endTime: new Date(oneWeekAgo.getTime() + 6 * 24 * 60 * 60 * 1000 + 4 * 60 * 60 * 1000),
-        status: BookingStatus.COMPLETED,
-        totalCost: 15,
+    });
+
+    // SUGGESTION feedback from Zhang Wei
+    await prisma.feedback.create({
+      data: {
+        title: '建议增加夜间优惠时段',
+        description: '晚上 22:00 到次日 6:00 的需求量较低，建议推出夜间优惠套餐，吸引夜归学生用户。',
+        category: FeedbackCategory.SUGGESTION,
+        priority: FeedbackPriority.LOW,
+        status: FeedbackStatus.PENDING,
+        scooterId: scooters[0].id,
+        createdById: zhangwei.id,
       },
-      // 第7天（今天）：已确认的预订
-      {
-        userId: user1.id,
-        scooterId: createdScooters[0].id,
-        hireType: HireType.DAY_1,
-        startTime: new Date(now.getTime() - 2 * 60 * 60 * 1000),
-        endTime: new Date(now.getTime() + 22 * 60 * 60 * 1000),
-        status: BookingStatus.CONFIRMED,
-        totalCost: 30,
-      },
+    });
+
+    console.log('✅ Zhangwei: 4 bookings (EXTENDED / COMPLETED×3) + 3 feedbacks (URGENT_CHARGEABLE / RESOLVED / SUGGESTION)');
+
+    // ══════════════════════════════════════════════════════════════
+    // 历史数据 — 张伟 30天 12条 COMPLETED（支撑统计图表）
+    // ══════════════════════════════════════════════════════════════
+    const historicalTemplates = [
+      { hireType: HireType.HOUR_1, cost: 3.75, daysAgo: 1 },
+      { hireType: HireType.HOUR_4, cost: 11.25, daysAgo: 2 },
+      { hireType: HireType.DAY_1, cost: 22.5, daysAgo: 4 },
+      { hireType: HireType.HOUR_1, cost: 3.75, daysAgo: 5 },
+      { hireType: HireType.HOUR_4, cost: 11.25, daysAgo: 6 },
+      { hireType: HireType.DAY_1, cost: 22.5, daysAgo: 7 },
+      { hireType: HireType.HOUR_1, cost: 3.75, daysAgo: 9 },
+      { hireType: HireType.HOUR_4, cost: 11.25, daysAgo: 10 },
+      { hireType: HireType.HOUR_1, cost: 3.75, daysAgo: 12 },
+      { hireType: HireType.DAY_1, cost: 22.5, daysAgo: 15 },
+      { hireType: HireType.HOUR_4, cost: 11.25, daysAgo: 18 },
+      { hireType: HireType.WEEK_1, cost: 67.5, daysAgo: 21 },
     ];
 
-    // 创建历史预订
-    for (const bookingData of historicalBookings) {
-      const booking = await prisma.booking.create({
-        data: bookingData,
+    for (const t of historicalTemplates) {
+      const start = new Date(ago.d(t.daysAgo).getTime() - 2 * 3600_000);
+      const end = new Date(start.getTime() + getDurationMs(t.hireType));
+      const b = await prisma.booking.create({
+        data: {
+          userId: zhangwei.id,
+          scooterId: scooters[t.daysAgo % 5].id,
+          pickupStationId: stations[t.daysAgo % 5].id,
+          returnStationId: stations[t.daysAgo % 5].id,
+          hireType: t.hireType,
+          startTime: start,
+          endTime: end,
+          actualStartTime: start,
+          actualEndTime: end,
+          status: BookingStatus.COMPLETED,
+          totalCost: t.cost,
+        },
       });
-
-      // 为已完成的预订创建支付记录
-      if (bookingData.status === BookingStatus.COMPLETED || bookingData.status === BookingStatus.CONFIRMED) {
-        await prisma.payment.create({
-          data: {
-            bookingId: booking.id,
-            amount: bookingData.totalCost,
-            status: 'SUCCESS',
-          },
-        });
-      }
+      await prisma.payment.create({
+        data: { bookingId: b.id, amount: t.cost, status: 'SUCCESS' },
+      });
     }
 
-    // 创建测试预订
-    const pendingBooking = await prisma.booking.create({
-      data: {
-        userId: user1.id,
-        scooterId: createdScooters[0].id,
-        hireType: HireType.HOUR_1,
-        startTime: now,
-        endTime: new Date(now.getTime() + 60 * 60 * 1000),
-        status: BookingStatus.PENDING_PAYMENT,
-        totalCost: 5,
-      },
-    });
+    // 王小明也补 4 条历史订单（让统计有两人数据）
+    const xmHistory = [
+      { hireType: HireType.HOUR_1, cost: 4, daysAgo: 3 },
+      { hireType: HireType.HOUR_4, cost: 12, daysAgo: 8 },
+      { hireType: HireType.DAY_1, cost: 24, daysAgo: 11 },
+      { hireType: HireType.HOUR_1, cost: 4, daysAgo: 16 },
+    ];
+    for (const t of xmHistory) {
+      const start = ago.d(t.daysAgo);
+      const end = new Date(start.getTime() + getDurationMs(t.hireType));
+      const b = await prisma.booking.create({
+        data: {
+          userId: xiaoming.id,
+          scooterId: scooters[t.daysAgo % 5].id,
+          pickupStationId: stations[t.daysAgo % 5].id,
+          returnStationId: stations[t.daysAgo % 5].id,
+          hireType: t.hireType,
+          startTime: start,
+          endTime: end,
+          actualStartTime: start,
+          actualEndTime: end,
+          status: BookingStatus.COMPLETED,
+          totalCost: t.cost,
+        },
+      });
+      await prisma.payment.create({
+        data: { bookingId: b.id, amount: t.cost, status: 'SUCCESS' },
+      });
+    }
 
-    const confirmedBooking = await prisma.booking.create({
+    console.log('✅ Historical: 12 + 4 = 16 COMPLETED bookings for revenue statistics\n');
+
+    // ══════════════════════════════════════════════════════════════
+    // EmployeeBooking — 管理员为访客代订
+    // ══════════════════════════════════════════════════════════════
+    const guestBooking = await prisma.booking.create({
       data: {
-        userId: user2.id,
-        scooterId: createdScooters[1].id,
+        userId: admin.id,
+        scooterId: scooters[3].id,
+        pickupStationId: stations[2].id,
         hireType: HireType.HOUR_4,
-        startTime: new Date(now.getTime() - 2 * 60 * 60 * 1000),
-        endTime: new Date(now.getTime() + 2 * 60 * 60 * 1000),
+        startTime: h(0.5),
+        endTime: h(4.5),
         status: BookingStatus.CONFIRMED,
         totalCost: 15,
       },
     });
-
     await prisma.payment.create({
+      data: { bookingId: guestBooking.id, amount: 15, status: 'SUCCESS' },
+    });
+    await prisma.employeeBooking.create({
       data: {
-        bookingId: confirmedBooking.id,
-        amount: 15,
-        status: 'SUCCESS',
+        bookingId: guestBooking.id,
+        employeeId: admin.id,
+        guestEmail: 'visitor@company.com',
+        guestName: '李教授（访客）',
       },
     });
 
-    console.log('✅ Seed with UUIDs complete.');
-    console.log('');
-    console.log('Test accounts:');
-    console.log('  - admin@scooter.com / admin123 (MANAGER)');
-    console.log('  - test1@example.com / user123 (CUSTOMER)');
-    console.log('  - test2@example.com / user123 (CUSTOMER)');
-    console.log('');
-    console.log('Sample bookings:');
-    console.log(`  - ${pendingBooking.id} (PENDING_PAYMENT)`);
-    console.log(`  - ${confirmedBooking.id} (CONFIRMED + Payment)`);
-    console.log('');
-    console.log('Historical bookings created:');
-    console.log(`  - ${historicalBookings.length} historical bookings for statistics`);
-    console.log('');
-    console.log('Stations created:');
-    createdStations.forEach((station, index) => {
-      console.log(`  - ${station.name} (${station.id})`);
+    console.log('✅ EmployeeBooking: 管理员为 李教授 代订 4小时');
+
+    // ══════════════════════════════════════════════════════════════
+    // 多一条 PENDING feedback（管理员待处理列表）
+    // ══════════════════════════════════════════════════════════════
+    await prisma.feedback.create({
+      data: {
+        title: '座椅高度调节卡死',
+        description: '座椅调节杆无法正常升降，卡在最低档位。需要润滑或更换调节机构。',
+        category: FeedbackCategory.FAULT,
+        priority: FeedbackPriority.HIGH,
+        status: FeedbackStatus.ESCALATED,
+        scooterId: scooters[5].id,
+        createdById: xiaoming.id,
+        managerNotes: '已上报维修部门，等待配件到货。预计本周内完成维修。',
+      },
     });
+
+    // ══════════════════════════════════════════════════════════════
+    // Summary
+    // ══════════════════════════════════════════════════════════════
+    const userCount = await prisma.user.count();
+    const bookingCount = await prisma.booking.count();
+    const feedbackCount = await prisma.feedback.count();
+    const scooterCount = await prisma.scooter.count();
+    const stationCount = await prisma.station.count();
+    const paymentCount = await prisma.payment.count();
+    const cardCount = await prisma.paymentCard.count();
+    const empBookingCount = await prisma.employeeBooking.count();
+
+    console.log('═══════════════════════════════════════');
+    console.log('  📊 Demo Data Summary');
+    console.log('═══════════════════════════════════════');
+    console.log(`  Users:           ${userCount} (admin + xiaoming + zhangwei)`);
+    console.log(`  Stations:        ${stationCount}`);
+    console.log(`  Scooters:        ${scooterCount} (4 AVAILABLE / 1 RENTED / 1 UNAVAILABLE)`);
+    console.log(`  Bookings:        ${bookingCount}`);
+    console.log(`  Payments:        ${paymentCount}`);
+    console.log(`  Payment Cards:   ${cardCount}`);
+    console.log(`  EmployeeBookings:${empBookingCount}`);
+    console.log(`  Feedbacks:       ${feedbackCount} (FAULT×2 / DAMAGE×2 / SUGGESTION×1)`);
     console.log('');
-    console.log('Scooters created:');
-    createdScooters.forEach((scooter, index) => {
-      console.log(`  - ${scooter.location} (${scooter.id})`);
-    });
+    console.log('  🔑 Login credentials:');
+    console.log('     admin@scooter.com  / admin123  (MANAGER)');
+    console.log('     xiaoming@example.com / user123  (STUDENT — rides in progress)');
+    console.log('     zhangwei@example.com / user123  (FREQUENT — damage cases)');
+    console.log('═══════════════════════════════════════\n');
   } finally {
     await prisma.$disconnect();
+  }
+}
+
+function getDurationMs(ht: HireType): number {
+  switch (ht) {
+    case HireType.HOUR_1:  return 3600_000;
+    case HireType.HOUR_4:  return 4 * 3600_000;
+    case HireType.DAY_1:   return 24 * 3600_000;
+    case HireType.WEEK_1:  return 7 * 24 * 3600_000;
+    default:               return 3600_000;
   }
 }
 
