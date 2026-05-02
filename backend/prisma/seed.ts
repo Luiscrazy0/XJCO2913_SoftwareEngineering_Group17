@@ -82,7 +82,6 @@ async function main() {
         {
           userId: xiaoming.id,
           lastFourDigits: '6789',
-          encryptedCardNumber: 'enc:4532xxxxxx6789',
           expiryDate: '2027-06',
           cardHolder: 'WANG XIAOMING',
           isDefault: true,
@@ -90,7 +89,6 @@ async function main() {
         {
           userId: xiaoming.id,
           lastFourDigits: '1234',
-          encryptedCardNumber: 'enc:5408xxxxxx1234',
           expiryDate: '2028-03',
           cardHolder: 'WANG XIAOMING',
           isDefault: false,
