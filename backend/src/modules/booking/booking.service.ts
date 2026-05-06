@@ -344,9 +344,7 @@ export class BookingService {
         },
       });
 
-      console.log(
-        `[AccountCreated] 为客户 ${customerEmail} 创建了新账户`,
-      );
+      console.log(`[AccountCreated] 为客户 ${customerEmail} 创建了新账户`);
     }
 
     // 检查滑板车可用性
@@ -514,7 +512,7 @@ export class BookingService {
         include: { scooter: true, user: true, returnStation: true },
       });
 
-      await tx.scooter.update({
+      const returnedScooter = await tx.scooter.update({
         where: { id: booking.scooterId },
         data: {
           status: ScooterStatus.AVAILABLE,
@@ -541,7 +539,7 @@ export class BookingService {
 
       return {
         booking: updated,
-        scooter: updated.scooter,
+        scooter: returnedScooter,
         damageReportCreated,
       };
     });

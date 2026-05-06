@@ -20,6 +20,9 @@ describe('BookingController', () => {
     cancelBooking: jest.fn(),
     completeBooking: jest.fn(),
     createBookingForCustomer: jest.fn(),
+    estimatePrice: jest.fn(),
+    startRide: jest.fn(),
+    endRide: jest.fn(),
   };
 
   const mockPaymentCardService = {
@@ -154,6 +157,35 @@ describe('BookingController', () => {
       );
     });
 
+    it('findOne preserves the estimate-price static route when parameter routes are registered first', async () => {
+      const result = { hireType: HireType.HOUR_4, discountedPrice: 12 };
+      mockBookingService.estimatePrice.mockResolvedValue(result);
+
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(
+        controller.findOne(req as any, 'estimate-price', HireType.HOUR_4),
+      ).resolves.toEqual(result);
+      expect(mockBookingService.estimatePrice).toHaveBeenCalledWith(
+        req.user.id,
+        HireType.HOUR_4,
+      );
+      expect(mockBookingService.findById).not.toHaveBeenCalled();
+    });
+
+    it('findOne preserves the payment-card static route when parameter routes are registered first', async () => {
+      const result = { cardNumber: '**** **** **** 1111' };
+      mockPaymentCardService.getPaymentCard.mockResolvedValue(result);
+
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(
+        controller.findOne(req as any, 'payment-card'),
+      ).resolves.toEqual(result);
+      expect(mockPaymentCardService.getPaymentCard).toHaveBeenCalledWith(
+        req.user.id,
+      );
+      expect(mockBookingService.findById).not.toHaveBeenCalled();
+    });
+
     it('create delegates to BookingService.createBooking', async () => {
       const dto: CreateBookingDto = {
         scooterId: '3c08fcf4-5607-480c-b8a7-85cc674f51a7',
@@ -224,6 +256,81 @@ describe('BookingController', () => {
         false,
         req.user.id,
         req.user.role,
+      );
+    });
+
+    it('estimatePrice delegates to BookingService.estimatePrice with the authenticated user', async () => {
+      const result = {
+        hireType: HireType.HOUR_4,
+        baseCost: 15,
+        discountedPrice: 12,
+      };
+      mockBookingService.estimatePrice.mockResolvedValue(result);
+
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(
+        controller.estimatePrice(req as any, HireType.HOUR_4),
+      ).resolves.toEqual(result);
+      expect(mockBookingService.estimatePrice).toHaveBeenCalledWith(
+        req.user.id,
+        HireType.HOUR_4,
+      );
+    });
+
+    it('startRide delegates to BookingService.startRide with the authenticated user', async () => {
+      const booking = { id: 'booking-1', status: BookingStatus.IN_PROGRESS };
+      mockBookingService.startRide.mockResolvedValue(booking);
+
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(
+        controller.startRide(req as any, 'booking-1'),
+      ).resolves.toEqual(booking);
+      expect(mockBookingService.startRide).toHaveBeenCalledWith(
+        'booking-1',
+        req.user.id,
+      );
+    });
+
+    it('endRide delegates return station and damage flag to BookingService.endRide', async () => {
+      const result = {
+        booking: { id: 'booking-1', status: BookingStatus.COMPLETED },
+        damageReportCreated: true,
+      };
+      mockBookingService.endRide.mockResolvedValue(result);
+
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(
+        controller.endRide(req as any, 'booking-1', {
+          returnStationId: 'station-2',
+          isScooterIntact: false,
+        }),
+      ).resolves.toEqual(result);
+      expect(mockBookingService.endRide).toHaveBeenCalledWith(
+        'booking-1',
+        req.user.id,
+        'station-2',
+        false,
+      );
+    });
+
+    it('endRide defaults isScooterIntact to true', async () => {
+      const result = {
+        booking: { id: 'booking-1', status: BookingStatus.COMPLETED },
+        damageReportCreated: false,
+      };
+      mockBookingService.endRide.mockResolvedValue(result);
+
+      const req = { user: { id: 'user-1', role: Role.CUSTOMER } };
+      await expect(
+        controller.endRide(req as any, 'booking-1', {
+          returnStationId: 'station-2',
+        }),
+      ).resolves.toEqual(result);
+      expect(mockBookingService.endRide).toHaveBeenCalledWith(
+        'booking-1',
+        req.user.id,
+        'station-2',
+        true,
       );
     });
 
