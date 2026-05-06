@@ -174,7 +174,18 @@ export class BookingController {
       },
     },
   })
-  findOne(@Request() req, @Param('id') id: string) {
+  findOne(
+    @Request() req,
+    @Param('id') id: string,
+    @Query('hireType') hireType?: string,
+  ) {
+    if (id === 'estimate-price') {
+      return this.estimatePrice(req, hireType ?? '');
+    }
+    if (id === 'payment-card') {
+      return this.getPaymentCard(req);
+    }
+
     const userId = req.user?.id;
     const role = req.user?.role;
     if (!userId) throw new UnauthorizedException('User information missing');

@@ -59,7 +59,10 @@ describe('PaymentService', () => {
 
     paymentService = module.get<PaymentService>(PaymentService);
 
-    jest.clearAllMocks();
+    jest.resetAllMocks();
+    transactionMock.mockImplementation(
+      (cb: (tx: typeof mockTx) => Promise<unknown>) => cb(mockTx),
+    );
   });
 
   it('模块应该被成功定义', () => {
@@ -137,7 +140,10 @@ describe('PaymentService', () => {
         status: BookingStatus.CONFIRMED,
       });
 
-      txScooterUpdateMock.mockResolvedValue({ id: scooterId, status: ScooterStatus.RENTED });
+      txScooterUpdateMock.mockResolvedValue({
+        id: scooterId,
+        status: ScooterStatus.RENTED,
+      });
 
       const result = await paymentService.createPayment(
         targetBookingId,
@@ -174,6 +180,85 @@ describe('PaymentService', () => {
       expect(result).toEqual(mockCreatedPayment);
     });
 
+    it('returns an existing payment for a repeated idempotency key without mutating the booking', async () => {
+      const existingPayment = {
+        id: 'payment-001',
+        bookingId: targetBookingId,
+        amount: paymentAmount,
+        status: 'SUCCESS',
+        idempotencyKey: 'booking-123-pay',
+        booking: {
+          id: targetBookingId,
+          status: BookingStatus.CONFIRMED,
+        },
+      };
+      mockPrismaService.payment.findUnique.mockResolvedValue(existingPayment);
+
+      await expect(
+        paymentService.createPayment(
+          targetBookingId,
+          paymentAmount,
+          userId,
+          'booking-123-pay',
+        ),
+      ).resolves.toEqual({
+        payment: existingPayment,
+        booking: existingPayment.booking,
+      });
+
+      expect(mockPrismaService.payment.findUnique).toHaveBeenCalledWith({
+        where: { idempotencyKey: 'booking-123-pay' },
+        include: { booking: true },
+      });
+      expect(mockPrismaService.booking.findUnique).not.toHaveBeenCalled();
+      expect(transactionMock).not.toHaveBeenCalled();
+      expect(mockEmailService.sendPaymentReceipt).not.toHaveBeenCalled();
+    });
+
+    it('propagates transaction failures so partial payment writes are rolled back by Prisma', async () => {
+      const scooterId = 'scooter-123';
+      const mockCreatedPayment = {
+        id: 'payment-001',
+        bookingId: targetBookingId,
+        amount: paymentAmount,
+        status: 'SUCCESS',
+      };
+
+      mockPrismaService.booking.findUnique.mockResolvedValue({
+        id: targetBookingId,
+        userId,
+        scooterId,
+        status: BookingStatus.PENDING_PAYMENT,
+        user: { id: userId, email: 'user@example.com' },
+        scooter: { id: scooterId, stationId: 'station-1' },
+      });
+      txPaymentCreateMock.mockResolvedValue(mockCreatedPayment);
+      txBookingUpdateMock.mockResolvedValue({
+        id: targetBookingId,
+        status: BookingStatus.CONFIRMED,
+      });
+      txScooterUpdateMock.mockRejectedValue(new Error('scooter update failed'));
+
+      await expect(
+        paymentService.createPayment(
+          targetBookingId,
+          paymentAmount,
+          userId,
+          'booking-123-pay',
+        ),
+      ).rejects.toThrow('scooter update failed');
+
+      expect(transactionMock).toHaveBeenCalledTimes(1);
+      expect(txPaymentCreateMock).toHaveBeenCalled();
+      expect(txBookingUpdateMock).toHaveBeenCalled();
+      expect(txScooterUpdateMock).toHaveBeenCalledWith({
+        where: { id: scooterId },
+        data: { status: ScooterStatus.RENTED },
+      });
+      expect(mockPrismaService.payment.create).not.toHaveBeenCalled();
+      expect(mockEmailService.sendPaymentReceipt).not.toHaveBeenCalled();
+    });
+
     it('returns the payment even if sending the receipt email fails', async () => {
       const scooterId = 'scooter-123';
       const mockCreatedPayment = {
@@ -196,7 +281,10 @@ describe('PaymentService', () => {
         id: targetBookingId,
         status: BookingStatus.CONFIRMED,
       });
-      txScooterUpdateMock.mockResolvedValue({ id: scooterId, status: ScooterStatus.RENTED });
+      txScooterUpdateMock.mockResolvedValue({
+        id: scooterId,
+        status: ScooterStatus.RENTED,
+      });
       mockEmailService.sendPaymentReceipt.mockRejectedValue(
         new Error('SMTP failure'),
       );

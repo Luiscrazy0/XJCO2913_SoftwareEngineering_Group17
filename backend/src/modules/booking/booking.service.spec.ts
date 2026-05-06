@@ -30,11 +30,13 @@ const createScooter = (
     id: string;
     status: ScooterStatus;
     location: string;
+    stationId: string;
   }> = {},
 ) => ({
   id: 'scooter-1',
   status: ScooterStatus.AVAILABLE,
   location: 'Main Street',
+  stationId: 'station-1',
   ...overrides,
 });
 
@@ -50,6 +52,10 @@ const createBookingRecord = (
     totalCost: number;
     status: BookingStatus;
     extensionCount: number;
+    pickupStationId: string | null;
+    returnStationId: string | null;
+    actualStartTime: Date | null;
+    actualEndTime: Date | null;
     user: ReturnType<typeof createUser>;
     scooter: ReturnType<typeof createScooter>;
   }> = {},
@@ -68,6 +74,10 @@ const createBookingRecord = (
     totalCost: 5,
     status: BookingStatus.CONFIRMED,
     extensionCount: 0,
+    pickupStationId: null,
+    returnStationId: null,
+    actualStartTime: null,
+    actualEndTime: null,
     user: createUser(),
     scooter: createScooter(),
     ...overrides,
@@ -112,6 +122,9 @@ describe('BookingService', () => {
     feedback: {
       create: jest.fn(),
     },
+    station: {
+      findUnique: jest.fn(),
+    },
     $transaction: jest.fn(),
   };
 
@@ -136,11 +149,16 @@ describe('BookingService', () => {
           useValue: {
             getCost: jest.fn().mockImplementation((hireType: string) => {
               switch (hireType) {
-                case 'HOUR_1': return 5;
-                case 'HOUR_4': return 15;
-                case 'DAY_1': return 30;
-                case 'WEEK_1': return 90;
-                default: return 0;
+                case 'HOUR_1':
+                  return 5;
+                case 'HOUR_4':
+                  return 15;
+                case 'DAY_1':
+                  return 30;
+                case 'WEEK_1':
+                  return 90;
+                default:
+                  return 0;
               }
             }),
           },
@@ -333,6 +351,195 @@ describe('BookingService', () => {
         ),
       ).rejects.toThrow(new BadRequestException('Invalid hire type'));
       expect(mockPrismaService.booking.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('estimatePrice', () => {
+    it('combines configured price and user discount details', async () => {
+      mockDiscountService.calculateDiscountedPrice.mockResolvedValue({
+        discountedPrice: 12,
+        discountAmount: 3,
+        discountReason: 'Student discount',
+      });
+
+      await expect(
+        service.estimatePrice('user-1', HireType.HOUR_4),
+      ).resolves.toEqual({
+        baseCost: 15,
+        discountedPrice: 12,
+        discountAmount: 3,
+        discountReason: 'Student discount',
+        hireType: HireType.HOUR_4,
+        durationHours: 4,
+      });
+
+      expect(mockDiscountService.calculateDiscountedPrice).toHaveBeenCalledWith(
+        'user-1',
+        15,
+        HireType.HOUR_4,
+      );
+    });
+  });
+
+  describe('startRide', () => {
+    it('throws when the booking does not exist', async () => {
+      mockPrismaService.booking.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.startRide('missing-booking', 'user-1'),
+      ).rejects.toThrow(new NotFoundException('Booking not found'));
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws when a user starts another user booking', async () => {
+      mockPrismaService.booking.findUnique.mockResolvedValue(
+        createBookingRecord({ userId: 'user-1' }),
+      );
+
+      await expect(service.startRide('booking-1', 'user-2')).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws when the booking is not confirmed', async () => {
+      mockPrismaService.booking.findUnique.mockResolvedValue(
+        createBookingRecord({ status: BookingStatus.PENDING_PAYMENT }),
+      );
+
+      await expect(service.startRide('booking-1', 'user-1')).rejects.toThrow(
+        new BadRequestException('Only confirmed bookings can start a ride'),
+      );
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('marks the booking in progress and keeps the scooter rented atomically', async () => {
+      const scooter = createScooter({ stationId: 'station-2' });
+      const confirmedBooking = createBookingRecord({
+        scooterId: scooter.id,
+        scooter,
+        status: BookingStatus.CONFIRMED,
+      });
+      const inProgressBooking = createBookingRecord({
+        scooterId: scooter.id,
+        scooter,
+        status: BookingStatus.IN_PROGRESS,
+        pickupStationId: 'station-2',
+        actualStartTime: new Date('2026-04-01T10:05:00Z'),
+      });
+
+      mockPrismaService.booking.findUnique.mockResolvedValue(confirmedBooking);
+      mockPrismaService.booking.update.mockResolvedValue(inProgressBooking);
+      mockPrismaService.scooter.update.mockResolvedValue({
+        ...scooter,
+        status: ScooterStatus.RENTED,
+      });
+
+      await expect(service.startRide('booking-1', 'user-1')).resolves.toEqual(
+        inProgressBooking,
+      );
+
+      expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
+        where: { id: 'booking-1' },
+        data: {
+          status: BookingStatus.IN_PROGRESS,
+          actualStartTime: expect.any(Date),
+          pickupStationId: 'station-2',
+        },
+        include: { scooter: true, user: true, pickupStation: true },
+      });
+      expect(mockPrismaService.scooter.update).toHaveBeenCalledWith({
+        where: { id: scooter.id },
+        data: { status: ScooterStatus.RENTED },
+      });
+    });
+  });
+
+  describe('endRide', () => {
+    it('throws when the booking cannot be ended from its current status', async () => {
+      mockPrismaService.booking.findUnique.mockResolvedValue(
+        createBookingRecord({ status: BookingStatus.CONFIRMED }),
+      );
+
+      await expect(
+        service.endRide('booking-1', 'user-1', 'station-2'),
+      ).rejects.toThrow(
+        new BadRequestException(
+          'Only in-progress or extended bookings can end a ride',
+        ),
+      );
+      expect(mockPrismaService.station.findUnique).not.toHaveBeenCalled();
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('throws when the return station does not exist', async () => {
+      mockPrismaService.booking.findUnique.mockResolvedValue(
+        createBookingRecord({ status: BookingStatus.IN_PROGRESS }),
+      );
+      mockPrismaService.station.findUnique.mockResolvedValue(null);
+
+      await expect(
+        service.endRide('booking-1', 'user-1', 'missing-station'),
+      ).rejects.toThrow(new BadRequestException('Return station not found'));
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalled();
+    });
+
+    it('completes the booking, moves the scooter to the return station, and reports damage', async () => {
+      const activeBooking = createBookingRecord({
+        status: BookingStatus.IN_PROGRESS,
+        actualStartTime: new Date('2026-04-01T10:00:00Z'),
+      });
+      const completedBooking = createBookingRecord({
+        status: BookingStatus.COMPLETED,
+        returnStationId: 'station-2',
+        actualEndTime: new Date('2026-04-01T10:45:00Z'),
+      });
+      const returnedScooter = createScooter({
+        status: ScooterStatus.AVAILABLE,
+        stationId: 'station-2',
+      });
+
+      mockPrismaService.booking.findUnique.mockResolvedValue(activeBooking);
+      mockPrismaService.station.findUnique.mockResolvedValue({
+        id: 'station-2',
+      });
+      mockPrismaService.booking.update.mockResolvedValue(completedBooking);
+      mockPrismaService.scooter.update.mockResolvedValue(returnedScooter);
+      mockPrismaService.feedback.create.mockResolvedValue({ id: 'feedback-1' });
+
+      await expect(
+        service.endRide('booking-1', 'user-1', 'station-2', false),
+      ).resolves.toEqual({
+        booking: completedBooking,
+        scooter: returnedScooter,
+        damageReportCreated: true,
+      });
+
+      expect(mockPrismaService.booking.update).toHaveBeenCalledWith({
+        where: { id: 'booking-1' },
+        data: {
+          status: BookingStatus.COMPLETED,
+          actualEndTime: expect.any(Date),
+          returnStationId: 'station-2',
+        },
+        include: { scooter: true, user: true, returnStation: true },
+      });
+      expect(mockPrismaService.scooter.update).toHaveBeenCalledWith({
+        where: { id: activeBooking.scooterId },
+        data: { status: ScooterStatus.AVAILABLE, stationId: 'station-2' },
+      });
+      expect(mockPrismaService.feedback.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          priority: 'HIGH',
+          scooterId: activeBooking.scooterId,
+          bookingId: activeBooking.id,
+          createdById: activeBooking.userId,
+        }),
+      });
+      expect(mockEmailService.sendReturnConfirmation).toHaveBeenCalledWith(
+        completedBooking,
+        false,
+      );
     });
   });
 
