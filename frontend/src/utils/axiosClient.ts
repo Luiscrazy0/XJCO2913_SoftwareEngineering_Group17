@@ -3,7 +3,7 @@
 import axios, { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios'
 
 // Base URL configuration (prefer env, fallback to localhost for stability)
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 // Create axios instance
 const axiosClient: AxiosInstance = axios.create({

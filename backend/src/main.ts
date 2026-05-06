@@ -10,8 +10,21 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Enable CORS for frontend
-  // Allow Vite dev server on any 51xx port (e.g., 5173, 5174, 5175, etc.)
+  // Allow: Vite dev servers (51xx ports), production server, and env-configured origins
   const corsOriginRegex = /^https?:\/\/(localhost|127\.0\.0\.1):51[0-9]{2}$/;
+
+  const extraOrigins = (process.env.CORS_ORIGINS || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  function isOriginAllowed(origin: string): boolean {
+    if (corsOriginRegex.test(origin)) return true;
+    if (extraOrigins.includes(origin)) return true;
+    // Allow any same-origin request through nginx proxy in Docker (port 8080)
+    if (/^https?:\/\/[a-zA-Z0-9.-]+:8080$/.test(origin)) return true;
+    return false;
+  }
 
   app.enableCors({
     origin: (
@@ -24,8 +37,7 @@ async function bootstrap() {
         return;
       }
 
-      // Check if origin matches Vite dev server pattern
-      if (corsOriginRegex.test(origin)) {
+      if (isOriginAllowed(origin)) {
         callback(null, true);
       } else {
         console.warn(`CORS blocked: ${origin}`);
