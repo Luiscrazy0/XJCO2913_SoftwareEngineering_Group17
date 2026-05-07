@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "perf:m9-pagination": "node scripts/m9-pagination-load-test.mjs"
+  },
   "dependencies": {
     "@prisma/adapter-pg": "^7.5.0",
     "@tailwindcss/vite": "^4.2.1",
