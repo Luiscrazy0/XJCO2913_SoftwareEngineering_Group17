@@ -67,6 +67,19 @@ function normalizePayment(result: PaymentResult): PaymentRecord {
   return "payment" in result ? result.payment : result;
 }
 
+async function loginWithCredentials(
+  api: Awaited<ReturnType<typeof request.newContext>>,
+  email: string,
+  password: string,
+) {
+  return api.post("/auth/login", {
+    data: {
+      email,
+      password,
+    },
+  });
+}
+
 async function loginAsCustomer(api: Awaited<ReturnType<typeof request.newContext>>) {
   const health = await unwrap<Record<string, unknown>>(
     await api.get("/health"),
@@ -74,13 +87,38 @@ async function loginAsCustomer(api: Awaited<ReturnType<typeof request.newContext
   );
   expect(health.status).toMatch(/healthy|degraded/);
 
+  let authResponse = await loginWithCredentials(
+    api,
+    customerEmail,
+    customerPassword,
+  );
+
+  if (!authResponse.ok()) {
+    const generatedEmail = `e2e-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}@test.com`;
+
+    await unwrap<{ id: string; email: string }>(
+      await api.post("/auth/register", {
+        data: {
+          email: generatedEmail,
+          password: customerPassword,
+          insuranceAcknowledged: true,
+          emergencyContact: "E2E Test Contact",
+        },
+      }),
+      "POST /auth/register fallback user",
+    );
+
+    authResponse = await loginWithCredentials(
+      api,
+      generatedEmail,
+      customerPassword,
+    );
+  }
+
   const auth = await unwrap<{ access_token: string }>(
-    await api.post("/auth/login", {
-      data: {
-        email: customerEmail,
-        password: customerPassword,
-      },
-    }),
+    authResponse,
     "POST /auth/login",
   );
 
