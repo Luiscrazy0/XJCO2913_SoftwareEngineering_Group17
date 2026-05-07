@@ -14,6 +14,7 @@
 - Added frontend utility tests for formatters, Luhn logic, query keys, `ApiWrapper`, retry, debounce, and throttle helpers.
 - Expanded Playwright API-level E2E coverage for repeated payment submission using the same `idempotencyKey`.
 - Expanded Playwright API-level E2E coverage for the damaged return flow with `isScooterIntact: false`.
+- Hardened Playwright login setup so CI can auto-register a temporary customer when the configured seed account is unavailable.
 - Added an M9 pagination concurrency smoke script that checks `limit=200` is clamped to `100`.
 - Extended GitHub Actions to run backend coverage, frontend coverage, Playwright E2E, and pagination performance smoke checks.
 
