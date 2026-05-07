@@ -1,4 +1,4 @@
-name: Backend CI Pipeline
+name: Sprint 4 CI Pipeline
 
 on:
   push:
@@ -6,11 +6,18 @@ on:
     branches: [ "main", "dev", "feat/**", "chore/**" ]
     paths:
       - 'backend/**'
+      - 'frontend/**'
+      - 'scripts/**'
+      - 'package.json'
       - '.github/workflows/**'
   pull_request:
-    branches: [ "main", "dev", "feat/**" ]
+    branches: [ "main", "dev", "feat/**", "chore/**" ]
     paths:
       - 'backend/**'
+      - 'frontend/**'
+      - 'scripts/**'
+      - 'package.json'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 env:
@@ -88,3 +95,115 @@ jobs:
         npm run test -- --verbose || true
         echo "=== Coverage Report ==="
         cat coverage/lcov.info | head -50 || true
+
+  test-frontend:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./frontend
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: ./frontend/package-lock.json
+
+    - name: Install frontend dependencies
+      run: npm install
+
+    - name: Run frontend component tests with coverage
+      run: npm run test:coverage
+
+  sprint4-e2e-and-performance:
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: test
+          POSTGRES_PASSWORD: test
+          POSTGRES_DB: test_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '22'
+        cache: 'npm'
+        cache-dependency-path: |
+          ./backend/package-lock.json
+          ./frontend/package-lock.json
+
+    - name: Install backend dependencies
+      working-directory: ./backend
+      run: npm install
+
+    - name: Generate Prisma Client
+      working-directory: ./backend
+      run: npx prisma generate
+
+    - name: Setup and seed E2E database
+      working-directory: ./backend
+      run: |
+        npx prisma db push --accept-data-loss
+        npm run seed
+
+    - name: Start backend API
+      working-directory: ./backend
+      run: |
+        npm run start > ../backend-e2e.log 2>&1 &
+        echo $! > ../backend.pid
+
+    - name: Wait for backend API
+      run: |
+        for i in {1..30}; do
+          if curl -fsS http://localhost:3000/health > /dev/null; then
+            exit 0
+          fi
+          sleep 2
+        done
+        cat backend-e2e.log
+        exit 1
+
+    - name: Install frontend dependencies
+      working-directory: ./frontend
+      run: npm install
+
+    - name: Run Sprint 4 Playwright E2E tests
+      working-directory: ./frontend
+      env:
+        E2E_API_URL: http://localhost:3000
+        E2E_CUSTOMER_EMAIL: test1@example.com
+        E2E_CUSTOMER_PASSWORD: user123
+      run: npm run test:e2e
+
+    - name: Run M9 pagination performance smoke test
+      env:
+        PERF_API_URL: http://localhost:3000
+        PERF_REQUESTS: 60
+        PERF_CONCURRENCY: 12
+        PERF_LIMIT: 200
+        PERF_EXPECTED_LIMIT: 100
+      run: npm run perf:m9-pagination
+
+    - name: Print backend logs on failure
+      if: failure()
+      run: cat backend-e2e.log || true
