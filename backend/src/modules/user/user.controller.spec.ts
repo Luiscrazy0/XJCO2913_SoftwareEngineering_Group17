@@ -62,7 +62,9 @@ describe('UserController', () => {
   });
 
   it('delegates discount info lookups to DiscountService', async () => {
-    await controller.getUserDiscountInfo('user-1');
+    await controller.getUserDiscountInfo('user-1', {
+      user: { id: 'user-1', role: 'CUSTOMER' },
+    });
 
     expect(mockDiscountService.getUserDiscountInfo).toHaveBeenCalledWith(
       'user-1',
