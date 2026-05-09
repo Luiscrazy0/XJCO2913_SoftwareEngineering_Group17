@@ -52,7 +52,7 @@ export default function StaffBookingPage() {
           <div className="mb-6 border-b border-[var(--border-line)] pb-4">
             <p className="text-xs uppercase tracking-[0.2em] text-[var(--text-secondary)]">Staff Booking</p>
             <h2 className="mt-1 text-xl font-semibold text-[var(--text-main)]">填写预约信息</h2>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">为无法自行操作的游客创建电动车租赁预约</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">为无法自行操作的游客创建AAA电动车租赁预约</p>
           </div>
           <GuestBookingForm onSuccess={(booking) => setCreatedBooking(booking)} />
         </div>

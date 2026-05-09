@@ -1,6 +1,6 @@
-# 电动车租赁系统
+# AAA电动车租赁
 
-> 基于NestJS和React的现代化电动车租赁管理系统
+> 基于NestJS和React的现代化AAA电动车租赁管理系统
 
 ## 🌟 功能特性
 
@@ -109,4 +109,4 @@ XJCO2913_SoftwareEngineering_Group17/
 如有问题或建议，请通过GitHub Issues提交反馈。
 
 ---
-*电动车租赁系统 - 为可持续城市交通而设计*
+*AAA电动车租赁 - 为可持续城市交通而设计*

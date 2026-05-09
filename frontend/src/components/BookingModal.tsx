@@ -90,7 +90,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
 
   const statusMessage = useMemo(() => {
     if (isPending) return '正在创建预约...'
-    if (isSuccess) return '预约成功！即将跳转到我的预约'
+    if (isSuccess) return ''
     if (formError) return formError
     if (friendlyErrorMessage) return friendlyErrorMessage
     return ''
@@ -129,11 +129,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
   useEffect(() => {
     if (isSuccess) {
       if (successTimer.current) window.clearTimeout(successTimer.current)
-      successTimer.current = window.setTimeout(() => {
-        onBookingSuccess?.()
-        onClose()
-        navigate('/bookings')
-      }, 1400)
+      successTimer.current = null
     }
     return () => { if (successTimer.current) { window.clearTimeout(successTimer.current); successTimer.current = null } }
   }, [isSuccess, navigate, onBookingSuccess, onClose])
@@ -221,18 +217,33 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
             <p className="mt-1 text-xs text-[var(--text-secondary)]">支持未来 2 周内的开始时间</p>
           </section>
 
-          {statusMessage && (
+          {(statusMessage || isSuccess) && (
             <div
               aria-live="polite"
-              className={`mt-6 rounded-2xl px-4 py-3 text-sm ${
+              className={`mt-6 rounded-2xl p-4 text-sm ${
                 statusState === 'loading'
                   ? 'bg-[var(--bg-input)] text-[var(--text-secondary)]'
                   : statusState === 'success'
-                  ? 'bg-emerald-500/15 text-emerald-200'
+                  ? 'bg-emerald-500/10 border border-emerald-500/30'
                   : 'bg-rose-500/15 text-rose-200'
               }`}
             >
-              {statusMessage}
+              {statusState === 'success' ? (
+                <div className="text-center">
+                  <div className="text-4xl mb-3">✅</div>
+                  <p className="font-bold text-emerald-300 text-base mb-2">预约成功！</p>
+                  <p className="text-[var(--text-secondary)] text-xs mb-4">您的预约已创建，请前往「我的预约」完成支付后即可取车。</p>
+                  <button
+                    type="button"
+                    onClick={() => { onBookingSuccess?.(); onClose(); navigate('/bookings') }}
+                    className="mclaren-btn-3d px-6 py-2.5 text-sm w-full"
+                  >
+                    查看我的预约 →
+                  </button>
+                </div>
+              ) : (
+                statusMessage
+              )}
             </div>
           )}
 

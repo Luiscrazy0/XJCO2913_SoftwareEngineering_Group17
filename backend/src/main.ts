@@ -1,5 +1,7 @@
 import './config/load-env';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 import { AppModule } from './app.module';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
@@ -7,7 +9,7 @@ import { ResponseInterceptor } from './interceptors/response.interceptor';
 import { HttpExceptionFilter } from './filters/http-exception.filter';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   // Enable CORS for frontend
   // Allow: Vite dev servers (51xx ports), production server, and env-configured origins
@@ -64,10 +66,15 @@ async function bootstrap() {
   // Global exception filter
   app.useGlobalFilters(new HttpExceptionFilter());
 
+  // Serve uploaded files
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads',
+  });
+
   // Swagger configuration
   const config = new DocumentBuilder()
-    .setTitle('Scooter Rental System API')
-    .setDescription('电动车租赁系统后端API文档')
+    .setTitle('AAA电动车租赁 API')
+    .setDescription('AAA电动车租赁系统后端API文档')
     .setVersion('1.0')
     .addBearerAuth(
       {

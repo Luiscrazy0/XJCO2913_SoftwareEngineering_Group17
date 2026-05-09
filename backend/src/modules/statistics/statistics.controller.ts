@@ -14,6 +14,7 @@ import {
   DailyRevenueDto,
 } from './dto/daily-revenue.dto';
 import { ChartDataResponseDto } from './dto/chart-data.dto';
+import { DashboardSummaryDto } from './dto/dashboard-summary.dto';
 
 @ApiTags('statistics')
 @Controller('statistics')
@@ -191,5 +192,22 @@ export class StatisticsController {
       chartType: type,
       period: period,
     };
+  }
+
+  /**
+   * 管理后台首页实时概览数据
+   */
+  @Get('dashboard-summary')
+  @Roles(Role.MANAGER)
+  @ApiOperation({ summary: '获取管理后台首页实时概览数据' })
+  @ApiResponse({
+    status: 200,
+    description: '成功获取概览数据',
+    type: DashboardSummaryDto,
+  })
+  @ApiResponse({ status: 401, description: '未授权' })
+  @ApiResponse({ status: 403, description: '权限不足' })
+  async getDashboardSummary(): Promise<DashboardSummaryDto> {
+    return this.statisticsService.getDashboardSummary();
   }
 }

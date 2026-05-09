@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import PageLayout from "../components/PageLayout";
 
@@ -6,6 +7,7 @@ type AuthTab = "login" | "register";
 
 export default function AuthPage() {
   const { login, register } = useAuth();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<AuthTab>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -141,7 +143,7 @@ export default function AuthPage() {
               </svg>
             </div>
             <h1 className="text-2xl font-bold text-[var(--text-main)] mb-2">
-              电动滑板车租赁系统
+              AAA电动车租赁
             </h1>
             <p className="text-sm text-[var(--text-secondary)]">
               欢迎使用我们的租赁服务
@@ -409,6 +411,20 @@ export default function AuthPage() {
                   </button>
                 </p>
               )}
+            </div>
+
+            {/* Guest Mode */}
+            <div className="mt-5 pt-5 border-t border-[var(--border-line)]">
+              <button
+                type="button"
+                className="w-full py-3 text-sm font-medium text-[var(--text-secondary)] hover:text-[var(--text-main)] border border-[var(--border-line)] hover:border-[var(--mclaren-orange)]/50 rounded-xl transition-all duration-200"
+                onClick={() => {
+                  sessionStorage.setItem('guest_mode', 'true')
+                  navigate('/scooters')
+                }}
+              >
+                游客模式 — 无需注册，浏览车辆
+              </button>
             </div>
           </form>
         </div>

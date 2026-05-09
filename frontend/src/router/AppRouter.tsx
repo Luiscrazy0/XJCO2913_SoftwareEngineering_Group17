@@ -1,27 +1,39 @@
 import { Routes, Route, Navigate } from "react-router-dom"
+import { lazy, Suspense } from "react"
 
+import LandingPage from "../pages/LandingPage"
 import AuthPage from "../pages/AuthPage"
-import ScooterListPage from "../pages/ScooterListPage"
-import MyBookingsPage from "../pages/MyBookingsPage"
-import AdminDashboardPage from "../pages/AdminDashboardPage"
-import AdminFleetPage from "../pages/AdminFleetPage"
-import AdminPricingPage from "../pages/AdminPricingPage"
-import TestScooterPage from "../pages/TestScooterPage"
-import MapPage from "../pages/MapPage"
-import RevenueStatisticsPage from "../pages/RevenueStatisticsPage"
-import CreateFeedbackPage from "../pages/CreateFeedbackPage"
-import MyFeedbacksPage from "../pages/MyFeedbacksPage"
-import AdminFeedbacksPage from "../pages/AdminFeedbacksPage"
-import FeedbackDetailPage from "../pages/FeedbackDetailPage"
-import HighPriorityPage from "../pages/HighPriorityPage"
-import FAQPage from "../pages/FAQPage"
-import PaymentMethodsPage from "../pages/PaymentMethodsPage"
-import StaffBookingPage from "../pages/StaffBookingPage"
-import UserManagementPage from "../pages/UserManagementPage"
 import ProtectedRoute from "../components/ProtectedRoute"
 import ForbiddenPage from "../pages/ForbiddenPage"
 import NotFoundPage from "../pages/NotFoundPage"
 import { useAuth } from "../context/AuthContext"
+import LoadingSpinner from "../components/ui/LoadingSpinner"
+
+const ScooterListPage = lazy(() => import("../pages/ScooterListPage"))
+const MyBookingsPage = lazy(() => import("../pages/MyBookingsPage"))
+const MapPage = lazy(() => import("../pages/MapPage"))
+const CreateFeedbackPage = lazy(() => import("../pages/CreateFeedbackPage"))
+const MyFeedbacksPage = lazy(() => import("../pages/MyFeedbacksPage"))
+const PaymentMethodsPage = lazy(() => import("../pages/PaymentMethodsPage"))
+const FeedbackDetailPage = lazy(() => import("../pages/FeedbackDetailPage"))
+const AdminDashboardPage = lazy(() => import("../pages/AdminDashboardPage"))
+const AdminFleetPage = lazy(() => import("../pages/AdminFleetPage"))
+const AdminPricingPage = lazy(() => import("../pages/AdminPricingPage"))
+const RevenueStatisticsPage = lazy(() => import("../pages/RevenueStatisticsPage"))
+const AdminFeedbacksPage = lazy(() => import("../pages/AdminFeedbacksPage"))
+const HighPriorityPage = lazy(() => import("../pages/HighPriorityPage"))
+const FAQPage = lazy(() => import("../pages/FAQPage"))
+const TestScooterPage = lazy(() => import("../pages/TestScooterPage"))
+const StaffBookingPage = lazy(() => import("../pages/StaffBookingPage"))
+const UserManagementPage = lazy(() => import("../pages/UserManagementPage"))
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center h-64">
+      <LoadingSpinner />
+    </div>
+  )
+}
 
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user } = useAuth()
@@ -34,9 +46,10 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 
 export default function AppRouter() {
   return (
-    <Routes>
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
         {/* Public routes */}
-        <Route path="/" element={<PublicRoute><AuthPage /></PublicRoute>} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/auth" element={<PublicRoute><AuthPage /></PublicRoute>} />
         <Route path="/test-scooters" element={<TestScooterPage />} />
         <Route path="/403" element={<ForbiddenPage />} />
@@ -66,5 +79,6 @@ export default function AppRouter() {
         <Route path="/statistics" element={<ProtectedRoute requiredRole="MANAGER"><RevenueStatisticsPage /></ProtectedRoute>} />
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+    </Suspense>
   )
 }

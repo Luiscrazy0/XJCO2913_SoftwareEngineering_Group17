@@ -104,3 +104,23 @@ export async function getRevenueChartData(period: string = 'week', type: string 
   
   return response.data.data!;
 }
+
+export interface DashboardSummary {
+  todayOrders: number;
+  todayRevenue: number;
+  rentedScooters: number;
+  totalUsers: number;
+}
+
+/**
+ * 获取管理后台首页实时概览数据
+ */
+export async function getDashboardSummary(): Promise<DashboardSummary> {
+  const response = await axiosClient.get<ApiResponse<DashboardSummary>>('/statistics/dashboard-summary');
+  
+  if (!response.data.success) {
+    throw new Error(response.data.message || 'Failed to fetch dashboard summary');
+  }
+  
+  return response.data.data!;
+}

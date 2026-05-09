@@ -42,6 +42,7 @@
     "globals": "^17.4.0",
     "jsdom": "^29.1.1",
     "postcss": "^8.5.8",
+    "rollup-plugin-visualizer": "^7.0.1",
     "tailwindcss": "^4.2.1",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.56.1",

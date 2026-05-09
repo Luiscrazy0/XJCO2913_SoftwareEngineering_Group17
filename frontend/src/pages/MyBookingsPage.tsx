@@ -123,7 +123,7 @@ const MyBookingsPage: React.FC = () => {
     if (result.damageReportCreated) {
       showToast('还车成功，已自动提交损坏报告', 'warning')
     } else {
-      showToast('骑行已结束，感谢使用！', 'success')
+      showToast('骑行已结束！去「我的反馈」提交使用体验 →', 'success')
     }
   }
 
@@ -222,7 +222,7 @@ const MyBookingsPage: React.FC = () => {
   }
 
   return (
-    <PageLayout title="我的预约" subtitle="查看和管理您的所有电动车租赁预约">
+    <PageLayout title="我的预约" subtitle="查看和管理您的所有AAA电动车租赁预约">
       {renderContent()}
 
         {selectedBooking && (

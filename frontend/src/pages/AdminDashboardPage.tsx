@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 import PageLayout from '../components/PageLayout'
 import { useAuth } from '../context/AuthContext'
+import { getDashboardSummary, DashboardSummary } from '../api/statistics'
 
 interface DashboardCard {
   title: string
@@ -62,11 +64,69 @@ const cards: DashboardCard[] = [
   },
 ]
 
+interface StatCardProps {
+  label: string
+  value: string | number
+  icon: string
+  iconBg: string
+}
+
+function StatCard({ label, value, icon, iconBg }: StatCardProps) {
+  return (
+    <div className="surface-card p-5 rounded-xl">
+      <div className="flex items-center gap-4">
+        <div className={`w-12 h-12 rounded-xl ${iconBg} flex items-center justify-center text-2xl shrink-0`}>
+          {icon}
+        </div>
+        <div className="min-w-0">
+          <div className="text-xs text-[var(--text-secondary)] mb-1">{label}</div>
+          <div className="text-2xl font-bold text-[var(--text-main)] tabular-nums">{value}</div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function AdminDashboardPage() {
   const { user } = useAuth()
 
+  const { data: summary, isLoading } = useQuery<DashboardSummary>({
+    queryKey: ['dashboard-summary'],
+    queryFn: getDashboardSummary,
+    refetchInterval: 30000,
+  })
+
   return (
     <PageLayout title="管理后台" subtitle={`欢迎回来，${user?.email}`} showFooter={false}>
+      {/* Real-time stat cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <StatCard
+          label="今日订单数"
+          value={isLoading ? '...' : (summary?.todayOrders ?? 0)}
+          icon="📦"
+          iconBg="bg-blue-500/10"
+        />
+        <StatCard
+          label="今日收入"
+          value={isLoading ? '...' : `¥${(summary?.todayRevenue ?? 0).toFixed(0)}`}
+          icon="💵"
+          iconBg="bg-green-500/10"
+        />
+        <StatCard
+          label="已租出车辆"
+          value={isLoading ? '...' : (summary?.rentedScooters ?? 0)}
+          icon="🛴"
+          iconBg="bg-[var(--mclaren-orange)]/10"
+        />
+        <StatCard
+          label="总用户数"
+          value={isLoading ? '...' : (summary?.totalUsers ?? 0)}
+          icon="👥"
+          iconBg="bg-purple-500/10"
+        />
+      </div>
+
+      {/* Navigation Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         {cards.map((card) => (
           <Link

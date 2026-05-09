@@ -27,6 +27,14 @@ describe('StatisticsService', () => {
   const mockPrismaService = {
     booking: {
       findMany: jest.fn(),
+      count: jest.fn(),
+      aggregate: jest.fn(),
+    },
+    scooter: {
+      count: jest.fn(),
+    },
+    user: {
+      count: jest.fn(),
     },
   };
 
@@ -268,37 +276,16 @@ describe('StatisticsService', () => {
       );
     });
 
-    it('builds a line chart dataset and uses the default weekly range for unknown periods', async () => {
-      const getDailyRevenueSpy = jest
-        .spyOn(service, 'getDailyRevenue')
-        .mockResolvedValue([
-          {
-            date: '2026-04-09',
-            totalRevenue: 24,
-            bookingCount: 2,
-            hireTypes: [{ hireType: HireType.DAY_1, revenue: 24 }],
-          },
-        ]);
-
+    it('throws BadRequestException for invalid period', async () => {
       await expect(
-        service.getRevenueChartData('unsupported', 'line'),
-      ).resolves.toEqual({
-        labels: ['2026-04-09'],
-        datasets: [
-          {
-            label: 'Daily Revenue',
-            data: [24],
-            borderColor: '#36A2EB',
-            backgroundColor: undefined,
-            borderWidth: 2,
-          },
-        ],
-      });
+        service.getRevenueChartData('decade', 'bar'),
+      ).rejects.toThrow('Invalid period');
+    });
 
-      expect(getDailyRevenueSpy).toHaveBeenCalledWith(
-        '2026-04-09',
-        '2026-04-16',
-      );
+    it('throws BadRequestException for invalid type', async () => {
+      await expect(
+        service.getRevenueChartData('week', 'scatter'),
+      ).rejects.toThrow('Invalid type');
     });
 
     it('supports a yearly range', async () => {
@@ -335,6 +322,48 @@ describe('StatisticsService', () => {
       expect(service.getHireTypeChineseName('CUSTOM' as HireType)).toBe(
         'CUSTOM',
       );
+    });
+  });
+
+  describe('getDashboardSummary', () => {
+    beforeEach(() => {
+      mockPrismaService.booking.count.mockResolvedValue(5);
+      mockPrismaService.booking.aggregate.mockResolvedValue({
+        _sum: { totalCost: 250 },
+      });
+      mockPrismaService.scooter.count.mockResolvedValue(3);
+      mockPrismaService.user.count.mockResolvedValue(42);
+    });
+
+    it('returns today orders, revenue, rented scooters, and total users', async () => {
+      await expect(service.getDashboardSummary()).resolves.toEqual({
+        todayOrders: 5,
+        todayRevenue: 250,
+        rentedScooters: 3,
+        totalUsers: 42,
+      });
+    });
+
+    it('handles null aggregate sum (no revenue)', async () => {
+      mockPrismaService.booking.aggregate.mockResolvedValue({
+        _sum: { totalCost: null },
+      });
+
+      await expect(service.getDashboardSummary()).resolves.toMatchObject({
+        todayRevenue: 0,
+      });
+    });
+
+    it('queries today boundaries correctly', async () => {
+      await service.getDashboardSummary();
+
+      const countCall = mockPrismaService.booking.count.mock.calls[0]?.[0] as {
+        where: { startTime: { gte: Date; lte: Date }; status: { in: string[] } };
+      };
+      expect(countCall.where.startTime.gte).toBeInstanceOf(Date);
+      expect(countCall.where.startTime.lte).toBeInstanceOf(Date);
+      const gteHours = countCall.where.startTime.gte.getHours();
+      expect(gteHours).toBe(0);
     });
   });
 });

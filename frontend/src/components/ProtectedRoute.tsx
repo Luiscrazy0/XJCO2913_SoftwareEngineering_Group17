@@ -31,8 +31,11 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     )
   }
 
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
+  // Allow guest mode (read-only browsing)
+  const isGuest = sessionStorage.getItem('guest_mode') === 'true'
+
+  // Redirect to login if not authenticated and not in guest mode
+  if (!isAuthenticated && !isGuest) {
     localStorage.setItem('redirect_path', location.pathname + location.search)
     return <Navigate to="/" replace />
   }
@@ -42,6 +45,6 @@ export default function ProtectedRoute({ children, requiredRole }: ProtectedRout
     return <Navigate to="/403" replace />
   }
 
-  // User is authenticated and has required role (if any)
+  // User is authenticated (or guest mode) and has required role (if any)
   return <>{children}</>
 }
