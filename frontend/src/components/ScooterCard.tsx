@@ -1,6 +1,8 @@
 import React from 'react'
+import { Link } from 'react-router-dom'
 import Badge from './ui/Badge'
 import { Scooter } from '../types'
+import { useAuth } from '../context/AuthContext'
 
 interface ScooterCardProps {
   scooter: Scooter
@@ -8,6 +10,7 @@ interface ScooterCardProps {
 }
 
 const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
+  const { user } = useAuth()
   const handleBookClick = () => {
     if (onBook) {
       onBook(scooter)
@@ -58,7 +61,7 @@ const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
           {/* ID line */}
           <div className="flex justify-between items-center mb-4">
             <span className="text-xs text-[var(--text-secondary)] font-mono">ID: {scooter.id.substring(0, 8)}...</span>
-            <span className="text-xs text-[var(--text-secondary)]">电动滑板车</span>
+            <span className="text-xs text-[var(--text-secondary)]">电动车</span>
           </div>
 
           {/* Location */}
@@ -88,17 +91,26 @@ const ScooterCard: React.FC<ScooterCardProps> = ({ scooter, onBook }) => {
         </div>
 
         {/* Action button */}
-        <button
-          onClick={handleBookClick}
-          disabled={scooter.status !== 'AVAILABLE'}
-          className={`mt-4 w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/30 ${
-            scooter.status === 'AVAILABLE'
-              ? 'bg-[var(--mclaren-orange)] text-white hover:brightness-110 hover:shadow-[var(--shadow-3d-hover)]'
-              : 'bg-[var(--bg-input)] text-[var(--text-secondary)] border border-[var(--border-line)] cursor-not-allowed'
-          }`}
-        >
-          {scooter.status === 'AVAILABLE' ? '立即预约' : '不可预约'}
-        </button>
+        {user ? (
+          <button
+            onClick={handleBookClick}
+            disabled={scooter.status !== 'AVAILABLE'}
+            className={`mt-4 w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-[var(--mclaren-orange)]/30 ${
+              scooter.status === 'AVAILABLE'
+                ? 'bg-[var(--mclaren-orange)] text-white hover:brightness-110 hover:shadow-[var(--shadow-3d-hover)]'
+                : 'bg-[var(--bg-input)] text-[var(--text-secondary)] border border-[var(--border-line)] cursor-not-allowed'
+            }`}
+          >
+            {scooter.status === 'AVAILABLE' ? '立即预约' : '不可预约'}
+          </button>
+        ) : (
+          <Link
+            to="/auth"
+            className="mt-4 w-full py-3 px-4 rounded-lg font-medium transition-all duration-200 text-center block border border-[var(--mclaren-orange)]/50 text-[var(--mclaren-orange)] hover:bg-[var(--mclaren-orange)]/10"
+          >
+            登录以预约
+          </Link>
+        )}
       </div>
     </div>
   )

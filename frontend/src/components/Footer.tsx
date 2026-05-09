@@ -12,10 +12,10 @@ export default function Footer() {
               <svg className="w-5 h-5 text-[var(--mclaren-orange)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
               </svg>
-              <span className="text-lg font-bold text-[var(--text-main)]">电动车租赁</span>
+              <span className="text-lg font-bold text-[var(--text-main)]">AAA电动车租赁</span>
             </div>
             <p className="text-sm text-[var(--text-secondary)] leading-relaxed">
-              便捷、环保的电动滑板车租赁服务。随时随地，轻松出行。
+              AAA电动车租赁 — 便捷、环保的城市出行服务。随时随地，轻松出行。
             </p>
           </div>
 
@@ -47,7 +47,7 @@ export default function Footer() {
           </div>
         </div>
         <div className="mt-8 pt-6 border-t border-[var(--border-line)] text-center text-xs text-[var(--text-secondary)]">
-          <p>&copy; {year} 电动车租赁系统，保留所有权利。</p>
+          <p>&copy; {year} AAA电动车租赁，保留所有权利。</p>
         </div>
       </div>
     </footer>

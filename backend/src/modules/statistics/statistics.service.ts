@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { HireType, BookingStatus } from '@prisma/client';
 
@@ -167,6 +167,20 @@ export class StatisticsService {
    * 获取收入图表数据
    */
   async getRevenueChartData(period: string, type: string): Promise<ChartData> {
+    const validPeriods = ['week', 'month', 'year'];
+    const validTypes = ['bar', 'line', 'pie'];
+
+    if (!validPeriods.includes(period)) {
+      throw new BadRequestException(
+        `Invalid period: "${period}". Must be one of: ${validPeriods.join(', ')}`,
+      );
+    }
+    if (!validTypes.includes(type)) {
+      throw new BadRequestException(
+        `Invalid type: "${type}". Must be one of: ${validTypes.join(', ')}`,
+      );
+    }
+
     const endDate = new Date();
     const startDate = new Date();
 
@@ -181,8 +195,6 @@ export class StatisticsService {
       case 'year':
         startDate.setFullYear(endDate.getFullYear() - 1);
         break;
-      default:
-        startDate.setDate(endDate.getDate() - 7); // 默认一周
     }
 
     // 获取每日收入数据
@@ -256,5 +268,60 @@ export class StatisticsService {
       [HireType.WEEK_1]: '1周租赁',
     };
     return hireTypeNames[hireType] || hireType;
+  }
+
+  /**
+   * 获取管理后台首页实时概览数据
+   */
+  async getDashboardSummary(): Promise<{
+    todayOrders: number;
+    todayRevenue: number;
+    rentedScooters: number;
+    totalUsers: number;
+  }> {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    const [todayOrders, todayRevenueResult, rentedScooters, totalUsers] =
+      await Promise.all([
+        this.prisma.booking.count({
+          where: {
+            status: {
+              in: [
+                BookingStatus.CONFIRMED,
+                BookingStatus.IN_PROGRESS,
+                BookingStatus.EXTENDED,
+              ],
+            },
+            startTime: { gte: todayStart, lte: todayEnd },
+          },
+        }),
+        this.prisma.booking.aggregate({
+          _sum: { totalCost: true },
+          where: {
+            status: {
+              in: [
+                BookingStatus.CONFIRMED,
+                BookingStatus.COMPLETED,
+                BookingStatus.EXTENDED,
+              ],
+            },
+            startTime: { gte: todayStart, lte: todayEnd },
+          },
+        }),
+        this.prisma.scooter.count({
+          where: { status: 'RENTED' },
+        }),
+        this.prisma.user.count(),
+      ]);
+
+    return {
+      todayOrders,
+      todayRevenue: todayRevenueResult._sum.totalCost ?? 0,
+      rentedScooters,
+      totalUsers,
+    };
   }
 }

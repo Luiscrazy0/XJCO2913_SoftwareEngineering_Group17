@@ -59,9 +59,9 @@ const Navbar: React.FC = () => {
           <div className="flex justify-between h-14 md:h-16 items-center">
             <div className="flex items-center shrink-0">
               <Link
-                to="/"
+                to={user ? (user.role === 'MANAGER' ? '/admin' : '/scooters') : '/'}
                 className="flex items-center"
-                aria-label="电动车租赁 - 返回首页"
+                aria-label="AAA电动车租赁 - 返回首页"
               >
                 <svg
                   className="w-7 h-7 md:w-8 md:h-8 text-[var(--mclaren-orange)]"
@@ -79,7 +79,7 @@ const Navbar: React.FC = () => {
                   />
                 </svg>
                 <span className="ml-2 text-base md:text-xl font-bold text-[var(--text-main)] whitespace-nowrap">
-                  电动车租赁
+                  AAA电动车租赁
                 </span>
               </Link>
             </div>

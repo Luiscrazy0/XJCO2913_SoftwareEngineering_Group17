@@ -75,7 +75,7 @@ const faqData: FAQItem[] = [
 
 export default function FAQPage() {
   return (
-    <PageLayout title="常见问题" subtitle="关于电动车租赁的常见疑问解答" showFooter={true} showBottomNav={true}>
+    <PageLayout title="常见问题" subtitle="关于AAA电动车租赁的常见疑问解答" showFooter={true} showBottomNav={true}>
       <div className="max-w-3xl mx-auto space-y-8">
         {faqData.map((section) => (
           <section key={section.category}>

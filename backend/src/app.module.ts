@@ -15,6 +15,7 @@ import { AmapModule } from './modules/amap/amap.module';
 import { FeedbackModule } from './modules/feedback/feedback.module';
 import { ConfigModule } from './modules/config/config.module';
 import { EventsModule } from './modules/events/events.module';
+import { UploadModule } from './modules/upload/upload.module';
 import { RequestIdMiddleware } from './middleware/request-id.middleware';
 import { LoggerMiddleware } from './middleware/logger.middleware';
 
@@ -34,6 +35,7 @@ import { LoggerMiddleware } from './middleware/logger.middleware';
     FeedbackModule,
     ConfigModule,
     EventsModule,
+    UploadModule,
   ],
   controllers: [AppController],
   providers: [AppService],

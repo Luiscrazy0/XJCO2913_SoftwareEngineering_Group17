@@ -8,6 +8,7 @@ import LoadingSpinner from "../components/ui/LoadingSpinner";
 import EmptyState from "../components/EmptyState";
 import ErrorState from "../components/ErrorState";
 import SidePromo from "../components/SidePromo";
+import OnboardingGuide, { isOnboardingComplete } from "../components/OnboardingGuide";
 import { Scooter } from "../types";
 import { useSearchParams } from "react-router-dom";
 import { scooterKeys } from "../utils/queryKeys";
@@ -17,6 +18,13 @@ export default function ScooterListPage() {
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [searchParams] = useSearchParams();
   const autoOpenedRef = useRef(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (!isOnboardingComplete()) {
+      setShowOnboarding(true)
+    }
+  }, [])
 
   // 使用TanStack Query获取车辆数据
   const {
@@ -112,9 +120,9 @@ export default function ScooterListPage() {
     const message =
       scooters.length > 0
         ? `共有 ${scooters.length} 辆车辆，但都处于不可用状态。`
-        : "当前没有可用的电动滑板车，请稍后再试。";
+        : "当前没有可用的电动车，请稍后再试。";
     return (
-      <PageLayout title="发现车辆" subtitle="当前没有可用的电动滑板车">
+      <PageLayout title="发现车辆" subtitle="当前没有可用的电动车">
         <EmptyState title="暂无可用车辆" message={message} />
       </PageLayout>
     );
@@ -123,6 +131,7 @@ export default function ScooterListPage() {
   // 成功状态：显示车辆列表
   return (
     <>
+      {showOnboarding && <OnboardingGuide onComplete={() => setShowOnboarding(false)} />}
       <PageLayout
         title="发现车辆"
         subtitle={`当前有 ${availableScooters.length} 辆可用车辆`}
