@@ -4,6 +4,7 @@ import { diskStorage } from 'multer';
 import { extname, join } from 'path';
 import { mkdirSync, existsSync } from 'fs';
 import { randomUUID } from 'crypto';
+import { AuthModule } from '../auth/auth.module';
 import { UploadController } from './upload.controller';
 
 const UPLOAD_DIR = join(process.cwd(), 'uploads', 'feedbacks');
@@ -34,6 +35,7 @@ const imageFileFilter = (
 
 @Module({
   imports: [
+    AuthModule,
     MulterModule.register({
       storage,
       fileFilter: imageFileFilter,
