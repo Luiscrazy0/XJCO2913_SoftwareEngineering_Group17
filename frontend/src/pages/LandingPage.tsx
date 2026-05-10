@@ -39,10 +39,10 @@ const features = [
 ]
 
 const pricingTiers = [
-  { label: '1小时', hireType: 'HOUR_1', price: '¥25', desc: '短途通勤首选' },
-  { label: '4小时', hireType: 'HOUR_4', price: '¥80', desc: '半天自由出行' },
-  { label: '1天', hireType: 'DAY_1', price: '¥150', desc: '全天畅快骑行' },
-  { label: '1周', hireType: 'WEEK_1', price: '¥600', desc: '长租更优惠' },
+  { label: '1小时', hireType: 'HOUR_1', price: '¥5', desc: '短途通勤首选' },
+  { label: '4小时', hireType: 'HOUR_4', price: '¥15', desc: '半天自由出行' },
+  { label: '1天', hireType: 'DAY_1', price: '¥30', desc: '全天畅快骑行' },
+  { label: '1周', hireType: 'WEEK_1', price: '¥90', desc: '长租更优惠' },
 ]
 
 export default function LandingPage() {
@@ -124,20 +124,7 @@ export default function LandingPage() {
             </div>
           </div>
 
-          {/* Stats */}
-          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-3xl mx-auto animate-fade-in-up">
-            {[
-              { value: '50+', label: '服务站点' },
-              { value: '200+', label: '运营车辆' },
-              { value: '24/7', label: '全天候服务' },
-              { value: '10K+', label: '服务用户' },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl md:text-3xl font-bold text-[var(--mclaren-orange)]">{stat.value}</div>
-                <div className="mt-1 text-sm text-[var(--text-secondary)]">{stat.label}</div>
-              </div>
-            ))}
-          </div>
+
         </div>
       </section>
 
