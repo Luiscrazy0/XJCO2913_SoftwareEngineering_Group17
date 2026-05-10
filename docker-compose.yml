@@ -30,6 +30,7 @@ services:
       DATABASE_URL: ${DATABASE_URL}
       JWT_SECRET: ${JWT_SECRET}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY}
+      AMAP_WEB_KEY: ${AMAP_WEB_KEY}
     depends_on:
       postgres:
         condition: service_healthy
@@ -40,6 +41,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_AMAP_JS_KEY: ${VITE_AMAP_JS_KEY}
+        VITE_AMAP_SECURITY_JS_CODE: ${VITE_AMAP_SECURITY_JS_CODE}
     restart: unless-stopped
     ports:
       - "8080:80"

@@ -124,7 +124,7 @@ const Navbar: React.FC = () => {
             </div>
 
             <div className="hidden md:flex flex-row flex-nowrap items-center space-x-1">
-              {userNavigation.map((item) => (
+              {user && userNavigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
@@ -249,7 +249,7 @@ const Navbar: React.FC = () => {
         >
           <div className="px-4 pb-6 space-y-4">
             <div className="flex flex-col space-y-3 pt-4">
-              {userNavigation.map((item) => (
+              {user && userNavigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}

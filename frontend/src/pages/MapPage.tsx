@@ -5,6 +5,7 @@ import { scootersApi } from "../api/scooters";
 import PageLayout from "../components/PageLayout";
 import LoadingSpinner from "../components/ui/LoadingSpinner";
 import ErrorState from "../components/ErrorState";
+import ErrorBoundary from "../components/ui/ErrorBoundary";
 import AmapMap from "../components/map/AmapMap";
 import BookingModal from "../components/BookingModal";
 import { useToast } from "../components/ToastProvider";
@@ -165,7 +166,7 @@ const MapPage: React.FC = () => {
       <PageLayout
         title="滑板车站点地图"
         subtitle="查看附近的滑板车站点及可用车辆信息"
-        showBottomNav={false}
+        showBottomNav={true}
       >
         <LoadingSpinner size="large" showText text="正在加载地图数据…" />
       </PageLayout>
@@ -177,7 +178,7 @@ const MapPage: React.FC = () => {
       <PageLayout
         title="滑板车站点地图"
         subtitle="数据加载失败"
-        showBottomNav={false}
+        showBottomNav={true}
       >
         <ErrorState
           title="加载失败"
@@ -197,7 +198,7 @@ const MapPage: React.FC = () => {
       <PageLayout
         title="滑板车站点地图"
         subtitle="查看附近的滑板车站点及可用车辆信息"
-        showBottomNav={false}
+        showBottomNav={true}
       >
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Left: Station list */}
@@ -277,20 +278,26 @@ const MapPage: React.FC = () => {
               </h2>
 
               <div className="relative">
-                <AmapMap
-                  config={mapConfig}
-                  markers={mapMarkers}
-                  selectedMarker={selectedMarker}
-                  userLocation={userLocation}
-                  onMarkerClick={handleMarkerClick}
-                  onMapClick={() => setSelectedStation(null)}
-                  className="h-[400px] rounded-lg overflow-hidden border border-gray-300"
-                  loading={false}
-                  onError={(error) => {
-                    console.error("Map load error:", error);
-                    showToast("地图加载失败", "error");
-                  }}
-                />
+                <ErrorBoundary
+                  errorMessage="地图加载失败"
+                  showRetry
+                  onRetry={() => window.location.reload()}
+                >
+                  <AmapMap
+                    config={mapConfig}
+                    markers={mapMarkers}
+                    selectedMarker={selectedMarker}
+                    userLocation={userLocation}
+                    onMarkerClick={handleMarkerClick}
+                    onMapClick={() => setSelectedStation(null)}
+                    className="h-[400px] rounded-lg overflow-hidden border border-gray-300"
+                    loading={false}
+                    onError={(error) => {
+                      console.error("Map load error:", error);
+                      showToast("地图加载失败", "error");
+                    }}
+                  />
+                </ErrorBoundary>
 
                 {userLocation && (
                   <button

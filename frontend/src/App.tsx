@@ -22,7 +22,7 @@ function App() {
               <div className="absolute -bottom-40 -left-40 w-[500px] h-[500px] rounded-full bg-[var(--mclaren-orange)]/[0.02] blur-3xl" />
             </div>
             <GlobalLoadingBar />
-            <ErrorBoundary showRetry onRetry={() => window.location.reload()}>
+            <ErrorBoundary showRetry onRetry={() => window.location.reload()} errorMessage="页面发生错误">
               <AppRouter />
             </ErrorBoundary>
             <SplashScreen />

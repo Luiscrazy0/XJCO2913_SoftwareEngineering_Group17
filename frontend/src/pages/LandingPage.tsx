@@ -34,7 +34,7 @@ const features = [
       </svg>
     ),
     title: '全城畅行',
-    desc: '高德地图实时导航，智能推荐最近站点。一键预订，扫码即走，骑行无忧。',
+    desc: '高德地图实时导航，智能推荐最近站点。一键预订，即刻出发，骑行无忧。',
   },
 ]
 
@@ -105,7 +105,7 @@ export default function LandingPage() {
             <p className="mt-6 text-lg md:text-xl text-[var(--text-secondary)] max-w-2xl mx-auto leading-relaxed">
               城市出行，即刻启程 — 覆盖全城的智能电动车租赁平台。
               <br className="hidden md:block" />
-              随时随地，扫码即走。
+              随时随地，一键即走。
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
               <Link
@@ -164,7 +164,7 @@ export default function LandingPage() {
             {[
               { step: '01', title: '选择车辆', desc: '在地图上浏览附近可用车辆，选择适合您的车型和租赁时长。' },
               { step: '02', title: '确认支付', desc: '确认订单信息，选择支付方式完成支付，立即获取车辆使用权。' },
-              { step: '03', title: '开始骑行', desc: '扫码解锁车辆，即刻出发。骑行结束后在站点归还即可。' },
+               { step: '03', title: '开始骑行', desc: '一键解锁车辆，即刻出发。骑行结束后在站点归还即可。' },
             ].map((s) => (
               <div key={s.step} className="text-center p-6">
                 <div className="text-5xl font-black text-[var(--mclaren-orange)]/20 mb-4">{s.step}</div>

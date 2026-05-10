@@ -113,6 +113,12 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
             {/* 操作按钮 */}
             <div className="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => window.history.back()}
+                className="px-4 py-2 bg-[var(--bg-input)] text-[var(--mclaren-orange)] rounded-lg font-medium hover:bg-[var(--bg-hover)] transition-colors duration-200"
+              >
+                返回上一页
+              </button>
               {this.props.showRetry && (
                 <button
                   onClick={this.handleRetry}
