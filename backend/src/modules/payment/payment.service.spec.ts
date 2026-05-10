@@ -10,10 +10,11 @@ describe('PaymentService', () => {
 
   const txPaymentCreateMock = jest.fn();
   const txBookingUpdateMock = jest.fn();
+  const txBookingFindUniqueMock = jest.fn();
   const txScooterUpdateMock = jest.fn();
   const mockTx = {
     payment: { create: txPaymentCreateMock },
-    booking: { update: txBookingUpdateMock },
+    booking: { findUnique: txBookingFindUniqueMock, update: txBookingUpdateMock },
     scooter: { update: txScooterUpdateMock },
   };
   const transactionMock = jest.fn(
@@ -75,17 +76,17 @@ describe('PaymentService', () => {
     const userId = 'user-1';
 
     it('【异常路径】如果 booking 不存在，应该抛出 Booking not found 错误', async () => {
-      mockPrismaService.booking.findUnique.mockResolvedValue(null);
+      txBookingFindUniqueMock.mockResolvedValue(null);
 
       await expect(
         paymentService.createPayment(targetBookingId, paymentAmount, userId),
       ).rejects.toThrow(new BadRequestException('Booking not found'));
 
-      expect(transactionMock).not.toHaveBeenCalled();
+      expect(transactionMock).toHaveBeenCalled();
     });
 
     it('【异常路径】如果用户尝试支付他人的预约，应该抛出 ForbiddenException', async () => {
-      mockPrismaService.booking.findUnique.mockResolvedValue({
+      txBookingFindUniqueMock.mockResolvedValue({
         id: targetBookingId,
         userId: 'different-user',
         status: BookingStatus.PENDING_PAYMENT,
@@ -98,11 +99,11 @@ describe('PaymentService', () => {
         new ForbiddenException('You can only pay for your own bookings'),
       );
 
-      expect(transactionMock).not.toHaveBeenCalled();
+      expect(transactionMock).toHaveBeenCalled();
     });
 
     it('【异常路径】如果 booking 状态不是 PENDING_PAYMENT，应该抛出 Booking cannot be paid', async () => {
-      mockPrismaService.booking.findUnique.mockResolvedValue({
+      txBookingFindUniqueMock.mockResolvedValue({
         id: targetBookingId,
         userId: userId,
         status: BookingStatus.CANCELLED,
@@ -113,12 +114,12 @@ describe('PaymentService', () => {
         paymentService.createPayment(targetBookingId, paymentAmount, userId),
       ).rejects.toThrow(new BadRequestException('Booking cannot be paid'));
 
-      expect(transactionMock).not.toHaveBeenCalled();
+      expect(transactionMock).toHaveBeenCalled();
     });
 
     it('【正常路径】应该成功创建支付记录，并将订单状态更新为 CONFIRMED', async () => {
       const scooterId = 'scooter-123';
-      mockPrismaService.booking.findUnique.mockResolvedValue({
+      txBookingFindUniqueMock.mockResolvedValue({
         id: targetBookingId,
         userId: userId,
         scooterId,
@@ -138,6 +139,7 @@ describe('PaymentService', () => {
       txBookingUpdateMock.mockResolvedValue({
         id: targetBookingId,
         status: BookingStatus.CONFIRMED,
+        user: { id: userId, email: 'user@example.com' },
       });
 
       txScooterUpdateMock.mockResolvedValue({
@@ -151,7 +153,7 @@ describe('PaymentService', () => {
         userId,
       );
 
-      expect(mockPrismaService.booking.findUnique).toHaveBeenCalledWith({
+      expect(txBookingFindUniqueMock).toHaveBeenCalledWith({
         where: { id: targetBookingId },
         include: { user: true, scooter: true },
       });
@@ -224,7 +226,7 @@ describe('PaymentService', () => {
         status: 'SUCCESS',
       };
 
-      mockPrismaService.booking.findUnique.mockResolvedValue({
+      txBookingFindUniqueMock.mockResolvedValue({
         id: targetBookingId,
         userId,
         scooterId,
@@ -236,6 +238,7 @@ describe('PaymentService', () => {
       txBookingUpdateMock.mockResolvedValue({
         id: targetBookingId,
         status: BookingStatus.CONFIRMED,
+        user: { id: userId, email: 'user@example.com' },
       });
       txScooterUpdateMock.mockRejectedValue(new Error('scooter update failed'));
 
@@ -268,7 +271,7 @@ describe('PaymentService', () => {
         status: 'SUCCESS',
       };
 
-      mockPrismaService.booking.findUnique.mockResolvedValue({
+      txBookingFindUniqueMock.mockResolvedValue({
         id: targetBookingId,
         userId: userId,
         scooterId,
@@ -280,6 +283,7 @@ describe('PaymentService', () => {
       txBookingUpdateMock.mockResolvedValue({
         id: targetBookingId,
         status: BookingStatus.CONFIRMED,
+        user: { id: userId, email: 'user@example.com' },
       });
       txScooterUpdateMock.mockResolvedValue({
         id: scooterId,
