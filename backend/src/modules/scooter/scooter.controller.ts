@@ -194,6 +194,22 @@ export class ScooterController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.MANAGER)
+  @Post(':id/force-reset')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: '强制重置电动车状态',
+    description: '管理员将卡在RENTED状态的幽灵车辆强制重置为AVAILABLE（需要管理员权限）',
+  })
+  @ApiParam({ name: 'id', description: '电动车ID' })
+  @ApiResponse({ status: 200, description: '强制重置成功' })
+  @ApiResponse({ status: 400, description: '车辆状态不是RENTED或存在活跃订单' })
+  @ApiResponse({ status: 404, description: '电动车不存在' })
+  forceReset(@Param('id') id: string) {
+    return this.scooterService.forceResetGhostScooter(id);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.MANAGER)
   @Delete(':id')
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({

@@ -6,11 +6,12 @@ interface FleetTableProps {
   scooters: Scooter[]
   onToggleStatus: (scooter: Scooter) => void
   onDelete: (scooter: Scooter) => void
+  onForceReset: (scooter: Scooter) => void
   updatingId?: string | null
   deletingId?: string | null
 }
 
-export function FleetTable({ scooters, onToggleStatus, onDelete, updatingId, deletingId }: FleetTableProps) {
+export function FleetTable({ scooters, onToggleStatus, onDelete, onForceReset, updatingId, deletingId }: FleetTableProps) {
   return (
     <div className="surface-card overflow-hidden">
       <table className="min-w-full divide-y divide-[var(--border-line)]">
@@ -33,13 +34,23 @@ export function FleetTable({ scooters, onToggleStatus, onDelete, updatingId, del
               </td>
               <td className="px-6 py-4 text-right">
                 <div className="flex justify-end gap-2">
-                  <button
-                    onClick={() => onToggleStatus(scooter)}
-                    disabled={updatingId === scooter.id || deletingId === scooter.id}
-                    className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-line)] px-4 py-2 text-sm font-semibold text-[var(--text-main)] hover:border-[var(--mclaren-orange)] hover:bg-white/5 disabled:opacity-60 disabled:cursor-not-allowed"
-                  >
-                    {updatingId === scooter.id ? '更新中…' : scooter.status === 'AVAILABLE' ? '标记不可用' : '恢复可用'}
-                  </button>
+                  {scooter.status === 'RENTED' ? (
+                    <button
+                      onClick={() => onForceReset(scooter)}
+                      disabled={updatingId === scooter.id || deletingId === scooter.id}
+                      className="inline-flex items-center gap-2 rounded-lg border border-amber-500/40 px-4 py-2 text-sm font-semibold text-amber-200 hover:border-amber-400 hover:bg-amber-500/10 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {updatingId === scooter.id ? '处理中…' : '强制重置'}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => onToggleStatus(scooter)}
+                      disabled={updatingId === scooter.id || deletingId === scooter.id}
+                      className="inline-flex items-center gap-2 rounded-lg border border-[var(--border-line)] px-4 py-2 text-sm font-semibold text-[var(--text-main)] hover:border-[var(--mclaren-orange)] hover:bg-white/5 disabled:opacity-60 disabled:cursor-not-allowed"
+                    >
+                      {updatingId === scooter.id ? '更新中…' : scooter.status === 'AVAILABLE' ? '标记不可用' : '恢复可用'}
+                    </button>
+                  )}
                   <button
                     onClick={() => onDelete(scooter)}
                     disabled={deletingId === scooter.id || updatingId === scooter.id}
