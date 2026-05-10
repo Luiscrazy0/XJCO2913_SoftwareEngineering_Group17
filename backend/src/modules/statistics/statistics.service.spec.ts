@@ -103,6 +103,7 @@ describe('StatisticsService', () => {
             status: {
               in: [
                 BookingStatus.CONFIRMED,
+                BookingStatus.IN_PROGRESS,
                 BookingStatus.COMPLETED,
                 BookingStatus.EXTENDED,
               ],
