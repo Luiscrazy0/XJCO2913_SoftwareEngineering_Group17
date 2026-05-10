@@ -70,14 +70,35 @@ export default function AdminFleetPage() {
     onSettled: () => setDeletingId(null),
   });
 
+  const forceResetMutation = useMutation({
+    mutationFn: (id: string) => scootersApi.forceReset(id),
+    onMutate: (id) => setUpdatingId(id),
+    onSuccess: () => {
+      showToast("幽灵车辆已强制重置为可用状态。", "success");
+      queryClient.invalidateQueries({ queryKey: scooterKeys.all });
+    },
+    onError: (error: Error) => {
+      showToast(error.message || "强制重置失败", "error");
+    },
+    onSettled: () => setUpdatingId(null),
+  });
+
   const handleToggleStatus = (scooter: Scooter) => {
     if (scooter.status === "RENTED") {
-      showToast("车辆处于租用中，无法手动切换状态。", "warning");
+      showToast("车辆处于租用中，无法手动切换状态。请使用强制重置功能。", "warning");
       return;
     }
     const nextStatus =
       scooter.status === "AVAILABLE" ? "UNAVAILABLE" : "AVAILABLE";
     updateMutation.mutate({ id: scooter.id, status: nextStatus });
+  };
+
+  const handleForceReset = (scooter: Scooter) => {
+    if (scooter.status !== "RENTED") return;
+    if (!window.confirm(`确定要强制重置车辆 ${(scooter.id ?? '').slice(0, 8)}… (${scooter.location}) 吗？这将把状态从"租用中"改为"可用"。请确认该车辆没有活跃的骑行订单。`)) {
+      return;
+    }
+    forceResetMutation.mutate(scooter.id);
   };
 
   const handleDeleteClick = (scooter: Scooter) => {
@@ -183,6 +204,7 @@ export default function AdminFleetPage() {
                 scooters={scooters}
                 onToggleStatus={handleToggleStatus}
                 onDelete={handleDeleteClick}
+                onForceReset={handleForceReset}
                 updatingId={updatingId}
                 deletingId={deletingId}
               />

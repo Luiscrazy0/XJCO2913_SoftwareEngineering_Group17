@@ -30,4 +30,10 @@ export const scootersApi = {
   delete: async (id: string): Promise<void> => {
     await axiosClient.delete<ApiResponse<null>>(`/scooters/${id}`)
   },
+
+  forceReset: async (id: string): Promise<Scooter> => {
+    const response = await axiosClient.post<ApiResponse<Scooter>>(`/scooters/${id}/force-reset`)
+    if (!response.data.data) throw new Error('Failed to force-reset scooter')
+    return response.data.data
+  },
 }

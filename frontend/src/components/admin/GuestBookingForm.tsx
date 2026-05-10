@@ -44,7 +44,7 @@ export default function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
   const [highlightedIndex, setHighlightedIndex] = useState(-1)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const { data: scooters = [], isLoading: isScootersLoading } = useQuery({
+  const { data: scooters = [], isLoading: isScootersLoading, isError: isScootersError, error: scootersError } = useQuery({
     queryKey: ['employee-bookings', 'available-scooters'],
     queryFn: employeeBookingsApi.getAvailableScooters,
     staleTime: 60_000,
@@ -59,7 +59,7 @@ export default function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
     if (!scooterSearch.trim()) return scooters
     const q = scooterSearch.toLowerCase()
     return scooters.filter(
-      (s) => s.location.toLowerCase().includes(q) || s.id.toLowerCase().includes(q),
+      (s) => (s.location ?? '').toLowerCase().includes(q) || (s.id ?? '').toLowerCase().includes(q),
     )
   }, [scooters, scooterSearch])
 
@@ -195,7 +195,7 @@ export default function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
             disabled={isScootersLoading || createMutation.isPending}
             autoComplete="off"
           />
-          {isDropdownOpen && !isScootersLoading && (
+          {isDropdownOpen && !isScootersLoading && !isScootersError && (
             <ul id="scooter-listbox" role="listbox" className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-[var(--border-line)] bg-[var(--bg-card)] shadow-lg">
               {filteredScooters.length === 0 ? (
                 <li className="px-4 py-3 text-sm text-[var(--text-secondary)]">未找到匹配的车辆</li>
@@ -215,14 +215,19 @@ export default function GuestBookingForm({ onSuccess }: GuestBookingFormProps) {
                     onMouseEnter={() => setHighlightedIndex(index)}
                   >
                     <div className="font-medium">{scooter.location}</div>
-                    <div className="mt-0.5 text-xs text-[var(--text-secondary)]">ID: {scooter.id.slice(0, 8)}...</div>
+                    <div className="mt-0.5 text-xs text-[var(--text-secondary)]">ID: {(scooter.id ?? '').slice(0, 8)}...</div>
                   </li>
                 ))
               )}
             </ul>
           )}
         </div>
-        {errors.scooterId && <span className="text-xs text-rose-400" role="alert">{errors.scooterId}</span>}
+          {isScootersError && (
+            <p className="text-xs text-rose-400" role="alert">
+              {scootersError instanceof Error ? scootersError.message : '无法加载车辆列表，请稍后重试'}
+            </p>
+          )}
+          {errors.scooterId && <span className="text-xs text-rose-400" role="alert">{errors.scooterId}</span>}
       </div>
 
       <div className="flex flex-col gap-1.5">

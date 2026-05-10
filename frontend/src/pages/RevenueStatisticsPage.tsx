@@ -80,12 +80,13 @@ const RevenueStatisticsPage: React.FC = () => {
   };
   
   useEffect(() => {
-    // 等待身份验证加载完成
     if (authLoading) {
       return;
     }
     
     loadData();
+    const interval = setInterval(loadData, 30000);
+    return () => clearInterval(interval);
   }, [authLoading]);
 
   useEffect(() => {

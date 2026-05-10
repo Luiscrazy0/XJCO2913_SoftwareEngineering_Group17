@@ -1,7 +1,7 @@
 // backend/src/modules/scooter/scooter.service.ts
-import { Injectable, BadRequestException, Logger } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ScooterStatus } from '@prisma/client';
+import { ScooterStatus, BookingStatus } from '@prisma/client';
 import { AmapService } from '../amap/amap.service';
 
 @Injectable()
@@ -87,6 +87,39 @@ export class ScooterService {
     }
     return this.prisma.scooter.delete({
       where: { id },
+    });
+  }
+
+  async forceResetGhostScooter(id: string) {
+    const scooter = await this.prisma.scooter.findUnique({ where: { id } });
+    if (!scooter) {
+      throw new NotFoundException('Scooter not found');
+    }
+
+    if (scooter.status !== ScooterStatus.RENTED) {
+      throw new BadRequestException(
+        `Scooter status is ${scooter.status}, not RENTED. Force-reset only applies to ghost RENTED scooters.`,
+      );
+    }
+
+    const activeBookings = await this.prisma.booking.count({
+      where: {
+        scooterId: id,
+        status: { in: [BookingStatus.CONFIRMED, BookingStatus.IN_PROGRESS] },
+      },
+    });
+
+    if (activeBookings > 0) {
+      throw new BadRequestException(
+        'Scooter has active bookings and cannot be force-reset. Resolve bookings first.',
+      );
+    }
+
+    this.logger.warn(`Force-resetting ghost scooter ${id} from RENTED to AVAILABLE`);
+
+    return this.prisma.scooter.update({
+      where: { id },
+      data: { status: ScooterStatus.AVAILABLE },
     });
   }
 

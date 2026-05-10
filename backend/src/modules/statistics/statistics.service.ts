@@ -50,6 +50,7 @@ export class StatisticsService {
         status: {
           in: [
             BookingStatus.CONFIRMED,
+            BookingStatus.IN_PROGRESS,
             BookingStatus.COMPLETED,
             BookingStatus.EXTENDED,
           ],
@@ -111,6 +112,7 @@ export class StatisticsService {
         status: {
           in: [
             BookingStatus.CONFIRMED,
+            BookingStatus.IN_PROGRESS,
             BookingStatus.COMPLETED,
             BookingStatus.EXTENDED,
           ],
@@ -304,6 +306,7 @@ export class StatisticsService {
             status: {
               in: [
                 BookingStatus.CONFIRMED,
+                BookingStatus.IN_PROGRESS,
                 BookingStatus.COMPLETED,
                 BookingStatus.EXTENDED,
               ],
