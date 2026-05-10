@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useMutation } from '@tanstack/react-query'
 import axiosClient from '../../utils/axiosClient'
 import { Booking, ApiResponse, Payment } from '../../types'
@@ -12,14 +12,17 @@ interface Props {
 
 export default function PaymentModal({ isOpen, booking, onClose, onSuccess }: Props) {
   const [error, setError] = useState('')
+  const idempotencyKeyRef = useRef('')
 
   const { mutate, isPending } = useMutation({
     mutationFn: async () => {
-      const idempotencyKey = `${booking.id}-${Date.now()}`
+      if (!idempotencyKeyRef.current) {
+        idempotencyKeyRef.current = `${booking.id}-${Date.now()}`
+      }
       const response = await axiosClient.post<ApiResponse<Payment>>('/payments', {
         bookingId: booking.id,
         amount: booking.totalCost,
-        idempotencyKey,
+        idempotencyKey: idempotencyKeyRef.current,
       })
       if (!response.data.success) {
         throw new Error(response.data.message || 'Payment failed')
