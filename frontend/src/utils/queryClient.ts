@@ -10,7 +10,7 @@ export const queryClient = new QueryClient({
       gcTime: 10 * 60 * 1000, // 10 minutes (cache time)
     },
     mutations: {
-      retry: 1,
+      retry: 0, // Mutations must not auto-retry — side effects on first attempt would make retries fail
     },
   },
 })

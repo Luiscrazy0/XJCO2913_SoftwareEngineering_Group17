@@ -31,21 +31,20 @@ export class PaymentService {
       }
     }
 
-    // Step 1: Validate booking
-    const booking = await this.prisma.booking.findUnique({
-      where: { id: bookingId },
-      include: { user: true, scooter: true },
-    });
-
-    if (!booking) throw new BadRequestException('Booking not found');
-    if (booking.userId !== userId)
-      throw new ForbiddenException('You can only pay for your own bookings');
-    if (booking.status !== BookingStatus.PENDING_PAYMENT) {
-      throw new BadRequestException('Booking cannot be paid');
-    }
-
-    // Step 2: Atomic transaction
+    // Step 1: Atomic transaction — validates status inside the lock
     const result = await this.prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.findUnique({
+        where: { id: bookingId },
+        include: { user: true, scooter: true },
+      });
+
+      if (!booking) throw new BadRequestException('Booking not found');
+      if (booking.userId !== userId)
+        throw new ForbiddenException('You can only pay for your own bookings');
+      if (booking.status !== BookingStatus.PENDING_PAYMENT) {
+        throw new BadRequestException('Booking cannot be paid');
+      }
+
       const payment = await tx.payment.create({
         data: {
           bookingId,
@@ -74,7 +73,7 @@ export class PaymentService {
 
     // Send receipt email (non-critical)
     try {
-      if (booking.user) {
+      if (result.booking.user) {
         await this.emailService.sendPaymentReceipt(result.booking, amount);
       }
     } catch (error) {

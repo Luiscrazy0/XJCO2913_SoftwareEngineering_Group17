@@ -43,7 +43,6 @@ const ExtendBookingModal: React.FC<ExtendBookingModalProps> = ({
     setIsSubmitting(true)
     try {
       await onExtend(booking.id, additionalHours)
-      showToast('续租成功！', 'success')
       onClose()
     } catch (error: any) {
       showToast(error.message || '续租失败', 'error')
@@ -65,7 +64,12 @@ const ExtendBookingModal: React.FC<ExtendBookingModalProps> = ({
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+      onClick={(e) => { if (e.currentTarget === e.target) onClose() }}
+    >
       <div className="bg-[var(--bg-card)] rounded-xl border border-[var(--border-line)] w-full max-w-md">
         {/* 模态框头部 */}
         <div className="px-6 py-4 border-b border-[var(--border-line)]">
@@ -78,24 +82,24 @@ const ExtendBookingModal: React.FC<ExtendBookingModalProps> = ({
         {/* 模态框内容 */}
         <div className="p-6">
           {/* 当前预订信息 */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="font-medium text-blue-800 mb-2">当前预订信息</h3>
+          <div className="mb-6 p-4 bg-blue-100/20 border border-blue-200/30 rounded-lg">
+            <h3 className="font-medium text-blue-300 mb-2">当前预订信息</h3>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between">
-                <span className="text-blue-700">车辆编号：</span>
-                <span className="font-medium">{booking.scooter.id}</span>
+                <span className="text-blue-300">车辆编号：</span>
+                <span className="font-medium text-blue-200">{(booking.scooter.id ?? '').slice(0, 8)}...</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-700">当前位置：</span>
-                <span>{booking.scooter.location}</span>
+                <span className="text-blue-300">当前位置：</span>
+                <span className="font-medium text-blue-200">{booking.scooter.location}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-700">当前结束时间：</span>
-                <span>{formatDateTime(booking.endTime)}</span>
+                <span className="text-blue-300">当前结束时间：</span>
+                <span className="font-medium text-blue-200">{formatDateTime(booking.endTime)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-blue-700">已续租次数：</span>
-                <span>{booking.extensionCount} 次</span>
+                <span className="text-blue-300">已续租次数：</span>
+                <span className="font-medium text-blue-200">{booking.extensionCount} 次</span>
               </div>
             </div>
           </div>
@@ -150,20 +154,20 @@ const ExtendBookingModal: React.FC<ExtendBookingModalProps> = ({
             </div>
 
             {/* 费用计算 */}
-            <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+            <div className="p-4 bg-gray-800/60 border border-[var(--border-line)] rounded-lg">
               <h3 className="font-medium text-[var(--text-main)] mb-2">费用明细</h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-[var(--text-secondary)]">原费用：</span>
-                  <span>¥{booking.totalCost.toFixed(2)}</span>
+                  <span className="text-[var(--text-main)]">¥{booking.totalCost.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[var(--text-secondary)]">续租费用：</span>
-                  <span>¥{calculateExtensionCost(additionalHours).toFixed(2)}</span>
+                  <span className="text-[var(--text-main)]">¥{calculateExtensionCost(additionalHours).toFixed(2)}</span>
                 </div>
-                <div className="border-t border-gray-200 pt-2">
+                <div className="border-t border-[var(--border-line)] pt-2">
                   <div className="flex justify-between font-medium">
-                    <span>总费用：</span>
+                    <span className="text-[var(--text-main)]">总费用：</span>
                     <span className="text-[var(--mclaren-orange)]">
                       ¥{(booking.totalCost + calculateExtensionCost(additionalHours)).toFixed(2)}
                     </span>
@@ -173,15 +177,15 @@ const ExtendBookingModal: React.FC<ExtendBookingModalProps> = ({
             </div>
 
             {/* 新结束时间 */}
-            <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="p-4 bg-green-500/15 border border-green-500/25 rounded-lg">
               <div className="flex justify-between items-center">
                 <div>
-                  <span className="text-sm text-green-700">新的结束时间：</span>
-                  <p className="font-medium text-green-800">
+                  <span className="text-sm text-green-300">新的结束时间：</span>
+                  <p className="font-medium text-green-200">
                     {formatDateTime(calculateNewEndTime(additionalHours).toISOString())}
                   </p>
                 </div>
-                <div className="text-green-600">
+                <div className="text-green-300">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
