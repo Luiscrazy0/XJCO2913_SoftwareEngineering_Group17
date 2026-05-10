@@ -79,11 +79,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     
     if (storedToken && storedUser) {
       try {
+        const payload = decodeJWT(storedToken)
+        if (payload && payload.exp) {
+          const now = Math.floor(Date.now() / 1000)
+          if (payload.exp < now) {
+            localStorage.removeItem('auth_token')
+            localStorage.removeItem('user')
+            setIsLoading(false)
+            return
+          }
+        }
         setToken(storedToken)
         setUser(JSON.parse(storedUser))
       } catch (error) {
         console.error('Failed to parse stored user:', error)
-        // Clear invalid data
         localStorage.removeItem('auth_token')
         localStorage.removeItem('user')
       }

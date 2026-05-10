@@ -63,7 +63,7 @@ export default function MobileBottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40
+      className="fixed bottom-0 left-0 right-0 z-[9999]
         bg-[var(--bg-card)]/90 backdrop-blur-xl
         border-t border-[var(--border-line)]
         bottom-nav-safe

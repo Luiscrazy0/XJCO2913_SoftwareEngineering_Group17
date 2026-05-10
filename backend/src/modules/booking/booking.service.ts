@@ -216,7 +216,7 @@ export class BookingService {
     if (requesterId && requesterRole !== Role.MANAGER) {
       const booking = await this.prisma.booking.findUnique({
         where: { id },
-        select: { userId: true },
+        select: { userId: true, status: true, scooterId: true },
       });
       if (!booking) throw new NotFoundException('Booking not found');
       if (booking.userId !== requesterId) {
@@ -224,14 +224,30 @@ export class BookingService {
       }
     }
 
-    return this.prisma.booking.update({
-      where: { id },
-      data: { status: BookingStatus.CANCELLED },
-      include: {
-        user: true,
-        scooter: true,
-      },
+    const result = await this.prisma.$transaction(async (tx) => {
+      const booking = await tx.booking.update({
+        where: { id },
+        data: { status: BookingStatus.CANCELLED },
+        include: {
+          user: true,
+          scooter: true,
+        },
+      });
+
+      await tx.scooter.update({
+        where: { id: booking.scooterId },
+        data: { status: ScooterStatus.AVAILABLE },
+      });
+
+      return booking;
     });
+
+    this.eventsService.emitScooterStatusChange(
+      result.scooterId,
+      ScooterStatus.AVAILABLE,
+    );
+
+    return result;
   }
 
   async completeBooking(

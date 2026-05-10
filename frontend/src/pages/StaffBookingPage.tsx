@@ -4,6 +4,7 @@ import PageLayout from '../components/PageLayout'
 import GuestBookingForm, { HIRE_TYPE_LABELS } from '../components/admin/GuestBookingForm'
 import { Booking } from '../types'
 import Button from '../components/ui/Button'
+import ErrorBoundary from '../components/ui/ErrorBoundary'
 
 export default function StaffBookingPage() {
   const [createdBooking, setCreatedBooking] = useState<Booking | null>(null)
@@ -54,7 +55,9 @@ export default function StaffBookingPage() {
             <h2 className="mt-1 text-xl font-semibold text-[var(--text-main)]">填写预约信息</h2>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">为无法自行操作的游客创建AAA电动车租赁预约</p>
           </div>
-          <GuestBookingForm onSuccess={(booking) => setCreatedBooking(booking)} />
+          <ErrorBoundary errorMessage="预约表单加载失败" showRetry onRetry={() => window.location.reload()}>
+            <GuestBookingForm onSuccess={(booking) => setCreatedBooking(booking)} />
+          </ErrorBoundary>
         </div>
       </div>
     </PageLayout>

@@ -30,7 +30,7 @@ const steps = [
   {
     step: 3,
     title: '开始骑行',
-    desc: '支付成功后到指定站点取车，扫码解锁即可出发。骑行结束在任意站点归还，系统自动结算费用。',
+    desc: '支付成功后到指定站点取车，一键解锁即可出发。骑行结束在任意站点归还，系统自动结算费用。',
     icon: (
       <svg className="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
