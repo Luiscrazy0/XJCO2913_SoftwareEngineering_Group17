@@ -8,26 +8,6 @@ DISCOUNT_END_DATE.setDate(DISCOUNT_END_DATE.getDate() + 15);
 
 const promos = [
   {
-    id: "referral",
-    title: "邀请有礼",
-    subtitle: "邀请好友各得 ¥15 骑行金",
-    description: `每邀请一位好友注册并完成首骑，双方各得 ¥15 余额。优惠截止至 ${DISCOUNT_END_DATE.getMonth() + 1}月${DISCOUNT_END_DATE.getDate()}日。`,
-    cta: "邀请好友",
-    link: "/scooters",
-    gradient: "from-rose-600 via-pink-500 to-orange-500",
-    emoji: "🎁",
-  },
-  {
-    id: "first-ride",
-    title: "首单特惠",
-    subtitle: "新用户首单立减 ¥20",
-    description: "注册即享新人专属优惠，探索城市，从第一骑开始。",
-    cta: "立即注册",
-    link: "/auth",
-    gradient: "from-orange-600 via-red-500 to-pink-500",
-    emoji: "🛴",
-  },
-  {
     id: "student",
     title: "学生专属计划",
     subtitle: "认证学生享8折优惠",

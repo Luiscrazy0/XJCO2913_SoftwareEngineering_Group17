@@ -4,32 +4,11 @@ interface SidePromoProps {
   className?: string
 }
 
-const promos = [
-  {
-    title: '升级月卡',
-    description: '不限次数，每天低至¥6.6',
-    link: '/ride-packages',
-    color: 'from-amber-500 to-orange-600',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-      </svg>
-    ),
-  },
-  {
-    title: '邀请好友',
-    description: '双方各得¥15优惠券',
-    link: null,
-    color: 'from-purple-500 to-pink-600',
-    icon: (
-      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-      </svg>
-    ),
-  },
-]
+const promos: never[] = []
 
 export default function SidePromo({ className = '' }: SidePromoProps) {
+  if (promos.length === 0) return null
+
   return (
     <div className={`space-y-4 ${className}`}>
       {promos.map((promo) => {
