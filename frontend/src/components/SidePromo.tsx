@@ -1,7 +1,3 @@
-interface SidePromoProps {
-  className?: string
-}
-
-export default function SidePromo({ className = '' }: SidePromoProps) {
+export default function SidePromo() {
   return null
 }
