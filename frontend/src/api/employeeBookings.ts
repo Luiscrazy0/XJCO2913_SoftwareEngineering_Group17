@@ -1,15 +1,15 @@
 import axiosClient from '../utils/axiosClient'
-import { ApiResponse, Booking, HireType, Scooter } from '../types'
+import { ApiResponse, Booking, HireType, Scooter, PaginatedResponse } from '../types'
 
 export const employeeBookingsApi = {
   getAvailableScooters: async (): Promise<Scooter[]> => {
-    const response = await axiosClient.get<ApiResponse<Scooter[]>>('/scooters', {
+    const response = await axiosClient.get<ApiResponse<PaginatedResponse<Scooter>>>('/scooters', {
       params: { status: 'AVAILABLE' },
     })
     if (!response.data.success) {
       throw new Error(response.data.message || '获取可用车辆失败')
     }
-    return response.data.data ?? []
+    return response.data.data?.items ?? []
   },
 
   create: async (payload: {
