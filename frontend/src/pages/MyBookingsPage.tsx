@@ -106,7 +106,7 @@ const MyBookingsPage: React.FC = () => {
     setStartRideBooking(booking)
   }
 
-  const handleStartRideSuccess = (updated: Booking) => {
+  const handleStartRideSuccess = (_updated: Booking) => {
     queryClient.invalidateQueries({ queryKey: bookingsKey })
     showToast('骑行已开始！', 'success')
   }
