@@ -71,14 +71,12 @@ export class PaymentService {
       return { payment, booking: updatedBooking };
     });
 
-    // Send receipt email (non-critical)
+    // Send receipt email (non-critical, fire-and-forget)
     try {
       if (result.booking.user) {
-        await this.emailService.sendPaymentReceipt(result.booking, amount);
+        this.emailService.sendPaymentReceipt(result.booking, amount).catch((error) => console.error('Failed to send payment receipt email:', error));
       }
-    } catch (error) {
-      console.error('Failed to send payment receipt email:', error);
-    }
+    } catch { /* fire-and-forget */ }
 
     return result.payment;
   }

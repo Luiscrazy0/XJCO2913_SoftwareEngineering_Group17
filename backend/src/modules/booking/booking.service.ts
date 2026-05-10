@@ -135,10 +135,8 @@ export class BookingService {
     this.eventsService.emitScooterStatusChange(scooterId, ScooterStatus.RENTED);
 
     try {
-      await this.emailService.sendBookingConfirmation(booking, finalCost);
-    } catch (error) {
-      console.error('发送预订确认邮件失败:', error);
-    }
+      this.emailService.sendBookingConfirmation(booking, finalCost).catch((error) => console.error('发送预订确认邮件失败:', error));
+    } catch { /* fire-and-forget */ }
 
     return booking;
   }
@@ -200,14 +198,12 @@ export class BookingService {
     });
 
     try {
-      await this.emailService.sendExtensionConfirmation(
+      this.emailService.sendExtensionConfirmation(
         updatedBooking,
         extensionCost,
         newEndTime,
-      );
-    } catch (error) {
-      console.error('发送续租确认邮件失败:', error);
-    }
+      ).catch((error) => console.error('发送续租确认邮件失败:', error));
+    } catch { /* fire-and-forget */ }
 
     return updatedBooking;
   }
@@ -318,10 +314,8 @@ export class BookingService {
     });
 
     try {
-      await this.emailService.sendReturnConfirmation(result, isScooterIntact);
-    } catch (error) {
-      console.error('发送还车确认邮件失败:', error);
-    }
+      this.emailService.sendReturnConfirmation(result, isScooterIntact);
+    } catch { /* fire-and-forget */ }
 
     return result;
   }
@@ -430,11 +424,8 @@ export class BookingService {
 
     // 发送代订确认邮件
     try {
-      await this.emailService.sendBookingConfirmation(booking, finalCost);
-      // 新用户账户信息已通过 booking confirmation 邮件告知
-    } catch (error) {
-      console.error('发送代订确认邮件失败:', error);
-    }
+      this.emailService.sendBookingConfirmation(booking, finalCost).catch((error) => console.error('发送代订确认邮件失败:', error));
+    } catch { /* fire-and-forget */ }
 
     return booking;
   }
@@ -561,13 +552,11 @@ export class BookingService {
     });
 
     try {
-      await this.emailService.sendReturnConfirmation(
+      this.emailService.sendReturnConfirmation(
         result.booking,
         isScooterIntact,
-      );
-    } catch (error) {
-      console.error('Failed to send return confirmation email:', error);
-    }
+      ).catch((error) => console.error('Failed to send return confirmation email:', error));
+    } catch { /* fire-and-forget */ }
 
     return result;
   }
