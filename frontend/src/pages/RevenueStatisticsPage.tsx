@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/ToastProvider';
 import { getWeeklyRevenue, getDailyRevenue, getRevenueChartData } from '../api/statistics';
@@ -56,7 +56,7 @@ const RevenueStatisticsPage: React.FC = () => {
     }
   };
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     if (!user || user.role !== 'MANAGER') {
       showToast('只有管理员可以查看收入统计', 'warning');
       return;
@@ -77,7 +77,7 @@ const RevenueStatisticsPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, startDate, endDate, showToast]);
   
   useEffect(() => {
     if (authLoading) {
@@ -87,7 +87,7 @@ const RevenueStatisticsPage: React.FC = () => {
     loadData();
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
-  }, [authLoading]);
+  }, [authLoading, loadData]);
 
   useEffect(() => {
     if (!authLoading && user?.role === 'MANAGER') {
