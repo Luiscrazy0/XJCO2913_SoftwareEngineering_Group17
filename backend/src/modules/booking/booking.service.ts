@@ -314,7 +314,7 @@ export class BookingService {
     });
 
     try {
-      this.emailService.sendReturnConfirmation(result, isScooterIntact);
+      this.emailService.sendReturnConfirmation(result, isScooterIntact).catch((error) => console.error('发送还车确认邮件失败:', error));
     } catch { /* fire-and-forget */ }
 
     return result;
