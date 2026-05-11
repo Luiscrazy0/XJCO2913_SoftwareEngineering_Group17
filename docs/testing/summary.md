@@ -4,19 +4,19 @@
 
 ## Latest Update
 
-- Date: `2026-05-07`
+- Date: `2026-05-11`
 - Branch: `sprint4-test-work-package`
-- Commit: `daa317401c2fd1d87fbc1f0843c15ec47ff133fd`
+- Base commit: `f08b46a`
 
 ## Scope
 
-- Added direct frontend API client tests for Sprint 4 flows and error paths.
-- Added frontend utility tests for formatters, Luhn logic, query keys, `ApiWrapper`, retry, debounce, and throttle helpers.
-- Expanded Playwright API-level E2E coverage for repeated payment submission using the same `idempotencyKey`.
-- Expanded Playwright API-level E2E coverage for the damaged return flow with `isScooterIntact: false`.
-- Hardened Playwright login setup so CI can auto-register a temporary customer when the configured seed account is unavailable.
-- Added an M9 pagination concurrency smoke script that checks `limit=200` is clamped to `100`.
-- Extended GitHub Actions to run backend coverage, frontend coverage, Playwright E2E, and pagination performance smoke checks.
+- Fast-forwarded `sprint4-test-work-package` to the latest `origin/dev`.
+- Added frontend unit tests for `AuthContext`, `ProtectedRoute`, `usePagination`, `useApiCall`, and `useApiResponse`.
+- Added backend unit tests for request-id middleware, logger middleware, events service, and events controller.
+- Added backend unit tests for feedback image upload controller success and missing-file validation.
+- Added frontend API tests for feedback image upload and dashboard summary statistics added by latest dev.
+- Updated Sprint 4 frontend API client tests for the latest dev response shape and reset mock queues between tests.
+- Added a frontend production build step to GitHub Actions before frontend coverage.
 
 ## Commands Run
 
@@ -24,39 +24,57 @@
 
 ```powershell
 cd backend
+npm ci
+npx prisma generate
+$env:ENCRYPTION_KEY='ci-test-encryption-key-32chars'
 npm run test:cov
+$env:JWT_SECRET='ci-test-jwt-secret'
+$env:ENCRYPTION_KEY='ci-test-encryption-key-32chars'
+npm run test:e2e
+npx prettier --check src/middleware/logger.middleware.spec.ts src/middleware/request-id.middleware.spec.ts src/modules/events/events.controller.spec.ts src/modules/events/events.service.spec.ts
 ```
 
 Result:
 
-- `36` suites passed
-- `318` tests passed
-- Global coverage: `81.64%` statements, `79.25%` branches, `86.59%` functions, `83.34%` lines
+- `npm run test:cov`: `41` suites passed, `332` tests passed.
+- Backend global coverage: `82.15%` statements, `79.37%` branches, `87.75%` functions, `83.65%` lines.
+- `src/middleware`: `100%` statements, `91.66%` branches, `100%` functions, `100%` lines.
+- `src/modules/events`: `76.92%` statements, `80%` branches, `100%` functions, `80%` lines.
+- `src/modules/upload/upload.controller.ts`: `100%` statements, `57.14%` branches, `100%` functions, `100%` lines.
+- `npm run test:e2e`: `1` suite passed, `1` test passed with CI-equivalent env vars.
+- Prettier check passed for the new backend test files.
 
 ### Frontend
 
 ```powershell
 cd frontend
+npm ci
+npm run build
 npm run test:coverage
+```
+
+Result:
+
+- `npm run build`: passed
+- `npm run test:coverage`: `10` files passed, `57` tests passed.
+- Overall frontend coverage: `24.13%` statements, `15.25%` branches, `19.23%` functions, `25.05%` lines.
+- `src/context/AuthContext.tsx`: `79.04%` statements, `63.88%` branches, `83.33%` functions, `79.04%` lines.
+- `src/hooks/usePagination.ts`: `94.28%` statements, `65%` branches, `92.3%` functions, `95.58%` lines.
+- `src/hooks/useApiCall.ts`: `85.71%` statements, `64%` branches, `83.33%` functions, `85.71%` lines.
+- `src/api`: `80.71%` statements, `83.33%` lines after adding coverage for `upload.ts` and dashboard summary.
+- `src/api/upload.ts`: `100%` statements, `75%` branches, `100%` functions, `100%` lines.
+- `src/utils`: `82.78%` statements, `82.73%` lines
+
+### E2E Discovery
+
+```powershell
+cd frontend
 npm run test:e2e:list
 ```
 
 Result:
 
-- `npm run test:coverage`: `6` files passed, `36` tests passed
-- `src/api`: `81.86%` statements, `84.33%` lines
-- `src/utils`: `82.78%` statements, `82.73%` lines
-- `npm run test:e2e:list`: discovered `3` Sprint 4 E2E tests
-
-### Performance Script Validation
-
-```powershell
-node --check scripts\m9-pagination-load-test.mjs
-```
-
-Result:
-
-- Script syntax check passed
+- Playwright discovered `3` Sprint 4 E2E tests.
 
 ## Not Run Locally
 
@@ -65,14 +83,20 @@ Result:
 
 Reason:
 
-- The local environment did not have a backend service listening on `http://localhost:3000`.
-- Docker was not available locally, so the CI-backed Postgres + seeded backend flow could not be reproduced in this session.
+- Local frontend E2E and pagination performance checks require a seeded backend and Postgres service; those are covered by the CI job setup.
+- A full-repo backend Prettier check was not used as a success signal locally because the Windows working tree reported existing style differences across many pre-existing files. The new backend test files were checked directly and passed.
 
 ## Files Added Or Updated In This Test Round
 
 - `.github/workflows/backend-ci.yml`
-- `frontend/e2e/sprint4-rental-flow.spec.ts`
+- `backend/src/middleware/logger.middleware.spec.ts`
+- `backend/src/middleware/request-id.middleware.spec.ts`
+- `backend/src/modules/events/events.controller.spec.ts`
+- `backend/src/modules/events/events.service.spec.ts`
+- `backend/src/modules/upload/upload.controller.spec.ts`
+- `docs/testing/summary.md`
 - `frontend/src/api/sprint4ApiClients.test.ts`
-- `frontend/src/utils/sprint4Utils.test.ts`
-- `scripts/m9-pagination-load-test.mjs`
-- `package.json`
+- `frontend/src/components/ProtectedRoute.test.tsx`
+- `frontend/src/context/AuthContext.test.tsx`
+- `frontend/src/hooks/useApiCall.test.tsx`
+- `frontend/src/hooks/usePagination.test.tsx`
