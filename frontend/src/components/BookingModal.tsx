@@ -76,7 +76,7 @@ export default function BookingModal({ isOpen, scooter, onClose, onBookingSucces
       if (mutationError instanceof Error && mutationError.message) {
         try {
           if ('response' in mutationError) {
-            const axiosError = mutationError as any
+            const axiosError = mutationError as { response?: { data?: { message?: string } } }
             const errorData = axiosError.response?.data
             if (errorData?.message) return `预约失败: ${errorData.message}`
           }

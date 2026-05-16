@@ -18,7 +18,7 @@ import { ExtendBookingDto } from './dto/extend-booking.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { Role } from '@prisma/client';
+import { HireType, Role } from '@prisma/client';
 import {
   ApiTags,
   ApiOperation,
@@ -578,7 +578,7 @@ export class BookingController {
   async estimatePrice(@Request() req, @Query('hireType') hireType: string) {
     const userId = req.user?.id;
     if (!userId) throw new UnauthorizedException('User information missing');
-    return this.bookingService.estimatePrice(userId, hireType as any);
+    return this.bookingService.estimatePrice(userId, hireType as HireType);
   }
 
   @Post(':id/start-ride')

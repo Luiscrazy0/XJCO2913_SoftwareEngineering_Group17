@@ -57,7 +57,7 @@ export default function AdminFeedbacksPage() {
     key: keyof FeedbackFilters,
     value: string | undefined,
   ) => {
-    setFilters((prev) => ({ ...prev, [key]: value as any }));
+    setFilters((prev) => ({ ...prev, [key]: value as FeedbackFilters[typeof key] }));
   };
 
   const handleQuickUpdate = (

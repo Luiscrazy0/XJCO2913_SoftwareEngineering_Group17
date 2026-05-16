@@ -101,7 +101,6 @@ const AmapMap: React.FC<AmapMapProps> = ({
       script.async = true;
       
       script.onload = () => {
-        console.log('高德地图JS API加载成功');
         setIsLoaded(true);
       };
       
@@ -140,7 +139,6 @@ const AmapMap: React.FC<AmapMapProps> = ({
         });
       }
 
-      console.log('高德地图初始化成功');
     } catch (err) {
       const errorMsg = '高德地图初始化失败';
       console.error(errorMsg, err);

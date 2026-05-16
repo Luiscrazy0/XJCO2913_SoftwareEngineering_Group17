@@ -7,6 +7,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { CreateFeedbackDto } from './dto/create-feedback.dto';
 import { UpdateFeedbackDto } from './dto/update-feedback.dto';
 import { FeedbackResponseDto } from './dto/feedback-response.dto';
+import type { FeedbackWithRelations } from './dto/feedback-response.dto';
 import type {
   FeedbackCategory,
   FeedbackPriority,
@@ -58,7 +59,7 @@ export class FeedbackService {
       },
     });
 
-    return new FeedbackResponseDto(feedback as any);
+    return new FeedbackResponseDto(feedback as unknown as FeedbackWithRelations);
   }
 
   async getMyFeedbacks(userId: string, page?: number, limit?: number) {
@@ -118,7 +119,7 @@ export class FeedbackService {
       );
     }
 
-    return new FeedbackResponseDto(feedback as any);
+    return new FeedbackResponseDto(feedback as unknown as FeedbackWithRelations);
   }
 
   async updateFeedback(
@@ -173,7 +174,7 @@ export class FeedbackService {
       },
     });
 
-    return new FeedbackResponseDto(feedback as any);
+    return new FeedbackResponseDto(feedback as unknown as FeedbackWithRelations);
   }
 
   async getAllFeedbacks(

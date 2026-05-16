@@ -38,7 +38,8 @@ export class ApiWrapper {
       if (axiosError.response) {
         // 服务器返回了错误状态码
         const status = axiosError.response.status
-        const data = axiosError.response.data as any
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
+        const data = axiosError.response.data as Record<string, unknown>
 
         errorMessage = this.getErrorMessage(status)
         

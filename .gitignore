@@ -84,5 +84,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 .agents/skills/frontend-patterns/SKILL.md
 
 
-# agent
+# AI development tooling
 .agents
+.claude/
+.sisyphus/

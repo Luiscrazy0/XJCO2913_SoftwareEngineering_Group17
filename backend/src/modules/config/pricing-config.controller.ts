@@ -3,7 +3,7 @@ import { PricingConfigService } from './pricing-config.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/roles.decorator';
-import { Role } from '@prisma/client';
+import { HireType, Role } from '@prisma/client';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 
 @ApiTags('config')
@@ -26,7 +26,7 @@ export class PricingConfigController {
     @Param('hireType') hireType: string,
     @Body() body: { price: number },
   ) {
-    return this.pricingConfigService.updatePricing(hireType as any, body.price);
+    return this.pricingConfigService.updatePricing(hireType as HireType, body.price);
   }
 
   @Put('pricing/reset')

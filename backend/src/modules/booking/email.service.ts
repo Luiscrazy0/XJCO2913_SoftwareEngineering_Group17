@@ -89,7 +89,7 @@ export class EmailService {
       };
 
       const info = await this.transporter.sendMail(mailOptions);
-      console.log('邮件发送成功:', info.messageId);
+      this.logger.log(`Email sent successfully: ${info.messageId}`);
     } catch (error) {
       console.error('邮件发送失败:', error);
       // 在生产环境中，这里应该记录到日志系统

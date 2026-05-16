@@ -22,14 +22,5 @@ export const authApi = {
     return response.data.data
   },
 
-  // Get current user profile - 暂时注释掉，后端可能没有这个接口
-  // getProfile: async (): Promise<User> => {
-  //   const response = await axiosClient.get('/auth/profile')
-  //   return response.data
-  // },
-
-  // Logout user - 暂时注释掉，后端可能没有这个接口
-  // logout: async (): Promise<void> => {
-  //   await axiosClient.post('/auth/logout')
-  // },
+  // getProfile and logout endpoints pending backend implementation
 }

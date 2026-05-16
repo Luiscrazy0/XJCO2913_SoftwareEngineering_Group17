@@ -354,7 +354,7 @@ export class BookingService {
         },
       });
 
-      console.log(`[AccountCreated] 为客户 ${customerEmail} 创建了新账户`);
+      this.logger.log(`Account auto-created for guest booking: ${customerEmail}`);
     }
 
     // 检查滑板车可用性
