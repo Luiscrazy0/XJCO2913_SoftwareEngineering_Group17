@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ForbiddenException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { BookingStatus, HireType, Role, ScooterStatus } from '@prisma/client';
@@ -132,6 +133,7 @@ describe('BookingService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         BookingService,
+        Logger,
         {
           provide: PrismaService,
           useValue: mockPrismaService,
@@ -854,7 +856,7 @@ describe('BookingService', () => {
     });
 
     it('creates a new customer, booking, and payment when the customer does not exist', async () => {
-      const logSpy = jest.spyOn(console, 'log').mockImplementation();
+      const logSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
 
       const manager = createUser({ id: 'employee-1', role: Role.MANAGER });
       const customer = createUser({

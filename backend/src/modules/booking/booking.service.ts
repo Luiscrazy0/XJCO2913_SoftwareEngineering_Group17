@@ -3,6 +3,8 @@ import {
   BadRequestException,
   NotFoundException,
   ForbiddenException,
+  Logger,
+  Optional,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { BookingStatus, HireType, Role, ScooterStatus } from '@prisma/client';
@@ -25,6 +27,7 @@ export class BookingService {
     private readonly emailService: EmailService,
     private readonly pricingConfigService: PricingConfigService,
     private readonly eventsService: EventsService,
+    @Optional() private readonly logger?: Logger,
   ) {}
 
   async findAll(userId?: string, role?: Role, page?: number, limit?: number) {
@@ -354,7 +357,7 @@ export class BookingService {
         },
       });
 
-      this.logger.log(`Account auto-created for guest booking: ${customerEmail}`);
+      this.logger?.log(`Account auto-created for guest booking: ${customerEmail}`);
     }
 
     // 检查滑板车可用性
