@@ -10,9 +10,11 @@ import { scootersApi } from "./scooters";
 import { stationsApi } from "./stations";
 import {
   getDailyRevenue,
+  getDashboardSummary,
   getRevenueChartData,
   getWeeklyRevenue,
 } from "./statistics";
+import { uploadApi } from "./upload";
 import { usersApi } from "./users";
 import axiosClient from "../utils/axiosClient";
 
@@ -89,7 +91,7 @@ const booking = {
 
 describe("Sprint 4 API clients", () => {
   beforeEach(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it("posts auth payloads and rejects malformed auth responses", async () => {
@@ -318,7 +320,7 @@ describe("Sprint 4 API clients", () => {
       .mockResolvedValueOnce(ok(card))
       .mockResolvedValueOnce(ok(booking));
     axiosClientMock.delete.mockResolvedValueOnce(ok(null));
-    axiosClientMock.get.mockResolvedValueOnce(ok([scooter]));
+    axiosClientMock.get.mockResolvedValueOnce(ok(paginated([scooter])));
 
     await expect(paymentCardApi.saveCard(cardPayload)).resolves.toEqual(card);
     await expect(paymentCardApi.deleteCard()).resolves.toBeUndefined();
@@ -402,6 +404,12 @@ describe("Sprint 4 API clients", () => {
       chartType: "bar",
       period: "week",
     };
+    const dashboard = {
+      todayOrders: 5,
+      todayRevenue: 125,
+      rentedScooters: 8,
+      totalUsers: 20,
+    };
     const users = paginated([
       {
         id: "user-1",
@@ -416,6 +424,7 @@ describe("Sprint 4 API clients", () => {
       .mockResolvedValueOnce(ok(weekly))
       .mockResolvedValueOnce(ok(daily))
       .mockResolvedValueOnce(ok(chart))
+      .mockResolvedValueOnce(ok(dashboard))
       .mockResolvedValueOnce(ok(users));
     axiosClientMock.put.mockResolvedValueOnce(ok(null)).mockResolvedValueOnce(
       fail("invalid user type"),
@@ -428,6 +437,7 @@ describe("Sprint 4 API clients", () => {
       daily,
     );
     await expect(getRevenueChartData()).resolves.toEqual(chart);
+    await expect(getDashboardSummary()).resolves.toEqual(dashboard);
     await expect(usersApi.getUsers({ page: 1, limit: 20 })).resolves.toEqual(
       users,
     );
@@ -435,6 +445,41 @@ describe("Sprint 4 API clients", () => {
       .toBeUndefined();
     await expect(usersApi.updateUserType("user-1", "BAD")).rejects.toThrow(
       "invalid user type",
+    );
+  });
+
+  it("uploads feedback images as multipart form data", async () => {
+    const imageFile = new File(["image"], "damage.png", { type: "image/png" });
+    const uploadResponse = {
+      url: "/uploads/feedbacks/damage.png",
+      originalName: "damage.png",
+      size: 5,
+    };
+
+    axiosClientMock.post.mockResolvedValueOnce(ok(uploadResponse));
+
+    await expect(uploadApi.uploadImage(imageFile)).resolves.toEqual(
+      uploadResponse,
+    );
+
+    const [, body, config] = axiosClientMock.post.mock.calls[0];
+    expect(axiosClientMock.post).toHaveBeenCalledWith(
+      "/upload/feedback-image",
+      expect.any(FormData),
+      { headers: { "Content-Type": "multipart/form-data" } },
+    );
+    expect(body.get("file")).toBe(imageFile);
+    expect(config).toEqual({
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  });
+
+  it("surfaces upload API errors", async () => {
+    const imageFile = new File(["image"], "damage.gif", { type: "image/gif" });
+    axiosClientMock.post.mockResolvedValueOnce(fail("Unsupported file type"));
+
+    await expect(uploadApi.uploadImage(imageFile)).rejects.toThrow(
+      "Unsupported file type",
     );
   });
 });
